@@ -1,0 +1,317 @@
+\newpage
+
+\section{书写约定、最佳实践与常见错误}
+\subsection{给对象命名}
+
+\textbf{注意：} 某些变量（如 \tkzname{z}、\tkzname{L}、\tkzname{T} 等）是为存储几何对象而保留的。
+重新给其中之一赋值（例如 \tkzname{L = 4}）会覆盖其内容并破坏系统。
+
+点是一种特殊情况：点必须存放在表 \tkzname{z} 中。
+对于所有其他几何对象，强烈建议遵循预定义的变量名。
+避免混用命名约定或自行发明标识符，否则可能导致不可预知的行为。
+
+\vspace{1em}
+\tkzRHand{\textcolor{red}{警告}}：不要把 \texttt{point}、\texttt{line}、\texttt{circle}、\texttt{path}、\texttt{triangle} 等名字复用为变量名。
+这些标识符由 \tkzNamePack{tkz-elements} 在内部保留，用于表示对象构造器。
+
+\vspace{1em}
+下面列出保留的类以及与之对应的默认变量名：
+\label{list of reserved classes}
+
+\vspace{1em}
+\textcolor{red}{\directlua{
+  for _, t in ipairs(tkz.tables) do
+    local class = (string.gsub(t[2], "_", "\\_"))
+    tex.sprint(class .. "  -->  " .. t[1] .. "\\\\")
+  end
+} }
+
+\subsection{最佳实践}
+
+最好使用方法——更好的是使用对象属性——而不是独立函数。
+
+例如，要确定线段 $AB$ 的中点，以前可以这样写：
+
+|z.m = midpoint(z.A, z.B)|。现在这被认为是不正确的：你必须使用
+
+|z.m = tkz.midpoint(z.A, z.B)|。
+
+不过，推荐的做法是先用下面的语句定义线段：
+
+|L.AB = line(z.A, z.B)|，然后使用属性：
+
+|z.m = L.AB.mid|。如果你不复用这条直线，那么写成一行 |z.m = line(z.A, z.B).mid| 也是可以接受的。
+
+\vspace{12pt}
+类似地，过去可能有人想写 |L.bi = tkz.bisector(z.A, z.B, z.C)| 来求顶点 $A$ 处的角平分线。和上一个例子一样，现在这不再有效。你现在必须使用：
+
+|L.bi = tkz.bisector(z.A, z.B, z.C)|，因为所有独立函数都已归到 |tkz| 模块之下。
+
+更好的做法是先用下面的语句定义三角形 $ABC$：
+
+|T.ABC = triangle(z.A, z.B, z.C)|，然后通过下面的方式访问角平分线：
+
+|L.bi = T.ABC:bisector(z.A)|，或直接：
+
+|L.bi = triangle(z.A, z.B, z.C):bisector(z.A)|。
+
+\subsection{常见错误与最佳实践}
+
+\vspace{1em}
+\tkzRHand{\textcolor{red}{第二个警告}}：我们来看看错误赋值的后果。下面这个例子很简单：定义两个点、过这两点的直线，以及在其中一点处与第一条直线正交的直线。为定义这些对象，我们使用两个表（即类）：\tkzname{z} 和 \tkzname{L}。
+
+下面是正确的代码：
+\begin{mybox}{}
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(1, 2)
+  z.B = point(3, -1)
+  L.AB = line(z.A, z.B)
+  -- blunders
+  L.ortho = L.AB:ortho_from(z.B)
+  z.C = L.ortho.pb
+}
+\begin{tikzpicture}[scale = .75]
+  \tkzGetNodes
+  \tkzDrawLines(A,B B,C)
+  \tkzDrawPoints(A,B)
+\end{tikzpicture}
+\end{tkzexample}
+\end{mybox}
+
+\begin{itemize}
+  \item \textbf{第一个错误：} \tkzname{z = nil} 或 \tkzname{z = 4}。你重新赋值了 \tkzname{z} 变量。它不再指向一个表，而是指向一个数字。它的类型变了，系统再也无法访问这些点。
+  \item \tkzname{z.A = 4} 同样有问题：你覆盖了点 $A$。如果你想移除点 $A$，那就应该改用 \tkzname{z.A = nil}。
+  \item \tkzname{L = 4}。用它来存一个长度看似方便，但这样做会擦掉整张直线表。
+  \item \tkzname{L.ortho = ortho}。一个更隐蔽的错误：如果 \tkzname{ortho} 没有定义，你就丢失了这条直线。如果它已定义但类型不对，则会报错。
+  \item 对于点以外的对象，在流程末尾进行错误赋值可能不会影响图形。可以在绘图之前清理表。不过，\tkzname{z} 表绝不能被改动。只应删除那些未用于绘图的点。
+\end{itemize}
+
+这些预防措施有助于保证系统的一致性，防止不可预知的行为。
+
+\vspace{1em}
+下面我们说明如何为每一类对象指定变量名。
+
+
+\subsection{给点命名}
+
+如果你打算稍后在 \tkzNamePack{\TIKZ} 或 \tkzNamePack{tkz-euclide} 中使用点，就必须把它们存放在表 \tkzname{z} 中。
+在 \tkzNamePack{tkz-elements} 中，所有点都遵循 \tkzname{z.name} 的约定，其中 \tkzname{name} 就是希望使用的节点标签。
+
+\medskip
+当使用 \tkzcname{tkzGetNodes} 把点传递给 \TIKZ{} 时，
+每个条目 \code{z.name} 都会生成对应的坐标：
+
+\begin{mybox}
+\verb|\coordinate (name) at (x,y);|
+\end{mybox}
+
+有些命名情况需要留意，特别是涉及撇号（prime）的情况。
+
+\paragraph{撇号记号。}
+
+宏 \tkzcname{tkzGetNodes} 会把 Lua 名字中的某些结尾模式
+转换成 \TIKZ{} 中的单撇号或双撇号记号。
+
+\begin{itemize}
+  \item 以 \code{p} 结尾的名字变成单撇号：
+        \begin{mybox}
+        \verb|z.Bp = point(...)|  →  节点 \verb|(B')|
+        \end{mybox}
+
+  \item 以 \code{pp} 结尾的名字变成双撇号：
+        \begin{mybox}
+        \verb|z.Bpp = point(...)| → 节点 \verb|(B'')|
+        \end{mybox}
+\end{itemize}
+
+这一约定对几何作图很方便，但如果结尾的 \code{p} 或 \code{pp} 并非有意表示撇号，就可能导致意外的重命名。
+
+\begin{tcolorbox}[colback=red!7,colframe=red!60!black,title=警告]
+避免使用以 \code{p} 或 \code{pp} 结尾的名字，除非你确实想在 \TIKZ{} 中使用单撇号或双撇号记号。
+\end{tcolorbox}
+
+\medskip
+ 你可以在 \code{lua} 部分随意使用这些名字，但在用 \verb|\tkzGetNodes| 宏把点传递成节点时会出错。为避免错误，请使用下一段给出的办法之一。对于 \code{z.p}，只要改用 \code{z.P} 即可。小写字母可以在 \TIKZ{} 中取回。
+
+\paragraph{中间名字。}
+
+为便于阅读，或在 Lua 中使用较长或描述性的名字时，
+你可以使用一个中间变量，并可选地为绘图指定一个简短标签。
+
+例如：
+
+\begin{mybox}
+\verb|local euler = point(...)|
+\verb|z.E = euler|
+\end{mybox}
+
+这里，这个点在内部以清晰的名字 \code{euler} 存放，
+但在 \TIKZ{} 中显示为节点 \code{(E)}。
+
+如果你希望在 Lua 和 \TIKZ{} 中都保留长名字，直接写：
+
+\begin{mybox}
+\verb|z.euler = point(...)|
+\end{mybox}
+
+或者，你也可以在 \TIKZ{} 层指定一个别名：
+
+\begin{mybox}
+\verb|\pgfnodealias{E}{euler}|
+\end{mybox}
+
+另一种可行做法是：在传递之前，先用一个可接受的名字（例如 \code{A}），再用 \verb|z.apollonius = nil| 删除点 \code{z.apollonius}。
+
+\begin{mybox}
+\verb|z.A = z.apollonius|
+\verb|z.apollonius = nil|
+\end{mybox}
+
+
+
+\paragraph{合法示例。}\mbox{}
+
+\begin{mybox}
+\begin{itemize}
+  \item \verb|z.A = point(1,2)|     → 节点 \verb|(A)|
+  \item \verb|z.Bp = point(3,4)|     → 节点 \verb|(B')|
+  \item \verb|z.Cpp = point(5,1)|    → 节点 \verb|(C'')|
+  \item \verb|z.H_a = T.ABC:altitude()| → 节点 \verb|(H_a)|
+  \item \verb|z.euler = T.ABC.eulercenter| → 节点 \verb|(euler)|
+\end{itemize}
+\end{mybox}
+
+名字可以包含字母、数字和“\_”。
+其他字符应避免使用，因为它们可能无法构成合法的 TikZ
+节点名。
+
+\paragraph{Lua 提示。}
+
+表 \tkzname{z} 的字段可以这样访问：
+
+\begin{itemize}
+  \item \verb|z.A|（语法糖），或
+  \item \verb|z["A"]|
+\end{itemize}
+
+把 \verb|z.A = nil| 会彻底删除该点。
+
+
+\subsection{给其他对象命名}
+对于点以外的所有几何对象，你可以自由选择名字。不过，采用一致的命名约定能大大提高代码的可读性和可维护性。更确切地说，每个 Lua 代码块之前通常会调用 \tkzFct{tkz-elements}{init\_elements()} 函数，其作用是清空并重置各个表（如 \tkzname{L}、\tkzname{C} 等）。如果你选择使用自定义的变量名或结构，那完全可以——但那样一来，你就需要自己负责手动管理和清理变量与表，以避免冲突或意外行为。
+
+本文档采用如下命名策略：
+
+
+对象存放在专门的表中，每个表对应一个特定的类。
+这些表由如下变量表示：
+\begin{itemize}
+
+\item \tkzname{L} 用于直线和线段
+\item \tkzname{C} 用于圆
+\item \tkzname{T} 用于三角形
+\item \tkzname{CO} 用于圆锥曲线（包括椭圆、双曲线和抛物线）
+
+\item 等等。参见保留字列表 [\ref{list of reserved classes}]
+\end{itemize}
+
+下面是一些使用中的命名约定示例：
+
+\begin{itemize}
+  \item 直线（L）：\\
+  名字反映确定该直线的两个点。
+
+   示例：|L.AB = line(z.A, z.B)| -- 经过 A 和 B 的直线
+
+\item 圆（C）\\
+你可以根据定义点或用途来命名一个圆。
+示例：
+\begin{itemize}
+ \item C.AB       --> 圆心在 A、过 B 的圆
+ \item C.euler    --> 欧拉圆（九点圆）
+ \item C.external --> 外部圆
+\end{itemize}
+
+\item 三角形（T）\\
+使用顶点标签，或在合适时使用描述性名字。示例：
+
+\begin{itemize}
+  \item T.ABC         --> 顶点为 A、B、C 的三角形
+  \item T.feuerbach   --> 费尔巴哈三角形
+
+\end{itemize}
+
+
+
+\item 圆锥曲线（CO）\\
+表 CO 可以存放各种圆锥曲线；使用有意义的键来表明类型和作用。
+
+
+\end{itemize}
+
+注意：\emph{虽然你可以选择其他变量名或格式，但遵循这些约定能确保代码清晰易读，尤其是在处理较复杂的图形时。}
+
+\subsection{属性、方法的书写约定。}
+\label{sub:writing_conventions_for_attributes_methods_and_functions}
+
+访问属性或调用方法时，必须遵循标准的 Lua 约定：
+
+\begin{itemize}
+  \item \textbf{属性} 用点记号访问：\verb|object.attribute|。
+    \begin{itemize}
+      \item 例如，要访问点 \verb|A| 的坐标，用 \verb|z.A.re| 表示横坐标，用 \verb|z.A.im| 表示纵坐标。
+      \item 要得到对象的类型，写 \verb|z.A.type|。
+      \item 要取圆 \verb|C.OA| 的南极点，写 \verb|C.OA.south|。
+    \end{itemize}
+
+  \item \textbf{方法} 用冒号记号调用：\verb|object:method()|。
+    \begin{itemize}
+      \item 例如，要计算三角形 \verb|ABC| 的内切圆，使用：\verb|C.incircle = T.ABC:in_circle()|。
+      \item 如果方法需要参数，就放在括号里。例如，要计算点 \verb|C| 到直线 \verb|(AB)| 的距离：\verb|d = L.AB:distance(z.C)|。
+    \end{itemize}
+
+  \item \textbf{丢弃结果}：如果一个函数返回多个值而你只需要其中一个，用 \verb|_| 忽略其余的。
+    \begin{itemize}
+      \item 例如，只想取直线与圆的第二个交点：
+
+      \verb|_, z.J = intersection(L.AB, C.OC)|。
+    \end{itemize}
+\end{itemize}
+
+\subsection{其他事项}
+\label{sub:miscellanous}
+\begin{itemize}
+  \item \texttt{单位与坐标：} 与 \tkzNamePack{tkz-euclide} 一样，默认单位是厘米。所有点都放在一个正交笛卡尔坐标系中。
+
+  \item \texttt{数值变量：} 实数遵循标准的 Lua 记法约定。
+
+  \item \texttt{复数：} 与实数类似，但必须用 point 构造器来定义。例如：
+  \begin{verbatim}
+  za = point(1, 2)
+  \end{verbatim}
+  这在数学上对应于 \(1 + 2i\)。你可以用下面的语句打印该复数：
+  \begin{verbatim}
+  tex.print(tostring(za))
+  \end{verbatim}
+
+  \item \texttt{布尔值：}
+  \begin{itemize}
+    \item 在 Lua 中：\verb|bool = true| 或 \verb|bool = false|
+    \item 你可以使用下面的 \tkzname{Lua} 代码：
+    \begin{verbatim}
+    if bool == true then ... else ... end
+    \end{verbatim}
+    \item 在 LaTeX 中，加载 \tkzNamePack{ifthen} 宏包后，你可以写：
+    \begin{verbatim}
+    \ifthenelse{\equal{\tkzUseLua{bool}}{true}}{<true code>}{<false code>}
+    \end{verbatim}
+  \end{itemize}
+
+  \item \texttt{字符串：}
+  \begin{itemize}
+    \item Lua 示例：\verb|st = "Euler's formula"|
+    \item 在 LaTeX 中：\verb|\tkzUseLua{st}| 将显示 \texttt{Euler's formula}
+  \end{itemize}
+\end{itemize}
+\endinput

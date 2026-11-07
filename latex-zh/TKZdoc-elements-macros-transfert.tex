@@ -1,0 +1,557 @@
+%====================================================================
+\section{\TeX\ 接口宏（\texttt{tkz-elements.sty}）}
+\label{sec:sty_interface}
+
+\subsection{用途}
+
+文件 \texttt{tkz-elements.sty} 提供了一小批宏，作为 \TeX{} 与 \tkzNamePack{tkz-elements} 所用 Lua 引擎之间的桥梁。它们的主要目标是：
+
+\begin{itemize}
+\item 在 \TeX{} 中安全地打印 Lua 值；
+\item 把几何对象（点、路径、圆）从 Lua 传递到 TikZ；
+\item 在 Lua 完成计算后，简化绘图阶段。
+\end{itemize}
+
+\medskip
+除非另有说明，这些宏都假定 \tkzNamePack{tkz-elements} 已在 Lua 中初始化（通常通过
+
+|\directlua{init_elements()}|。
+
+%--------------------------------------------------------------------
+\subsection{所提供宏一览}
+
+
+\begin{tabular}{ll}
+\toprule
+\texttt{宏} & \texttt{参考} \\
+\midrule
+\tkzMacro{tkz-elements}{tkzUseLua\{...\}}               & \\
+\tkzMacro{tkz-elements}{tkzPrintNumber\{...\}}          & \\
+\tkzMacro{tkz-elements}{tkzEraseLuaObj\{name\}}         & \\
+\tkzMacro{tkz-elements}{tkzDrawCoordinates(\dots)}      & \\
+\tkzMacro{tkz-elements}{tkzGetPointsFromPath\{P\}\{A\}} & \\
+\tkzMacro{tkz-elements}{tkzDrawPointsFromPath(\dots)}   & \\
+\tkzMacro{tkz-elements}{tkzDrawSegmentsFromPaths(\dots)}& \\
+\tkzMacro{tkz-elements}{tkzDrawCirclesFromPaths(\dots)} & \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\texttt{注意：} Lua 对象的内部布局可能会演进；这些宏在用户层面保持稳定。
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzUseLua}}
+\label{subsec:tkzUseLua}
+
+\medskip
+\texttt{语法： }
+
+\verb|tkzUseLua{<lua-expression>\}|
+
+
+\medskip
+\texttt{描述： } 对该 Lua 表达式求值，并把结果打印到 \TeX{} 流中。
+
+\medskip
+\texttt{参数： }
+\begin{itemize}
+\item \tkzname{<lua-expression>}：返回一个值的 Lua 表达式。
+\end{itemize}
+
+\medskip
+\texttt{说明： }
+\begin{itemize}
+\item 本宏用于\emph{值}（数、布尔值、字符串）。
+\item 对于 Lua 对象（点、直线、圆、路径……），请改用专用的传递/绘图宏，或调用一个显式返回值的 Lua 方法。
+\end{itemize}
+
+\texttt{示例： }
+\begin{minipage}{.52\textwidth}
+\begin{verbatim}
+\directlua{init_elements()
+  z.A = point(0,0)
+  z.B = point(4,2)
+}
+The slope is \tkzUseLua{(z.B.im-z.A.im)/(z.B.re-z.A.re)}.
+\end{verbatim}
+\end{minipage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+该宏对一个 Lua 表达式求值，并把结果插入文档。
+
+
+\texttt{语法： }\verb|\tkzUseLua{<lua-code>}|
+
+\texttt{用法示例： }
+
+\begin{mybox}
+\begin{verbatim}
+\tkzUseLua{utils_checknumber(math.pi)}
+\end{verbatim}
+\end{mybox}
+
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzPrintNumber}}
+该宏用 PGF 的定点输出格式化并打印一个数，默认精度为 2 位小数。
+
+\medskip
+
+%\texttt{Syntax: }\verb|\tkzPrintNumber[<precision>]{<number>}|
+\texttt{语法： }
+\begin{quote}
+\tkzMacro{tkz-elements}{tkzPrintNumber\{<lua-expression>\}} \qquad
+\tkzMacro{tkz-elements}{tkzPN\{<lua-expression>\}}
+\end{quote}
+
+\texttt{示例： }
+
+\begin{mybox}
+\begin{verbatim}
+\tkzPrintNumber{pi} % outputs 3.14
+\tkzPrintNumber[4]{sqrt(2)} % outputs 1.4142
+\end{verbatim}
+\end{mybox}
+
+\texttt{别名： } 宏 \tkzMacro{tkz-elements}{tkzPN} 是 \tkzMacro{tkz-elements}{tkzPrintNumber} 的简写。
+
+
+\texttt{示例： }
+\begin{minipage}{.52\textwidth}
+\begin{verbatim}
+\directlua{init_elements()
+  x = math.pi/7
+}
+$\alpha = \tkzPN{x}$.
+\end{verbatim}
+\end{minipage}
+
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzEraseLuaObj}}
+
+\label{sub:macro_tkzEraseLuaObj}
+
+\texttt{语法： }
+\begin{quote}
+\tkzMacro{tkz-elements}{tkzEraseLuaObj\{<name>\}}
+\end{quote}
+
+
+
+\texttt{描述： }
+从全局存储表中移除一个已存储的 Lua 对象（根据你的约定，通常是 \code{z}、\code{L}、\code{C}、\code{CO} 等）。
+
+
+\texttt{语法： } \verb|\tkzEraseLuaObj{<object>}|
+
+\texttt{用法示例： }
+
+\begin{mybox}
+\begin{verbatim}
+\tkzEraseLuaObj{z.A}
+\tkzEraseLuaObj{T.ABC}
+\end{verbatim}
+\end{mybox}
+
+
+\texttt{说明： }
+在编译大型文档、或在不同图形间复用相同对象名时，使用本宏可避免命名冲突。
+
+
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzPathCount}}
+该宏取回一个 Lua 路径中的顶点个数，并把结果存入一个 TeX 宏。
+
+\texttt{语法： }\verb|\tkzPathCount(<lua-path>){<MacroName>}|
+
+\texttt{参数： }
+
+\verb|<lua-path>|：一个 Lua \verb|path| 对象的标识符。
+\verb|<MacroName>|：一个 TeX 宏的名字（不带反斜杠），用于存放顶点个数。
+
+
+\texttt{用法示例： }
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ z.A = point(0, 0)
+ z.B = point(5, 4)
+ L.AB = line(z.A, z.B)
+ PA.AB = L.AB:path(3)
+ z.O = point(2, 0)
+ }
+\tkzPathCount(PA.AB){N}
+\begin{center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawCoordinates[blue](PA.AB)
+\tkzDrawPointsFromPath[red,size=2](PA.AB)
+  \foreach \i in {1,...,\N}{
+ \tkzGetPointFromPath(PA.AB,\i){P\i}
+ \tkzDrawSegment[orange](O,P\i)
+  }
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzDrawCoordinates}}
+该宏用 TikZ 的 \code{plot coordinates} 语法绘制一条曲线，坐标由 Lua 生成。
+
+\medskip
+\texttt{概念视角：}
+
+Lua 的 \code{path} 是一个计算对象：它存放 Lua 阶段产生的几何数据（坐标、采样、变换、拼接等）。
+
+TikZ 命令 \code{plot coordinates} 是一条绘图指令：它只是把收到的显式坐标画出来。
+
+\medskip
+\emph{Lua 负责计算 —— TikZ 负责绘制。}
+
+\medskip
+宏 \tkzMacro{tkz-elements}{tkzDrawCoordinates} 在这两个世界之间架起桥梁：
+
+\begin{itemize}
+\item Lua 构造并操作几何对象；
+\item TikZ 渲染这份显式的坐标列表；
+\item 绘图时不再做额外的几何解释。
+\end{itemize}
+
+这种严格分离保证了计算出的几何与最终图形输出之间的一致性。
+
+
+\texttt{语法： } |\tkzDrawCoordinates[<options>](lua-path)|
+
+\texttt{用法示例： }
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(0, 0)
+  z.B = point(6, 0)
+  z.C = point(1, 4)
+  T.ABC = triangle(z.A, z.B, z.C)
+  z.M = T.ABC.bc.mid
+  z.N = T.ABC.ca.mid
+  PA.path = T.ABC:path(z.M,z.N,4)
+}
+\begin{tikzpicture}[gridded]
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C)
+\tkzDrawCoordinates[orange,thick](PA.path)
+\tkzDrawPoints(A,B,C,M,N)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C)
+\end{tikzpicture}
+\end{tkzexample}
+
+
+\medskip
+\texttt{描述： }
+把一个 Lua \code{path} 对象作为 TikZ 路径绘制。本宏通常在 Lua 计算阶段之后使用。它用显式的 \code{(x,y)} 坐标，绘制由一个 Lua 路径中的点序列所定义的折线。
+
+
+\medskip
+\texttt{别名： } % \let\tkzDrawPath\tkzDrawCoordinates
+\label{subsec:tkzDrawPath}
+
+\begin{quote}
+\tkzMacro{tkz-elements}{tkzDrawPath[<tikz-options>](lua-path)}
+\end{quote}
+
+%====================================================================
+
+\subsection{宏 \tkzMacro{tkz-elements}{tkzDrawPointsFromPath}}
+\label{sub:macro_tkzDrawPointsFromPath}
+
+该宏用 \tkzname{tkzDrawPoint} 绘制一条路径上的所有点，而不导出点的名字。
+
+\medskip
+\texttt{语法： }
+\verb|\tkzDrawPointsFromPath[<options>](lua-path)|
+
+\medskip
+\texttt{用法示例： }
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+init_elements()
+LP.test = list_point()
+LP.test:add(point(0, 0))
+LP.test:add(point(1, 0))
+LP.test:add(point(1, 1))
+PA.curve = LP.test:as_path()
+}
+\begin{tikzpicture}
+\tkzDrawCoordinates[blue](PA.curve)
+\tkzDrawPointsFromPath[red,size=2](PA.curve)
+\end{tikzpicture}
+\end{tkzexample}
+
+%====================================================================
+
+
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzGetPointsFromPath}}
+该宏由一个 Lua 路径定义若干 TikZ 点。每个点以一个基名加索引命名。
+
+\texttt{语法： }\verb|\tkzGetPointsFromPath[<options>](<path>,<basename>)|
+
+\medskip
+\texttt{描述： }
+把一个 Lua 路径的点导出为具名的 \TeX/TikZ 点。
+命名方式为 \code{<prefix>1}、\code{<prefix>2}、……
+
+\medskip
+\texttt{示例： }
+
+\begin{tkzexample}[latex=.5\textwidth]
+ \directlua{
+  init_elements()
+  PA.g = path({ "(0, 0)", "(1, 0)","(1, 1)" })
+}
+\begin{tikzpicture}
+  \tkzGetPointsFromPath(PA.g,A)
+  \tkzDrawPolygon(A_1,A_2,A_3)
+  \tkzDrawPoints(A_1,A_2,A_3)
+\end{tikzpicture}
+\end{tkzexample}
+
+%====================================================================
+
+
+
+\subsection{宏 \tkzMacro{tkz-elements}{tkzGetPointFromPath}}
+该宏取出一个 Lua 路径的第 i 个顶点，并把它定义为一个给定名字的 TikZ 点。
+
+\texttt{语法： }\verb|\tkzGetPointFromPath(<PathLua>,<index>){<PointName>}|
+
+\texttt{参数： }
+
+\verb|<PathLua>|：一个 Lua \verb|path| 对象的标识符。
+\verb|<index>|：要取回的顶点索引（TeX 数或数值宏）。
+\verb|<PointName>|：要创建的 TikZ 点的名字。
+\medskip
+
+
+\texttt{用法示例：}
+
+\begin{mybox}
+\begin{verbatim}
+% Get the 3rd vertex of PA.A and name it P3
+\tkzGetPointFromPath(PA.A,3){P3}
+% With counting and a loop
+\tkzPathCount(PA.A){N}
+\foreach \i in {1,...,\N}{
+\expandafter\tkzGetPointFromPath\expandafter(PA.A,\i){P\i}
+}
+\end{verbatim}
+\end{mybox}
+%====================================================================
+
+
+
+
+\subsection{宏 \tkzMacro{tkz-elements}{tkzDrawSegmentsFromPaths}}
+\label{sub:macro_tkzDrawSegmentsFromPaths}
+
+\texttt{描述： }
+绘制编码在一条或多条 Lua 路径中的线段（点对或连续点，取决于所采用的约定）。
+
+\texttt{语法： }\verb|\tkzDrawSegmentsFromPaths[<options>](<lua-path-start>,<lua-path-end>)|
+
+\texttt{示例： }
+
+\begin{tkzexample}[vbox]
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(3, 0)
+ C.AB = circle(z.A, z.B)
+ PA.c = path()
+ PA.u = path()
+ PA.v = path()
+ for i = 0, 18, 2 do
+   local angle = i * 2 * math.pi / 18
+   local p = point(polar(8, angle))
+   local Lu, Lv = C.AB:tangent_from(p)
+   local u , v  = Lu.pb, Lv.pb
+   PA.c:add_point(p)
+   PA.u:add_point(u)
+   PA.v:add_point(v)
+ end}
+
+\begin{center}
+ \begin{tikzpicture}[scale =.6]
+  \tkzGetNodes
+  \tkzDrawSegmentsFromPaths[draw,red](PA.c,PA.u)
+  \tkzDrawSegmentsFromPaths[draw,red](PA.c,PA.v)
+  \tkzDrawCircle[blue](A,B)
+\end{tikzpicture}
+ \end{center}
+\end{tkzexample}
+%====================================================================
+\subsection{宏 \tkzMacro{tkz-elements}{tkzDrawCirclesFromPaths}}
+\label{sub:macro_tkzDrawCirclesFromPaths}
+该宏绘制由两条路径定义的圆：一条给出圆心，另一条给出每个圆所经过的点。
+
+\medskip
+\texttt{语法： }\verb|\tkzDrawCirclesFromPaths[<options>](<PA.center>,<PA.through>)|
+
+\medskip
+\texttt{用法示例： }
+
+\begin{mybox}
+\begin{verbatim}
+\tkzDrawCirclesFromPaths[blue](PA.O, PA.A)
+\end{verbatim}
+\end{mybox}
+
+更多示例见在 \href{http://altermundus.fr}{altermundus.fr} 上发布的文档《欧几里得几何》。
+
+\medskip
+\begin{tkzexample}[vbox]
+\directlua{
+ init_elements()
+ z.A = point(-4, -4)
+ z.B = point(4, -4)
+ L.AB = line(z.A, z.B)
+ C.AB = circle(z.A, z.B)
+ S.AB = L.AB:square()
+ _, _, z.C, z.D = S.AB:get()
+ z.O = S.AB.ac.mid
+ z.a = S.AB.ab.mid
+ z.c = S.AB.cd.mid
+ z.o1 = tkz.midpoint(z.a, z.O)
+ z.o = tkz.midpoint(z.c, z.O)
+ z.b = S.AB.bc.mid
+ z.g = (z.o1 - z.O) + (z.b - z.O)
+ z.o2 = intersection(line(z.c, z.g), line(z.O,z.b))
+ z.o3 = (z.o - z.O) + (z.o2 - z.O)
+ z.j = intersection(line(z.c, z.b), line(z.o2,z.o3))
+ local C2 = circle(z.O, z.a)
+ local C1 = circle(z.o, z.c)
+ local C3 = circle(z.o3, z.j)
+ PA.pc, PA.pt, n = C1:CCC(C2, C3)
+}
+
+\begin{center}
+\begin{tikzpicture}[scale=1]
+\tkzGetNodes
+\tkzDrawPolygon[cyan](A,B,C,D)
+\tkzDrawCircles(O,a o,c o1,a o2,b o3,j)
+\tkzDrawCirclesFromPaths[draw,red](PA.pc,PA.pt)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+%===============================================================
+
+\subsection{宏 \tkzMacro{tkz-elements}{tkzDrawFromPointToPath}}
+该宏从一个给定的 TikZ 点出发，向一个 Lua \emph{path} 对象的每个点画一组线段。
+
+\medskip
+\texttt{语法： }\verb|\tkzDrawFromPointToPath[<options>](<point-tikz>,<lua-path>)|
+
+\medskip
+\texttt{参数： }
+
+\verb|<options>|（可选）：pgf/tikz 绘图选项（颜色、线宽等）。
+
+\verb|<point-tikz>|：一个已定义的 TikZ 点的名字。
+
+\verb|<lua-path>|：一个 Lua \verb|path| 对象的标识符。
+
+\medskip
+\texttt{用法示例： }
+
+\medskip
+\begin{tkzexample}[vbox]
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = point(5, 1)
+ z.Ta = point(8, 2)
+ C.A = circle(z.A, z.Ta)
+ L.OA = line(z.O,z.A)
+ z.x, z.y = intersection(C.A, L.OA,{near=z.O})
+ C.A.through = z.y
+ z.m = tkz.midpoint(z.O, z.x)
+ z.n = tkz.midpoint(z.O, z.y)
+ z.w = tkz.midpoint(z.m, z.n)
+ PA.A = path()
+ PA.c = path()
+ for t = 0, 1 - 1e-12, 0.1 do
+   PA.A:add_point(C.A:point(t))
+   local m = tkz.midpoint(z.O, C.A:point(t))
+   PA.c:add_point(m)
+ end
+}
+ \begin{center}
+  \begin{tikzpicture}[scale=.8]
+   \tkzGetNodes
+   \tkzDrawCircle(A,Ta)
+   \tkzDrawLine(O,A)
+   \tkzDrawPoints(O,A,m,n,w,x,y)
+   \tkzLabelPoints(O,A,m,n,w)
+   \tkzDrawCircle[red](w,n)
+   \tkzDrawPointsFromPath[red](PA.c)
+   \tkzDrawPointsFromPath[blue](PA.A)
+   \tkzDrawSegmentsFromPaths[draw,teal](PA.c,PA.A)
+   \tkzDrawFromPointToPath[orange](O,PA.A)
+ \end{tikzpicture}
+  \end{center}
+\end{tkzexample}
+
+
+
+\subsection{阿基米德螺线：一个完整示例}
+
+本示例借助本节介绍的若干宏构建而成。它的灵感来自 Jean-Marc Desbonnez 用 tkz-euclide 创建的一个示例。
+
+\vspace{1em}
+\begin{tkzexample}[vbox]
+\directlua{
+  z.O = point(0, 0)
+  z.A = point(5, 0)
+  L.OA = line(z.O, z.A)
+  PA.spiral = path()
+  PA.center = path()
+  PA.through = path()
+  PA.ray = path()
+  for i = 1, 48 do
+      local k = i / 48
+      z["P"..i] = L.OA:point(k)
+      local angle = i * tkz.tau / 48
+      z["r"..i] = point(polar(5, angle))
+      ray = line(z.O, z["r"..i])
+      circ = circle(z.O, z["P"..i])
+      z["X"..i], _ = intersection(ray, circ, { near = z["r"..i] })
+      PA.spiral:add_point(z["X"..i])
+      PA.center:add_point(z.O)
+      PA.through:add_point(z["P"..i])
+      PA.ray:add_point(z["r"..i])
+  end}
+\begin{center}
+  \begin{tikzpicture}[scale = .8]
+  \tkzGetNodes
+  \tkzDrawCircle(O,A)
+  \tkzDrawCirclesFromPaths[draw,
+      orange!50](PA.center,PA.through)
+  \tkzDrawSegmentsFromPaths[draw,teal](PA.center,PA.ray)
+  \tkzDrawPath[red,thick,smooth](PA.spiral)
+  \tkzDrawPointsFromPath[blue, size=2](PA.spiral)
+  \end{tikzpicture}
+\end{center}
+
+\end{tkzexample}
+
+
+
+\endinput

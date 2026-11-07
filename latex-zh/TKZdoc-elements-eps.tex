@@ -1,0 +1,37 @@
+%--------------------------------------------------------------------
+\section{数值容差}
+\label{sec:numerical_tolerance}
+
+\subsection{浮点运算}
+
+\tkzNamePack{tkz-elements} 中的所有计算均采用浮点运算完成。
+因此，实数之间的精确比较并不可靠。
+
+例如，一个理论上位于某条直线上的点，由于舍入误差，可能会产生一个非常小的非零值。
+
+\subsection{全局容差：\code{tkz.epsilon}}
+
+为保证数值稳健性，\tkzNamePack{tkz-elements}
+使用了一个全局容差参数：
+
+
+\verb|tkz.epsilon = 1e-10|
+
+
+该值规定了几何判定（共线、关联、距离相等等）中允许的数值误差。
+
+\medskip
+默认情况下，该容差被设为一个较小的正值。
+如有需要，高级用户可对其进行调整。
+
+\subsection{在位置判定中的使用}
+
+所有从属关系与位置判定均为 \emph{EPS 感知}。
+当某个方法接受可选参数 \code{EPS} 时，遵循以下规则：
+
+\begin{itemize}
+\item 若提供了 \code{EPS}，则它会覆盖全局容差。
+\item 否则使用 \code{tkz.epsilon}。
+\end{itemize}
+
+这一设计保证了所有几何对象之间的一致性。

@@ -1,0 +1,443 @@
+\newpage
+\section{\tkzClass{occs} 类}
+\label{sec:orthonormal_cartesian_coordinate_system}
+
+\subsection{说明}
+\tkzClass{occs} 类建模一个\emph{正交笛卡尔坐标系}（OCCS）。它的主要用途是从默认坐标系切换到与图形几何特征（例如准线、长轴或圆锥曲线的顶点）对齐的坐标系。
+
+本宏包中的所有计算都在一个固定的 OCCS 中进行。为方便和清晰起见，本类允许借助一个方向（一条直线）和一个新原点来定义并切换到新的 OCCS。
+
+\medskip
+
+典型用法是：通过把坐标轴与圆锥曲线等对象的自然方向对齐，来简化它们的坐标。
+
+\subsection{创建一个 occs}\label{occs:create}
+
+一个 OCCS（正交笛卡尔坐标系）由以下二者定义：
+\begin{itemize}
+  \item 一条直线，它设定新的\emph{纵}轴（$y$ 轴）的方向；以及
+  \item 一个点，它成为新的原点。
+\end{itemize}
+
+横轴（$x$ 轴）会被自动计算为与纵轴正交，从而保证得到一个右手坐标系。
+
+\medskip
+
+创建 OCCS 有两种等价方式：
+
+\begin{mybox}
+  \code{O.S = occs(L.axis, z.S)} \hfill（简写，推荐）
+  \\
+  \code{O.S = occs:new(L.axis, z.S)} \hfill（显式构造器）
+\end{mybox}
+
+结果存放在表 \code{O} 的键 \code{"S"} 下，表示以点 \code{z.S} 为中心的 OCCS。
+
+\medskip
+
+随后即可用该对象来：
+\begin{itemize}
+  \item 计算点在新坐标系中的坐标，
+  \item 把点投影到新坐标轴上，或
+  \item 重构与新坐标系对齐的几何元素。
+\end{itemize}
+
+
+新的横轴会被自动计算，以保证正交性。
+
+\subsection{occs 的属性}
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{\texttt{occs} 对象的属性。}\label{occs:attributes}
+  \begin{tabular}{ll}
+    \toprule
+    \texttt{属性} & \textbf{说明}  \\
+    \midrule
+    \tkzAttr{occs}{type}       & 对象类型名，恒为 \texttt{"occs"} \\
+    \tkzAttr{occs}{origin}     & 新原点                     \\
+    \tkzAttr{occs}{x}          & 定义新 $x$ 轴（横轴）的点 \\
+    \tkzAttr{occs}{y}          & 定义新 $y$ 轴（纵轴）的点 \\
+    \tkzAttr{occs}{abscissa}   & 表示横轴的直线 \\
+    \tkzAttr{occs}{ordinate}   & 表示纵轴的直线 \\
+    \bottomrule
+  \end{tabular}
+  \egroup
+
+
+
+\subsubsection{示例：\texttt{occs} 的属性}
+\label{ssub:example_attributes_of_occs}
+
+关于新建 OCCS 的参数，需说明几句。最重要的是定义新纵轴方向的那条直线。对于抛物线，这个方向应从准线指向焦点。对于双曲线或椭圆，则应从中心指向主焦点。方向由构造该直线时所用两个点的顺序决定：从第一个点指向第二个点。
+
+若这条直线是作为另一条直线的垂线构造的（如下例），则它的方向取决于原直线的方向。
+\vspace{1em}
+
+\begin{verbatim}
+ \directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.i = point(1, 0)
+ z.j = point(0, 1)
+ z.A = point(-1, -1)
+ z.B = point(4, 2)
+ L.AB = line(z.A, z.B)
+ z.S = point(0, 3)
+ L.axis = L.AB:ortho_from(z.S)
+ % new occs
+ O.S = occs(L.axis, z.S)
+ z.u = O.S.x
+ z.v = O.S.y
+ z.ax = O.S.abscissa.pa
+ z.bx = O.S.ordinate.pa
+ z.ay = O.S.abscissa.pb
+ z.by = O.S.ordinate.pb}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawLines(A,B)
+ \tkzDrawLines[purple,add=4 and 4](ax,ay bx,by)
+ \tkzDrawSegments[->,red,thick](O,i O,j)
+ \tkzDrawSegments[->,purple,thick](S,u S,v)
+ \tkzLabelSegment[below,sloped,pos=.9](A,B){L.AB the directrix}
+ \tkzLabelSegment[below,sloped,pos=3](ax,ay){abscissa}
+ \tkzLabelSegment[below,sloped,pos=5](bx,by){ordinate major\_axis}
+ \tkzLabelPoints(O,S)
+ \tkzLabelPoints[left](j,v)
+ \tkzLabelPoints[below right](i,u)
+\end{tikzpicture}
+\end{verbatim}
+
+
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.i = point(1, 0)
+ z.j = point(0, 1)
+ z.A = point(-1, -1)
+ z.B = point(4, 2)
+ L.AB = line(z.A, z.B)
+ z.S = point(0, 3)
+ L.axis = L.AB:ortho_from(z.S)
+ % new occs
+ O.S = occs(L.axis, z.S)
+ z.u = O.S.x
+ z.v = O.S.y
+ z.ax = O.S.abscissa.pa
+ z.bx = O.S.ordinate.pa
+ z.ay = O.S.abscissa.pb
+ z.by = O.S.ordinate.pb}
+
+\begin{center}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawLines(A,B)
+ \tkzDrawLines[purple,add=4 and 4](ax,ay bx,by)
+ \tkzDrawSegments[->,red,thick](O,i O,j)
+ \tkzDrawSegments[->,purple,thick](S,u S,v)
+ \tkzLabelSegment[below,sloped,pos=.9](A,B){L.AB the directrix}
+ \tkzLabelSegment[below,sloped,pos=3](ax,ay){abscissa}
+ \tkzLabelSegment[below,sloped,pos=5](bx,by){ordinate major\_axis}
+ \tkzLabelPoints(O,S)
+ \tkzLabelPoints[left](j,v)
+ \tkzLabelPoints[below right](i,u)
+\end{tikzpicture}
+\end{center}
+
+\subsection{\texttt{occs} 类的方法}
+
+本类提供以下方法：
+
+\bgroup
+\small
+\captionof{table}{occs 的方法。}\label{occs:methods}
+\begin{tabular}{ll}
+\toprule
+\textbf{方法} & \texttt{参考}   \\
+\midrule
+\texttt{构造器} &    \\
+\midrule
+\tkzMeth{occs}{occs(L, pt)} & [\ref{occs:new}] \\
+\midrule
+\texttt{返回实数的方法} &    \\
+\midrule
+\tkzMeth{occs}{coordinates(pt)}  & [\ref{occs:coordinates}] \\
+\midrule
+\texttt{返回点的方法} &    \\
+\midrule
+\tkzMeth{occs}{point(u, v)}  & [\ref{occs:point}] \\
+\bottomrule
+\end{tabular}
+\egroup
+
+\subsection{方法 \tkzMeth{occs}{occs(L, pt)}}
+\label{occs:new}
+
+如何创建一个依附于某条直线的正交坐标系，前面已经介绍过
+[见 \ref{occs:create}]。
+
+这里要强调定义直线~\(L\) 的那两个点所起的重要作用。如果交换这两个点，得到的坐标系并不相同：坐标轴的方向会反转。无论哪种情况，坐标系都沿定义点的顺序取正向。
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{%
+z.O = point(0, 0)
+z.A = point(0, 1)
+z.B = point(4, 2)
+z.S = point(1, 3)
+L.AB = line(z.A, z.B)
+z.K = L.AB:projection(z.S)
+O.sys = occs(L.AB, z.S)
+z.u, z.v = O.sys.x, O.sys.y}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawLines[purple](A,B)
+  \tkzDrawPoints(A,B,S,O,K)
+  \tkzLabelPoints(A,B,S,O,K,u,v)
+  \tkzDrawSegments[thick,->](S,u S,v)
+\end{tikzpicture}
+\end{tkzexample}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{%
+z.O = point(0, 0)
+z.A = point(0, 1)
+z.B = point(4, 2)
+z.S = point(1, 3)
+L.AB = line(z.B, z.A)
+z.K = L.AB:projection(z.S)
+O.sys = occs(L.AB, z.S)
+z.u, z.v = O.sys.x, O.sys.y}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawLines[purple](A,B)
+  \tkzDrawPoints(A,B,S,O,K)
+  \tkzLabelPoints(A,B,S,O,K,u,v)
+  \tkzDrawSegments[thick,->](S,u S,v)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsection{方法 \tkzMeth{occs}{coordinates(pt)}}\label{occs:coordinates}
+我们想构造一条经过三个给定点的抛物线，已知该抛物线的对称轴平行于给定直线 \((MN)\)。
+
+\begin{enumerate}
+  \item 首先必须检查三点 \(A,B,C\) 不共线，且其中任意两点不在同一条垂直于 \((MN)\) 的直线上。
+  \item 接着，我们定义一个依附于直线 \((MN)\) 的参考系
+        \((M,\overrightarrow{MU},\overrightarrow{MV})\)。
+  \item 在这个新坐标系中，存在唯一一条经过这三个点的抛物线。
+        函数 \tkzFct{tkz}{parabola(pt, pt, pt)}
+        [见 \ref{tkz:parabola}] 计算二次函数
+        \(y = Ax^2 + Bx + C\) 的系数。
+  \item 要应用该函数，需要 \(A,B,C\) 在新坐标系中的坐标。
+        这正是方法
+        \tkzMeth{occs}{coordinates(pt)} 的作用。
+\end{enumerate}
+
+\directlua{
+z.O = point(0, 0)
+z.A = point(-1.5, 1)
+z.B = point(1, 0.25)
+z.C = point(2.5, 1.8)
+z.M = point(3, 0)
+z.N = point(2, 1)
+L.MN = line(z.M, z.N)
+sys = occs(L.MN, z.M)
+z.U = sys.x
+z.V = sys.y
+L.MU = line(z.M, z.U)
+local a, b, c = tkz.parabola(point(sys:coordinates(z.A)),
+                             point(sys:coordinates(z.B)),
+                             point(sys:coordinates(z.C)))
+function f(x)
+  return a * x ^ 2 + b * x + c
+end
+
+xf = - b / (2 * a)
+yf = (4 * a * c - b ^ 2 + 1) / (4 * a)
+xk = xf
+yk = (4 * a * c - (b ^ 2) - 1) / (4 * a)
+z.K = sys:point(xk, yk)
+z.F = sys:point(xf, yf)
+L.dir = L.MU:ll_from(z.K)
+PA = conic(z.F, L.dir, 1)
+curve = PA:points(-3, 3, 30)
+}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawSegments[->,purple,thick](M,U M,V)
+ \tkzDrawLines(M,N)
+ \tkzDrawCoordinates[smooth,red,thick](curve)
+ \tkzDrawPoints(A,B,C)
+ \tkzLabelPoints(A,B,U,V)
+ \tkzLabelPoints[above](M,N,C)
+\end{tikzpicture}
+
+\subsection{方法 \tkzMeth{occs}{point(u, v)}}\label{occs:point}
+
+该方法是 \tkzMeth{occs}{coordinates(pt)} 的逆：它返回在该坐标系中坐标为 \code{(u, v)} 的点。对任意点 \code{P}，\code{O.sys:point(O.sys:coordinates(P))} 给出 \code{P}。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(3, 1)
+ z.S = point(1, 1)
+ L.AB = line(z.A, z.B)
+ O.sys = occs(L.AB, z.S)
+ z.u, z.v = O.sys.x, O.sys.y
+ z.P = O.sys:point(2, 1)}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawLines[purple](A,B)
+ \tkzDrawSegments[thick,->](S,u S,v)
+ \tkzDrawPoints(A,B,S,P)
+ \tkzLabelPoints(A,B,S,u,v,P)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsection{示例：把 \texttt{occs} 用于抛物线}
+
+我们看一个实际例子。假设要求一条抛物线与一条直线的交点。该抛物线由其准线和焦点定义。在以抛物线顶点 $S$ 为中心、$x$ 轴平行于准线且经过 $S$ 的坐标系中，抛物线方程为
+\[
+y = \frac{x^2}{2p}
+\]
+其中 $p$ 是\emph{通径}，即焦点到准线的距离。
+
+\vspace{1em}
+
+为求交点，我们先把给定直线的方程表达到新坐标系中。然后用 $y = \frac{x^2}{2p}$ 求解方程组。在内部，这通过两个工具函数完成。
+
+\vspace{1em}
+
+若有解，结果由两个值 $r_1$、$r_2$ 组成，它们是交点在新 OCCS 中的横坐标。求出相应的纵坐标后，我们可以：
+\begin{itemize}
+  \item 直接用向新 OCCS 的投影，把坐标表达到 \TIKZ{} 中；或
+  \item 几何地重构这些点：对每个 $r$，在新 $x$ 轴（\code{OCCS.abscissa}）上找到对应的点 $x$，再用它在抛物线上定位该点。
+\end{itemize}
+
+\vspace{1em}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.i = point(1, 0)
+ z.j = point(0, 1)
+ z.A = point(-1, 0)
+ z.B = point(5, 4)
+ L.dir = line(z.A, z.B)
+ z.F = point(0, 3)
+ CO.parabola = conic(z.F, L.dir, 1)
+ PA.curve = CO.parabola:points(-3, 3, 50)
+ local p = CO.parabola.p
+ z.P = L.dir:report(p, z.K)
+ z.X = PA:point(p)
+ z.H = L.dir:projection(z.X)
+ z.K = CO.parabola.K
+ z.S = CO.parabola.vertex
+ L.KF = CO.parabola.major_axis
+  % new occs
+ O.SKF = occs(L.KF, z.S)
+ z.u = O.SKF.x
+ z.v = O.SKF.y
+  % line a,b
+ z.a = point(-1, 1)
+ z.b = point(3, 5)
+ L.ab = line(z.a, z.b)
+  % % coordinates in the new occs
+ X, Y = O.SKF:coordinates(z.F)
+ Xa, Ya = O.SKF:coordinates(z.a)
+ Xb, Yb = O.SKF:coordinates(z.b)
+  % solve in the new occs
+ local r, s = tkz.line_coefficients(Xa, Ya, Xb, Yb)
+ r1, r2 = solve_para_line(p, r, s)
+ z.x = O.SKF.abscissa:report(r1, z.K)
+ z.y = O.SKF.abscissa:report(r2, z.K)
+ L1 = L.dir:ortho_from(z.x)
+ L2 = L.dir:ortho_from(z.y)
+ z.s1 = intersection(L.ab, L1)
+ z.s2 = intersection(L.ab, L2)}
+
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawCoordinates[smooth,orange,thick](PA.curve)
+ \tkzDrawLines(A,B)
+ \tkzDrawLines[add = 1 and 1](K,F)
+ \tkzDrawSegments[add = .5 and .5,blue](a,b)
+ \tkzDrawSegments[dashed](s1,x s2,y)
+ \tkzDrawPoints(A,B,F,K,S)
+ \tkzDrawPoints[blue,size=2](a,b)
+ \tkzDrawPoints[blue,size=2](s1,s2,x,y)
+ \tkzLabelPoints[blue](a,b)
+ \tkzLabelPoints[blue,above left](s1,s2)
+ \tkzLabelPoints(O,i,u,S,A,B,x,y)
+ \tkzLabelPoints[left](j,v)
+ \tkzLabelPoints[right](F,K)
+ \tkzDrawSegments[->,red,thick](O,i O,j)
+ \tkzDrawSegments[->,purple,thick](S,u S,v)
+ \tkzLabelSegment[below,sloped,pos=.7](A,B){Directrix}
+\end{tikzpicture}
+\end{verbatim}
+
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.i = point(1, 0)
+ z.j = point(0, 1)
+ z.A = point(-1, 0)
+ z.B = point(5, 4)
+ L.dir = line(z.A, z.B)
+ z.F = point(0, 3)
+ CO.parabola = conic(z.F, L.dir, 1)
+ PA.curve = CO.parabola:points(-3, 3, 50)
+ local p = CO.parabola.p
+ z.P = L.dir:report(p, z.K)
+ z.X = CO.parabola:point(p)
+ z.H = L.dir:projection(z.X)
+ z.K = CO.parabola.K
+ z.S = CO.parabola.vertex
+ L.KF = CO.parabola.major_axis
+  % new occs
+ O.SKF = occs(L.KF, z.S)
+ z.u = O.SKF.x
+ z.v = O.SKF.y
+  % line a,b
+ z.a = point(-1, 1)
+ z.b = point(3, 5)
+ L.ab = line(z.a, z.b)
+  % % coordinates in the new occs
+ X, Y = O.SKF:coordinates(z.F)
+ Xa, Ya = O.SKF:coordinates(z.a)
+ Xb, Yb = O.SKF:coordinates(z.b)
+  % solve in the new occs
+ local r, s = tkz.line_coefficients(Xa, Ya, Xb, Yb)
+ r1, r2 = tkz.solve_quadratic_(1, -2 * p * r, -2 * p * s)
+ z.x = O.SKF.abscissa:report(r1, z.K)
+ z.y = O.SKF.abscissa:report(r2, z.K)
+ local L1 = L.dir:ortho_from(z.x)
+ local L2 = L.dir:ortho_from(z.y)
+ z.s1 = intersection(L.ab, L1)
+ z.s2 = intersection(L.ab, L2)}
+
+\begin{center}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawCoordinates[smooth,orange,thick](PA.curve)
+ \tkzDrawLines(A,B)
+ \tkzDrawLines[add = 1 and 1](K,F)
+ \tkzDrawSegments[add = .5 and .5,blue](a,b)
+ \tkzDrawSegments[dashed](s1,x s2,y)
+ \tkzDrawPoints(A,B,F,K,S)
+ \tkzDrawPoints[blue,size=2](a,b)
+ \tkzDrawPoints[blue,size=2](s1,s2,x,y)
+ \tkzLabelPoints[blue](a,b)
+ \tkzLabelPoints[blue,above left](s1,s2)
+ \tkzLabelPoints(O,i,u,S,A,B,x,y)
+ \tkzLabelPoints[left](j,v)
+ \tkzLabelPoints[right](F,K)
+ \tkzDrawSegments[->,red,thick](O,i O,j)
+ \tkzDrawSegments[->,purple,thick](S,u S,v)
+ \tkzLabelSegment[below,sloped,pos=.7](A,B){Directrix}
+\end{tikzpicture}
+\end{center}
+\endinput

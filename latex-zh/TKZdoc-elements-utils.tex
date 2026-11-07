@@ -1,0 +1,432 @@
+\newpage
+\section{utils 模块}
+\tkzname{utils} 模块提供底层的数值与解析工具，供 \tkzname{tkz-elements} 内部使用。这些函数保证了安全的数值转换，并为 TikZ 输出提供一致的字符串格式。
+
+
+\subsection{\tkzname{utils} 模块函数一览表}
+
+\begin{table}[htbp]
+\centering
+\caption{模块 \tkzMod{utils} 的函数。}
+
+\begin{tabular}{@{}ll@{}}
+\toprule
+\texttt{函数} & \texttt{参考} \\
+\midrule
+
+\tkzFct{utils}{utils.parse\_point(str)}        & [\ref{sub:function_utils_parse_point}] \\
+
+\tkzFct{utils}{utils.format\_number(r, n)}     & [\ref{sub:function_utils_format_number}]\\
+
+\tkzFct{utils}{utils.format\_coord(x, decimals)} & [\ref{sub:function_utils_format_coord}]\\
+
+\tkzFct{utils}{utils.format\_point(z, decimals)} & [\ref{sub:function_utils_format_point}]\\
+
+\tkzFct{utils}{utils.checknumber(x, decimals)}  & [\ref{sub:function_utils_checknumber}]\\
+
+\tkzFct{utils}{utils.almost\_equal(a, b, eps)}  & [\ref{sub:function_utils_almost_equal}]\\
+
+\tkzFct{utils}{utils.clamp(x, min, max)} & [\ref{sub:function_utils_clamp}]\\
+
+\tkzFct{utils}{utils.sign(x)}            & [\ref{sub:function_utils_sign}]\\
+
+\tkzFct{utils}{utils.w(...)}             & [\ref{sub:function_utils_w}]\\
+
+\tkzFct{utils}{utils.wlog(...)}              & [\ref{sub:function_utils_wlog}]\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.parse\_point(str)}}
+\label{sub:function_utils_parse_point}
+
+解析形如 \code{"(x,y)"} 的字符串，并返回相应的数值坐标。该函数支持可选空格和科学计数法。
+
+\medskip
+\texttt{参数： } \code{str} – 表示一个点的字符串，例如 \code{"(3.5, -2.0)"}。
+
+该函数接受：
+\begin{itemize}
+\item 十进制记法：\texttt{(3.5,-2)}
+\item 科学计数法：\texttt{(1e-5,2E3)}
+\item 可选空格
+\item 可选括号
+\end{itemize}
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{local x, y = utils.parse\_point("(1.5, -2.3)")}
+\end{center}
+
+\medskip
+\texttt{用途： }
+
+该函数接收一个字符串参数并解析它，以数值形式取出 \code{x} 和 \code{y} 分量。输入字符串必须符合 \code{"(x, y)"} 的格式，其中 \code{x} 和 \code{y} 可以是用十进制或科学计数法书写的浮点数。
+
+
+\medskip
+\texttt{返回： }
+
+两个数：\texttt{x}、\texttt{y} – 以 Lua 数表示的数值坐标。
+两个数值：该点的实部和虚部。
+
+
+\medskip
+\texttt{用法示例： }
+
+\begin{verbatim}
+utils.parse_point("(3.5, -2)")
+--  3.5   -2.0
+
+utils.parse_point("(1e-5,2E3)")
+-- 1e-05  2000
+
+utils.parse_point(" -3.2e+1 , 4.5e-2 ")
+-- -32  0.045
+\end{verbatim}
+
+科学计数法与十进制在数值上是等价的：
+
+\begin{verbatim}
+local x1 = utils.parse_point("(1e-5,0)")
+local x2 = utils.parse_point("(0.00001,0)")
+-- x1 == x2  --> true
+\end{verbatim}
+
+\medskip
+\texttt{错误处理}
+
+非法输入会引发 \texttt{tex.error}：
+
+\begin{verbatim}
+utils.parse_point("(a,b)")
+-- Invalid point string
+\end{verbatim}
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.format\_number(x, decimals)}}
+\label{sub:function_utils_format_number}
+
+该函数把一个数值（或数值字符串）格式化为固定小数位数的字符串表示。
+
+\texttt{语法： }
+
+\begin{center}
+\code{local str = utils.format\_number(math.pi, 3)}
+\end{center}
+
+\texttt{用途： }
+
+该函数把一个数（或可转换为数的字符串）转换成具有指定小数位数的字符串。在生成整洁的数值输出、或将其导出为 \TIKZ{} 坐标时，它尤其有用。
+
+\texttt{参数： }
+
+\begin{itemize}
+\item \code{x} – 数值
+\item \code{decimals} – 可选。小数位数（默认：5）
+\end{itemize}
+
+\texttt{返回： } 一个字符串，表示 \code{x} 具有指定小数位数的值。
+
+\texttt{特点： }
+
+\begin{itemize}
+\item 尽可能自动把字符串转换为数。
+\item 保证 \TIKZ{} 坐标或 LaTeX 输出的格式一致。
+\item 输入不合法时引发错误。
+\end{itemize}
+
+\texttt{用法示例： }
+
+\begin{verbatim}
+utils.format_number(1e-5,5)
+-- "0.00001"
+
+utils.format_number(math.pi, 3)
+-- "3.142"
+
+utils.format_number("2.718281828", 2)
+-- "2.72"
+
+utils.format_number(2e3,2)
+-- "2000.00"
+
+utils.format_number(-4.2e-2,4)
+-- "-0.0420"
+\end{verbatim}
+
+
+\subsection{在 tkz-elements 中的典型用法}
+
+一个完整的解析与格式化流水线示例：
+
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+init_elements()
+local x,y = utils.parse_point("(1e-5,2e3)")
+
+local sx = utils.format_number(x,5)
+local sy = utils.format_number(y,2)
+tex.print(sx)
+tex.print('\\\\')
+tex.print(sy)
+}
+\end{tkzexample}
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.format\_coord(x, decimals)}}
+\label{sub:function_utils_format_coord}
+
+该函数把一个数值格式化为固定小数位数的字符串。它是 \tkzFct{utils}{format\_number} 的一个轻量版本，用于输入已保证为数值的内部场合。
+
+\texttt{语法： }
+
+\begin{center}
+\code{local s = utils.format\_coord(3.14159, 2)} \hfill $\rightarrow$ \code{"3.14"}
+\end{center}
+
+\texttt{参数： }
+
+\begin{itemize}
+\item \code{x} – 一个数（不做校验）。
+\item \code{decimals} – 可选小数位数（默认：5）。
+\end{itemize}
+
+\medskip
+\texttt{返回： }
+
+一个具有固定小数格式的字符串。
+
+\medskip
+\texttt{说明： }
+
+该函数由 \tkzFct{path}{add\_pair\_to\_path} 及其他路径构造方法在内部使用。
+
+与 \tkzFct{utils}{format\_number} 不同，它不做输入校验，只应在已知输入为数值时使用。
+
+\medskip
+\texttt{相关函数： }
+
+\begin{itemize}
+\item \tkzFct{utils}{format\_number(x, decimals)} – 带校验的更安全的替代
+\end{itemize}
+
+\medskip
+\texttt{精度说明： }
+
+很小的数值可能根据小数位数被舍入为零：
+
+\begin{verbatim}
+utils.format_number(1e-8,5)
+-- "0.00000"
+
+utils.format_number(1e-8,10)
+-- "0.0000000100"
+\end{verbatim}
+
+\texttt{重要提示： }
+
+Lua 内部可能用科学计数法表示数：
+
+\begin{verbatim}
+print(1e-5)
+-- 1e-05
+\end{verbatim}
+
+不过，\verb|utils.format_number| 总是生成适合 TikZ 输出的固定小数表示。
+
+\subsection{与 \tkzname{path} 的交互}
+
+在由计算所得的点构造 TikZ 路径时，格式化工具尤为重要。
+
+\texttt{示例：路径中的科学计数法}
+
+考虑一次计算后得到的一个非常小的坐标：
+
+\begin{verbatim}
+local x = 1e-5
+local y = 2
+\end{verbatim}
+
+如果不做格式化就直接插入路径：
+
+\begin{verbatim}
+PA.curve:add_point(point(x,y))
+\end{verbatim}
+
+Lua 内部可能把该坐标表示为：
+
+\begin{verbatim}
+(1e-05,2)
+\end{verbatim}
+
+虽然数值正确，但科学计数法对 TikZ 输出并不理想。
+
+
+\texttt{完整示例}
+
+\begin{verbatim}
+local p = path()
+p:add_point(point(1e-5,0),5)
+p:add_point(point(2e-5,1),5)
+
+-- 生成：
+-- (0.00001,0.00000) -- (0.00002,1.00000)
+\end{verbatim}
+
+
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.checknumber(x, decimals)}}
+\label{sub:function_utils_checknumber}
+
+把一个数或数值字符串校验并转换为固定格式的小数字符串。
+
+它是 \verb|utils.format_number| 的别名（为向后兼容而保留）。
+
+\begin{verbatim}
+utils.checknumber(1e-5,5)
+-- "0.00001"
+\end{verbatim}
+
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.format\_point(z, decimals)}}
+\label{sub:function_utils_format_point}
+
+把一个复点转换为适合坐标输出的字符串表示。
+
+\texttt{语法： }
+
+\begin{center}
+\code{local s = utils.format\_point(z, 4)} \hfill $\rightarrow$ \code{"(1.0000,2.0000)"}
+\end{center}
+
+\medskip
+\texttt{参数： }
+
+\begin{itemize}
+\item \code{z} – 一个带有 \code{re} 和 \code{im} 字段的表。
+\item \code{decimals} – 可选精度（默认：5）。
+\end{itemize}
+
+\medskip
+\texttt{返回： }
+
+一个把该点表示为 \code{"(x,y)"} 的字符串。
+
+\medskip
+\texttt{错误处理。}
+
+若 \code{z} 没有数值型的 \code{re} 和 \code{im} 分量，则引发错误。
+
+\medskip
+\texttt{相关函数： }
+
+\begin{itemize}
+\item \tkzFct{utils}{format\_coord}
+\end{itemize}
+
+\subsection{函数 \tkzFct{utils}{utils.almost\_equal(a, b, epsilon)}}
+\label{sub:function_utils_almost_equal}
+
+若两个数在给定容差内近似相等，则返回 \code{true}。
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{if utils.almost\_equal(x, y) then ... end}
+\end{center}
+
+\medskip
+\texttt{参数： }
+
+\begin{itemize}
+\item \code{a}、\code{b} – 待比较的两个数。
+\item \code{epsilon} – 可选容差（默认：\code{tkz.epsilon}）。
+\end{itemize}
+
+\medskip
+\texttt{返回： }
+
+一个布尔值：若两值之差小于容差则为 \code{true}。
+
+
+
+\subsection{函数 \tkzFct{utils}{utils.clamp(x, min, max)}}
+\label{sub:function_utils_clamp}
+
+返回把 \code{x} 限制在区间 $[\code{min}, \code{max}]$ 内的结果。
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{local t = utils.clamp(t, 0, 1)}
+\end{center}
+
+\medskip
+\texttt{返回： }
+
+若 \code{x < min} 则返回 \code{min}；若 \code{x > max} 则返回 \code{max}；否则返回 \code{x}。
+
+\subsection{函数 \tkzFct{utils}{utils.sign(x)}}
+\label{sub:function_utils_sign}
+
+返回一个数的符号。
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{local s = utils.sign(z.A.im)}
+\end{center}
+
+\medskip
+\texttt{返回： }
+
+若 \code{x > 0} 则为 \code{1}；若 \code{x < 0} 则为 \code{-1}；若 \code{x = 0} 则为 \code{0}。
+
+\subsection{函数 \tkzFct{utils}{utils.w(...)}}
+\label{sub:function_utils_w}
+
+把一条格式化消息写到终端和 .log 文件，并带有 \code{[tkz-elements]} 前缀。参数与 \code{string.format} 相同。若只想写到 .log 文件，请使用 \tkzFct{utils}{utils.wlog}。
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{utils.w("Radius: \%.3f", C.OA.radius)}
+\end{center}
+
+\medskip
+\texttt{返回： }
+
+无返回值。
+
+\subsection{函数 \tkzFct{utils}{utils.wlog(...)}}
+\label{sub:function_utils_wlog}
+
+只把一条格式化消息写入 .log 文件，并带有 \code{[tkz-elements]} 前缀。
+
+\medskip
+\texttt{语法： }
+
+\begin{center}
+\code{utils.wlog("Internal value: \%s", tostring(value))}
+\end{center}
+
+\medskip
+\texttt{返回： }
+
+无返回值。仅记录日志。
+\endinput

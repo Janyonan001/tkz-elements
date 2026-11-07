@@ -1,0 +1,893 @@
+\newpage
+\section{\tkzClass{path} 类}
+
+这个类是应 \code{tex.stackexchange.com} 上的一个问题而开发的 [\href{https://tex.stackexchange.com/questions/741663/fill-a-space-made-by-three-arcs/741758#741758}{fill-a-space-made-by-three-arcs}]。
+
+宏包中原本缺少这个概念，不过在某些情况下可以借助 \TIKZ{} 路径来绕过。在创建 \code{conic} 类时，我经常需要操作坐标表，于是把它们形式化为 \code{path} 就变得很自然。
+
+\directlua{
+ z.O = point(0, 0)
+ z.A = point(8, 0)
+ z.E = z.O:rotation(2*math.pi / 3, z.A)
+ z.C = z.O:rotation(-2*math.pi / 3, z.A)
+ z.F, z.D, z.B = z.O:rotation(math.pi / 3, z.A, z.E, z.C)
+ L.AC = line(z.A, z.C)
+ L.OB = line(z.O, z.B)
+ L.OD = line(z.O, z.D)
+ L.CE = line(z.C, z.E)
+ L.AE = line(z.A, z.E)
+ L.OF = line(z.O, z.F)
+ z.G = intersection(L.AC, L.OB)
+ z.H = intersection(L.CE, L.OD)
+ z.I = intersection(L.AE, L.OF)
+ C.GA = circle(z.G, z.A)
+ C.FE = circle(z.F, z.E)
+ C.BA = circle(z.B, z.A)
+ C.IE = circle(z.I, z.E)
+ C.DE = circle(z.D, z.E)
+ C.FA = circle(z.F, z.A)
+ C.HE = circle(z.H, z.E)
+ C.GC = circle(z.G, z.C)
+ _,z.J = intersection(C.GA, C.FE)
+ _,z.K = intersection(C.BA, C.IE)
+ _,z.L = intersection(C.DE, C.IE)
+ _,z.M = intersection(C.FA, C.HE)
+ z.N = intersection(C.BA, C.HE)
+ z.P = intersection(C.DE, C.GC)
+ % the paths
+ local nb = 40
+ PA.th1 = C.IE:path(z.E, z.L, nb) + C.DE:path(z.L, z.O, nb) - C.FA:path(z.E, z.O, nb)
+ PA.th2 = C.IE:path(z.G, z.A, nb) - C.FA:path(z.M, z.A, nb) - C.HE:path(z.G, z.M, nb)
+ PA.th3 = C.IE:path(z.H, z.K, nb) + C.BA:path(z.K, z.C, nb) - C.GC:path(z.H, z.C, nb)
+ PA.th4 = C.GA:path(z.A, z.J, nb) + C.FA:path(z.J, z.O, nb) - C.BA:path(z.A, z.O, nb)
+ PA.th5 = C.HE:path(z.C, z.N, nb) + C.BA:path(z.N, z.O, nb) - C.DE:path(z.C, z.O, nb)
+ PA.th6 = C.HE:path(z.I, z.E, nb) - C.DE:path(z.P, z.E, nb) - C.GA:path(z.I, z.P, nb)}
+\begin{center}
+  \begin{tikzpicture}[scale = .5, rotate = -30]
+    \tkzGetNodes
+    \tkzFillCircle[fill=yellow!20](O,A)
+    \tkzDrawCircle[ultra thick,black](O,A)
+    \tkzClipCircle(O,A)
+    \tkzDrawCoordinates[draw,ultra thick,fill=green!15](PA.th1)
+    \tkzDrawCoordinates[draw,ultra thick,fill=green!15](PA.th2)
+    \tkzDrawCoordinates[draw,ultra thick,fill=blue!15](PA.th3)
+    \tkzDrawCoordinates[draw,ultra thick,fill=blue!15](PA.th4)
+    \tkzDrawCoordinates[draw,ultra thick,fill=red!15](PA.th5)
+    \tkzDrawCoordinates[draw,ultra thick,fill=red!15](PA.th6)
+    \tkzDrawCircle[ultra thick,black](O,A)
+    \end{tikzpicture}
+\end{center}
+
+\begin{verbatim}
+
+\directlua{
+ z.O = point(0, 0)
+ z.A = point(8, 0)
+ z.E = z.O:rotation(2*math.pi / 3, z.A)
+ z.C = z.O:rotation(-2*math.pi / 3, z.A)
+ z.F, z.D, z.B = z.O:rotation(math.pi / 3, z.A, z.E, z.C)
+ L.AC = line(z.A, z.C)
+ L.OB = line(z.O, z.B)
+ L.OD = line(z.O, z.D)
+ L.CE = line(z.C, z.E)
+ L.AE = line(z.A, z.E)
+ L.OF = line(z.O, z.F)
+ z.G = intersection(L.AC, L.OB)
+ z.H = intersection(L.CE, L.OD)
+ z.I = intersection(L.AE, L.OF)
+ C.GA = circle(z.G, z.A)
+ C.FE = circle(z.F, z.E)
+ C.BA = circle(z.B, z.A)
+ C.IE = circle(z.I, z.E)
+ C.DE = circle(z.D, z.E)
+ C.FA = circle(z.F, z.A)
+ C.HE = circle(z.H, z.E)
+ C.GC = circle(z.G, z.C)
+ _,z.J = intersection(C.GA, C.FE)
+ _,z.K = intersection(C.BA, C.IE)
+ _,z.L = intersection(C.DE, C.IE)
+ _,z.M = intersection(C.FA, C.HE)
+ z.N = intersection(C.BA, C.HE)
+ z.P = intersection(C.DE, C.GC)
+ % the paths
+ local nb = 40
+ PA.th1 = C.IE:path(z.E, z.L, nb) + C.DE:path(z.L, z.O, nb) - C.FA:path(z.E, z.O, nb)
+ PA.th2 = C.IE:path(z.G, z.A, nb) - C.FA:path(z.M, z.A, nb) - C.HE:path(z.G, z.M, nb)
+ PA.th3 = C.IE:path(z.H, z.K, nb) + C.BA:path(z.K, z.C, nb) - C.GC:path(z.H, z.C, nb)
+ PA.th4 = C.GA:path(z.A, z.J, nb) + C.FA:path(z.J, z.O, nb) - C.BA:path(z.A, z.O, nb)
+ PA.th5 = C.HE:path(z.C, z.N, nb) + C.BA:path(z.N, z.O, nb) - C.DE:path(z.C, z.O, nb)
+ PA.th6 = C.HE:path(z.I, z.E, nb) - C.DE:path(z.P, z.E, nb) - C.GA:path(z.I, z.P, nb)}
+\begin{center}
+  \begin{tikzpicture}[scale = .5, rotate = -30]
+    \tkzGetNodes
+    \tkzFillCircle[fill=yellow!20](O,A)
+    \tkzDrawCircle[ultra thick,black](O,A)
+    \tkzClipCircle(O,A)
+    \tkzDrawCoordinates[draw,ultra thick,fill=green!15](PA.th1)
+    \tkzDrawCoordinates[draw,ultra thick,fill=green!15](PA.th2)
+    \tkzDrawCoordinates[draw,ultra thick,fill=blue!15](PA.th3)
+    \tkzDrawCoordinates[draw,ultra thick,fill=blue!15](PA.th4)
+    \tkzDrawCoordinates[draw,ultra thick,fill=red!15](PA.th5)
+    \tkzDrawCoordinates[draw,ultra thick,fill=red!15](PA.th6)
+    \tkzDrawCircle[ultra thick,black](O,A)
+    \end{tikzpicture}
+\end{center}
+
+\end{verbatim}
+
+\medskip
+
+除了从一个点列表手动构造路径外，你还可以利用各个几何类自动生成路径。这在绘制圆弧、线段或插值曲线时特别有用。目前，以下类提供了生成路径对象的内置方法：
+
+\begin{itemize}
+\item \tkzClass{line} —— 两点之间的线段插值，见 [\ref{ssub:line_path}]
+\item \tkzClass{triangle} —— 作为路径的三角形轮廓，见 [\ref{ssub:method_tkzmeth_triangle_path}]
+\item \tkzClass{circle} —— 圆周上两点之间的圆弧，见 [\ref{ssub:circle_path}]
+\item \tkzClass{conic} —— 参数化的弧或整条曲线，见 [\ref{ssub:conic_path}]
+\end{itemize}
+
+这些方法通常返回一个 \tkzClass{path} 对象，其点数为默认或用户指定。例如：
+
+\begin{verbatim}
+PA.arc = C.OA:path(z.A, z.B, 40) -- circular arc from A to B on circle OA
+PA.seg = L.AB:path(10) -- line segment from A to B with 10 points
+PA.tri = T.ABC:path() -- triangle outline path
+PA.co = CO.EL:points(0, 1, 50) -- conic arc from t=0 to t=1
+\end{verbatim}
+
+这些生成的路径可以合并、反向、填充，或用于 \TIKZ{} 的装饰。
+
+
+\subsection{概述}
+
+路径对象表示一个有序的二维复点序列，以 \texttt{"(x,y)"} 形式的、与 TikZ 兼容的字符串存放。它支持平移、位似、旋转等几何运算，并可通过 Lua 运算符重载与其他路径组合。
+
+变量 \code{PA} 持有一个表，用于存放路径。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐使用 \code{PA}。如果你使用自定义变量（例如 Paths），则必须手动初始化它。如果使用了 \code{PA}，\tkzFct{tkz-elements}{init\_elements()} 函数会重新初始化该表。
+
+在处理路径对象时——尤其是涉及若干中间曲线时——强烈建议使用带索引的名字，如 \code{PA.p1}、\code{PA.p2} 等，而不要用一个笼统的名字。
+
+\begin{mybox}
+\textbf{规则——优先使用显式的、带索引的名字：}
+使用 \code{PA.p1}、\code{PA.p2}、\code{PA.result} 等可提高清晰度、避免意外覆盖，并确保所有几何数据都能通过一次 \tkzFct{tkz-elements}{init\_elements()} 调用重置。
+\end{mybox}
+
+这种做法与 \tkzNamePack{tkz-elements} 的整体理念一致：用 \code{PA}、\code{T}、\code{C}、\code{L} 等具名表来存放结构化的几何信息。带索引的命名也有助于让图更易读、可复现、易调试。
+
+
+它支持用于组合和操作路径的算术运算，以及平移、旋转、位似和反向等几何变换。
+
+\subsection{说明}
+
+\begin{itemize}
+\item 点在内部以 \texttt{"(x,y)"} 这样的字符串存放，解析通过工具函数 parse\_point 完成。
+
+\begin{verbatim}
+local x, y = utils.parse_point("(3.5, -2)")
+-- x = 3.5, y = -2.0
+\end{verbatim}
+
+
+\item 数字格式化（例如为了与 \TIKZ{} 兼容）应由 utils\_checknumber 处理，假定它已在全局或某个工具模块中定义。
+
+\item 该类设计为轻量型，并与 TikZ/LuaLaTeX 工作流兼容。
+
+\end{itemize}
+
+
+
+
+
+\subsection{构造器 \tkzMeth{path}{path(<list>)}}
+
+创建一个新路径。
+
+\medskip
+
+\texttt{参数： }
+ \code{<list>}（可选）：一个 Lua 表，包含以 TikZ 格式字符串给出的点坐标，
+        例如 \code{"(0,0)"}、\code{"(1,2)"}。
+
+
+\begin{center}
+  \begin{verbatim}
+ PA.name = path(table_of_points) -- Creates a new path object.
+  \end{verbatim}
+\end{center}
+
+\medskip
+
+若未提供参数，则创建一个空路径。
+
+
+若提供了数据，输入应是一个以字符串书写的点表，例如 |{ "(0,0)", "(1,0)"|、|"(1,1)" }|，否则创建一个空路径。
+
+下面是一个表示简单三角形的 \tkzname{path}：
+
+  \begin{mybox}
+    \begin{verbatim}
+      PA.name = path({ "(0, 0)", "(1, 0)","(1, 1)" })
+      tex.print(tostring(PA.name))
+    \end{verbatim}
+  \end{mybox}
+
+
+
+\subsection{运算符重载；元方法}
+
+\subsubsection{元方法一览}
+\bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{vector 类的方法。}\label{path:metamethods}
+  \begin{tabular}{ll}
+  \toprule
+   \texttt{元方法} & \texttt{参考} \\
+   \midrule
+  \tkzMeta{path}{add(path1,path2)}   & [\ref{ssub:metamethod_add}]  \\
+  \tkzMeta{path}{sub(path1,path2)}   & [\ref{ssub:metamethod_sub}]  \\
+  \tkzMeta{path}{unm(path1)}         &  [\ref{ssub:metamethod_unm}]       \\
+  \tkzMeta{vector}{tostring(path1)}   & [\ref{ssub:metamethod_tostring}]  \\
+  \bottomrule
+  \end{tabular}
+\egroup
+
+\subsubsection{元方法 \tkzMeta{path}{add}}
+\label{ssub:metamethod_add}
+若 p1 和 p2 是两条路径，可以用
+  |p3 = p1:add(p2)|
+得到第三条路径。
+
+ 更方便地，可使用运算符
+
+ \code{p3 = p1 + p2} —— \textbf{拼接} \\
+ 把 \code{p2} 接在 \code{p1} 之后，返回一条新路径。
+
+\subsubsection{元方法 \tkzMeta{path}{unm}}
+\label{ssub:metamethod_sub}
+|p2 = p1:unm()|
+
+ 更方便地，可使用运算符
+
+  \code{-p} —— \textbf{反向} \\
+  返回该路径按相反顺序的一个副本。
+
+\subsubsection{元方法 \tkzMeta{path}{sub}}
+\label{ssub:metamethod_unm}
+若 p1 和 p2 是两条路径，可以用
+|p3 = p1:sub(p2)|
+得到第三条路径。
+
+ 更方便地，可使用运算符
+
+  \code{p1 - p2} —— \textbf{相减} \\
+  等价于 \code{p1 + (-p2)}（把 \code{p1} 与反向的 \code{p2} 拼接）。
+
+\subsubsection{元方法 \tkzMeta{path}{tostring}}
+\label{ssub:metamethod_tostring}
+字符串表示
+
+\code{tostring} 元方法提供一种可读形式，主要用于调试：
+
+\begin{verbatim}
+tostring(p) --> path: { (x1,y1) , (x2,y2) , ... }
+\end{verbatim}
+
+
+
+\subsection{方法}
+
+\bgroup
+\catcode`\_ = 12
+\small
+\captionof{table}{\texttt{path} 类的方法。}\label{path:methods}
+\begin{tabular}{ll}
+\toprule
+\texttt{方法} & \texttt{参考} \\
+\midrule
+\tkzMeth{path}{add\_point(z)}     & [\ref{ssub:method_tkzmeth_path_add__point}]\\
+\tkzMeth{path}{get(i)}            & [\ref{ssub:method_tkzmeth_path_get}] \\
+\tkzMeth{path}{copy()}            & [\ref{ssub:method_tkzmeth_path_copy}] \\
+\tkzMeth{path}{count()}           & [\ref{ssub:method_tkzmeth_path_count}] \\
+\tkzMeth{path}{translate(dx, dy)} & [\ref{ssub:method_tkzmeth_path_translate}] \\
+\tkzMeth{path}{scale(kx, ky)}     & [\ref{ssub:path_scale}] \\
+\tkzMeth{path}{homothety(pt, k)}  & [\ref{ssub:path_homothety}] \\
+\tkzMeth{path}{map(fx, fy)}        & [\ref{ssub:path_map}] \\
+\tkzMeth{path}{rotate(pt, an)}    & [\ref{ssub:method_tkzmeth_path_rotate}] \\
+\tkzMeth{path}{close()}           & [\ref{ssub:method_tkzmeth_path_close}]\\
+\tkzMeth{path}{sub(i1, i2)}       & [\ref{ssub:method_tkzmeth_path_sub_i1_i2}] \\
+\tkzMeth{path}{show()}            & [\ref{ssub:method_tkzmeth_path_show}] \\
+\tkzMeth{path}{add\_pair\_to\_path(z1, z2, n)} & 或 add\_pair [\ref{ssub:subsubsection_name}] \\
+\tkzMeth{path}{concat(sep)}       &  [\ref{ssub:path_concat}]\\
+\bottomrule
+\end{tabular}
+\egroup
+
+
+
+\subsubsection{方法 \tkzMeth{path}{add\_point(pt,<n>)}}
+\label{ssub:method_tkzmeth_path_add__point}
+
+该方法向路径追加一个点。
+
+\medskip
+
+\textbf{参数：}
+\begin{itemize}
+  \item \code{pt}：可以是
+  \begin{itemize}
+    \item 一个 \code{point} 对象，或
+    \item 表示一个点坐标的字符串，例如 \code{"(2,3)"} 或 \code{"(1e-5,0)"}。
+  \end{itemize}
+  \item \code{n}（可选）：为 TikZ 输出格式化坐标时所用的小数位数。
+\end{itemize}
+
+\medskip
+
+若 \code{pt} 是字符串，则用 \code{utils.parse\_point} 解析它。然后该点被格式化（经由 \code{utils.format\_point}）并存入路径。
+
+\medskip
+
+若给出 \code{n}，坐标在存入路径前先按 \code{n} 位小数舍入。若省略，则使用 10 位小数，以便从路径读回的点在进一步计算中保留足够精度。
+
+\medskip
+
+\texttt{注意： }
+参数 \code{n} 只影响生成的 TikZ 代码中的数值表示。它不改变内部的几何计算。
+
+\medskip
+
+\textbf{示例}
+
+\begin{tkzexample}[latex=.35\textwidth]
+\directlua{
+  PA.triangle = path()
+  PA.triangle:add_point(point(0,0),0)
+  PA.triangle:add_point(point(1,0),0)
+  PA.triangle:add_point(point(1,1),0)
+  tex.print(tostring(PA.triangle))
+}
+\end{tkzexample}
+
+\begin{tkzexample}[latex=.35\textwidth]
+\directlua{
+  PA.p = path({ "(0,0)", "(1,0)", "(1,1)" })
+  PA.p:add_point("(2,3)",0)
+  PA.p:add_point("(1e-5,0)",5)
+  tex.print(tostring(PA.p))
+}
+\end{tkzexample}
+\subsubsection{方法 \tkzMeth{path}{get(i)}}
+\label{ssub:method_tkzmeth_path_get}
+
+方法 \code{get(i)} 返回存放在路径 \texttt{PA.p} 中的第 i 个点。
+
+tkz-elements 中的路径把点以格式化的坐标字符串存放（例如 \texttt{"(1.000,2.000)"}），以与 TikZ 兼容并高效地从 Lua 传递到 \TeX。当调用 \code{get(i)} 时，这些坐标会自动转换回一个真正的 Lua 点对象。
+
+\medskip
+\texttt{返回值： }
+
+与路径第 i 个元素对应的点对象。
+
+\medskip
+\texttt{错误： }
+
+若索引超出有效范围，则引发错误。
+
+
+
+\subsubsection{方法 \tkzMeth{path}{copy()}}
+\label{ssub:method_tkzmeth_path_copy}
+
+返回该路径的深拷贝。
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+  PA.p1 = path({ "(0, 0)", "(1, 0)","(1, 1)" })
+  PA.p2 = PA.p1:copy()
+  PA.p2:add_point(point(0, 0),0)}
+\begin{tikzpicture}
+  \tkzDrawCoordinates(PA.p2)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{path}{count()}}
+\label{ssub:method_tkzmeth_path_count}
+
+返回路径中点的个数。
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+  PA.p1 = path({ "(0, 0)", "(1, 0)","(1, 1)" })
+  PA.p2 = PA.p1:copy()
+  PA.p2:add_point(point(0, 0),0)
+  tex.print(PA.p2:count())
+  }
+\end{tkzexample}
+
+
+
+\subsubsection{方法 \tkzMeth{path}{translate(dx,dy)}}
+\label{ssub:method_tkzmeth_path_translate}
+
+把路径按给定向量 \((dx,dy)\) 平移。
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+  PA.p1 = path({ "(0,0)", "(1,0)", "(1,1)" })
+  PA.p2 = PA.p1:translate(2,1)}
+\begin{tikzpicture}
+\tkzDrawCoordinates(PA.p2)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{path}{scale(kx,ky)}}
+\label{ssub:path_scale}
+
+该方法相对于原点对路径施加各向异性缩放。
+
+\medskip
+
+\texttt{参数： }
+\begin{itemize}
+  \item \code{kx}：水平缩放因子，
+  \item \code{ky}：竖直缩放因子。
+\end{itemize}
+
+\medskip
+
+\texttt{描述： }
+
+路径中的每个点 $P(x,y)$ 变换为
+\[
+P'(kx \cdot x,\; ky \cdot y).
+\]
+
+该变换相对于原点 $(0,0)$ 进行。
+
+\medskip
+
+\texttt{返回： }
+
+一个新的 \code{path} 对象，包含缩放后的点。
+原路径保持不变。
+
+\medskip
+
+\texttt{示例： }
+
+\begin{verbatim}
+PA.scaled = PA.original:scale(2,0.5)
+\end{verbatim}
+
+这把 $x$ 坐标放大一倍、$y$ 坐标缩小一半。
+
+\subsubsection{方法 \tkzMeth{path}{homothety(k,<center>)}}
+\label{ssub:path_homothety}
+
+该方法对路径施加均匀缩放（位似）。
+
+\medskip
+
+\textbf{参数}
+\begin{itemize}
+  \item \code{k}：缩放因子，
+  \item \code{center}：可选参考点。
+\end{itemize}
+
+\medskip
+
+\textbf{第 5 版的变化}
+
+\code{center} 参数现在是可选的。
+若省略，则使用原点 $(0,0)$。
+
+\medskip
+
+\textbf{描述}
+
+每个点 $P(x,y)$ 变换为
+\[
+P'(x',y') = (x_c + k(x - x_c),\; y_c + k(y - y_c)).
+\]
+
+\medskip
+
+\textbf{返回}
+
+一个新的 \code{path} 对象。
+
+\subsubsection{方法 \tkzMeth{path}{map(fx,<fy>)}}
+\label{ssub:path_map}
+
+该方法对路径中的每个点施加一个坐标变换。
+
+\medskip
+
+\texttt{参数： }
+\begin{itemize}
+  \item \code{fx}：作用于 $x$ 坐标的 Lua 函数，
+  \item \code{fy}：可选，作用于 $y$ 坐标的 Lua 函数。
+\end{itemize}
+
+若省略 \code{fy}，则函数 \code{fx} 同时作用于两个坐标。
+
+\medskip
+
+\texttt{描述： }
+
+路径中的每个点 $P(x,y)$ 变换为
+\[
+P'(x',y')
+\]
+满足：
+\[
+x' = fx(x),
+\qquad
+y' = fy(y).
+\]
+
+若只提供一个函数：
+\[
+(x,y) \mapsto (f(x), f(y)).
+\]
+
+\medskip
+
+\texttt{返回： }
+
+一个新的 \code{path} 对象，包含变换后的点。
+原路径不被修改。
+
+\medskip
+
+\texttt{示例： }
+
+对两个坐标施加同一个函数：
+
+\begin{verbatim}
+PA.new = PA.old:map(math.abs)
+\end{verbatim}
+
+施加不同的变换：
+
+\begin{verbatim}
+PA.new = PA.old:map(
+  function(x) return 2*x end,
+  function(y) return 0.5*y end
+)
+\end{verbatim}
+
+这产生变换
+\[
+(x,y) \mapsto (2x, 0.5y).
+\]
+
+
+
+
+\subsubsection{方法 \tkzMeth{path}{rotate(pt, an)}}
+\label{ssub:method_tkzmeth_path_rotate}
+
+  把路径绕 \(pt\) 旋转角度 \(\theta\)（弧度）。
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+   z.O = point(1, 1)
+   PA.base = path({ "(1,0)", "(2,0)", "(2,1)" })
+   PA.rotated = PA.base:rotate(z.O, math.pi / 2)}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawCoordinates(PA.base)
+  \tkzDrawCoordinates(PA.rotated)
+  \tkzDrawPoint(O)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{path}{close()}}
+\label{ssub:method_tkzmeth_path_close}
+
+在末尾重复第一个点，从而闭合路径。
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+  PA.p = path({ "(0,0)", "(1,0)", "(1,1)" })
+  PA.closed = PA.p:close()}
+\begin{tikzpicture}
+  \tkzDrawCoordinates[fill=green!20](PA.closed)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{path}{sub(i1, i2)}}
+\label{ssub:method_tkzmeth_path_sub_i1_i2}
+
+返回两个索引之间的一段子路径。
+
+
+\begin{tkzexample}[latex=.3\textwidth]
+\directlua{
+  PA.full = path({ "(0,0)", "(1,0)", "(1,1)", "(0,1)", "(0,0)" })
+  PA.part = PA.full:sub(2, 4)}
+\begin{tikzpicture}
+  \tkzDrawCoordinates[fill=green!20](PA.part)
+\end{tikzpicture}
+\end{tkzexample}
+
+
+\subsubsection{方法 \tkzMeth{path}{show()}}
+\label{ssub:method_tkzmeth_path_show}
+
+在终端打印该路径（用于调试）。
+
+\begin{tkzexample}[latex=.45\textwidth]
+\directlua{
+  PA.p = path({ "(0,0)", "(1,0)", "(1,1)" })
+  PA.p:show()}
+\end{tkzexample}
+
+% ADD(AM, 4.25) 补充内容
+\subsubsection{方法 \tkzMeth{path}{add\_pair\_to\_path(p, p, n)} 或 \tkzMeth{path}{add\_pair(p, p, n)}}
+\label{ssub:subsubsection_name}
+\begin{verbatim}
+  path:add_pair(z1, z2, decimals)
+\end{verbatim}
+
+或等价地：
+
+\begin{verbatim}
+ path:add_pair_to_path(z1, z2, decimals)
+\end{verbatim}
+
+\medskip
+\texttt{用途： }
+
+ 取出 \code{z1} 和 \code{z2} 的坐标，按固定小数位数 $n$ 格式化，组合成字符串 \code{"x1/y1/x2/y2"} 追加到路径。然后该字符串被插入当前路径表。该方法向一个 \tkzname{path} 对象追加一个格式化好的点对。它主要用于存放线段，把两个点的坐标成对地放在一起。
+
+\medskip
+\texttt{参数： }
+
+\begin{itemize}
+  \item \code{z1}、\code{z2} – 以 \code{\{re, im\}} 表给出的点。
+  \item \code{decimals}（可选） – 小数位数（默认：\code{10}）。
+\end{itemize}
+
+\medskip
+\texttt{返回： }
+
+无返回值（就地修改路径）。
+
+\medskip
+\texttt{用法示例： }
+
+\begin{verbatim}
+   local PA.p = path() -- empty path
+   local z.A = point(1, 2)
+   local z.B = point(3, 4)
+   PA.p:add_pair(z.A, z.B, 2)
+   -- PA.p = {"1.00/2.00/3.00/4.00"}
+\end{verbatim}
+
+
+\subsubsection{方法 \tkzMeth{path}{concat(sep)}}
+\label{ssub:path_concat}
+
+该方法返回一个字符串，它由一个 \tkzClass{path} 对象中存放的所有坐标拼接而成。这些坐标按顺序用一个分隔符连接。
+
+\medskip
+在内部，一个 \tkzClass{path} 包含一个有序的 Lua 点表，以 TikZ 语法书写，例如 \verb|(x,y)|。\tkzMeth{path}{concat} 方法只是把这些条目连接成一条文本路径。
+
+\medskip
+\texttt{语法： }
+\begin{verbatim}
+S = PA.myPath:concat(sep)
+\end{verbatim}
+
+\medskip
+\texttt{参数： }
+\begin{itemize}
+  \item \code{sep} – 可选字符串，用于分隔各坐标（默认：单个空格 \verb|" "|）。
+\end{itemize}
+
+\medskip
+\texttt{返回： }
+一个 Lua 字符串，包含该路径的所有点，以 \code{sep} 分隔。所得字符串可直接插入一条 TikZ 路径。
+
+\texttt{示例： }
+
+\begin{tkzexample}[code only]
+\directlua{
+init_elements()
+local A = point(0, 0)
+local B = point(2, 1)
+local C = point(3, 0)
+local P = path:new()
+P:add_point(A)
+P:add_point(B)
+P:add_point(C)
+local S = P:concat(" -- ")
+}
+\end{tkzexample}
+
+
+\texttt{用途： }
+
+本方法在以下场合很有用：
+\begin{itemize}
+  \item 从 Lua 动态构造 TikZ 路径；
+  \item 导出或组合几何路径；
+  \item 生成诸如 \verb|\tkzDrawPath| 之类宏的参数。
+\end{itemize}
+
+
+\subsubsection{示例：准圆}
+\label{ssub:director_circle}
+
+
+圆锥曲线用 \tkzClass{path} 工具绘制。
+
+\begin{minipage}{.55\textwidth}
+  \begin{verbatim}
+   \directlua{
+    init_elements()
+    z.O = point(0, 0)
+    z.F1 = point(4, 1)
+    z.F2 = point(-4, -1)
+    z.H = point(4 * math.sqrt(2), 0)
+    local a = tkz.length(z.O, z.H)
+    CO.EL = conic(EL_bifocal(z.F2, z.F1, a))
+    PA.curve = CO.EL:points(0, 1, 50)
+    z.A = CO.EL.covertex
+    T.HOA = triangle(z.H, z.O, z.A)
+    z.P = T.HOA:parallelogram()
+    C.OP = circle(z.O, z.P)
+    z.L = C.OP:point(0.25)
+    T.LJ, T.LK = CO.EL:tangent_from(z.L)
+    z.J = T.LJ.pb
+    z.K = T.LK.pb}
+  \end{verbatim}
+\end{minipage}
+\begin{minipage}{.45\textwidth}
+   \directlua{
+    init_elements()
+    z.O = point(0, 0)
+    z.F1 = point(4, 1)
+    z.F2 = point(-4, -1)
+    z.H = point(4 * math.sqrt(2), 0)
+    local a = tkz.length(z.O, z.H)
+    CO.EL = conic(EL_bifocal(z.F2, z.F1, a))
+    PA.curve = CO.EL:points(0, 1, 50)
+    z.A = CO.EL.covertex
+    T.HOA = triangle(z.H, z.O, z.A)
+    z.P = T.HOA:parallelogram()
+    C.OP = circle(z.O, z.P)
+    z.L = C.OP:point(0.25)
+    T.LJ, T.LK = CO.EL:tangent_from(z.L)
+    z.J = T.LJ.pb
+    z.K = T.LK.pb}
+\begin{center}
+  \begin{tikzpicture}[scale = .4]
+   \tkzGetNodes
+   \tkzDrawPoints(F1,F2,O)
+   \tkzDrawCircles[teal](O,P)
+   \tkzDrawPolygon(H,O,A,P)
+   \tkzDrawCoordinates[smooth,cyan](PA.curve)
+   \tkzDrawSegments[orange](O,P O,L L,J L,K)
+   \tkzDrawPoints(F1,F2,O,H,A,P,L,J,K)
+   \tkzLabelPoints(F1,F2,O,H,A,P,L,J,K)
+  \end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{verbatim}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawPoints(F1,F2,O)
+ \tkzDrawCircles[teal](O,P)
+ \tkzDrawPolygon(H,O,A,P)
+ \tkzDrawCoordinates[smooth,cyan](PA.curve)
+ \tkzDrawSegments[orange](O,P O,L L,J L,K)
+ \tkzDrawPoints(F1,F2,O,H,A,P,L,J,K)
+ \tkzLabelPoints(F1,F2,O,H,A,P,L,J,K)
+\end{tikzpicture}
+\end{verbatim}
+
+
+
+\subsubsection{经典抛物线}
+\label{ssub:classic_parabola}
+
+本示例脱离了欧几里得几何的概念，但所用方法可以复用。这里我们想画一条对称轴平行于 y 轴的抛物线。已知它的三个点，就可以确定方程。绘制抛物线所需的点集，用 \tkzClass{path} 类提供的工具得到。
+
+\begin{minipage}{.55\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.a = point(1, 0)
+ z.b = point(3, 2)
+ z.c = point(0, 2)
+ local A, B, C = parabola(z.a, z.b, z.c)
+
+ function f(t0, t1, n)
+ 	local PA.tbl = path()
+ 	for t = t0, t1, (t1 - t0) / n do
+ 		local y = A * t ^ 2 + B * t + C
+    local pt = point(t, y)
+    PA.tbl:add_point(pt)
+ 	end
+ 	return PA.tbl
+ end}
+ \end{verbatim}
+\end{minipage}
+\begin{minipage}{.45\textwidth}
+  \directlua{
+   init_elements()
+   z.a = point(1, 0)
+   z.b = point(3, 2)
+   z.c = point(0, 2)
+   local A, B, C = tkz.parabola(z.a, z.b, z.c)
+
+   function def_curve(t0, t1, n)
+   local p = path()
+   for t = t0,t1,(t1-t0)/n  do
+       y = A*t^2+B*t +C
+       pt = point(t, y)
+       p:add_point(pt)
+    end
+    return p
+   end
+
+   PA.curve = def_curve(-1,3,100)}
+
+  \begin{center}
+    \begin{tikzpicture}
+       \tkzGetNodes
+       \tkzInit[xmin = -2,xmax=4,ymin =-1,ymax=6]
+       \tkzDrawX\tkzDrawY
+       \tkzDrawPoints[red,size=4pt](a,b,c)
+      \tkzDrawCoordinates[smooth,purple](PA.curve)
+    \end{tikzpicture}
+  \end{center}
+\end{minipage}
+
+
+\begin{verbatim}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzInit[xmin = -2,xmax=4,ymin =-1,ymax=6]
+ \tkzDrawX\tkzDrawY
+ \tkzDrawPoints[red,size=4pt](a,b,c)
+ \draw[smooth] plot coordinates {%
+ \directlua{tex.print(f(-1,3,100))}};
+\end{tikzpicture}
+\end{verbatim}
+
+\subsection{含多条路径的示例}
+
+\begin{tkzexample}[latex=.45\textwidth]
+\directlua{
+  z.O = point(0, 0)
+  z.A = point(5, 0)
+  C.OA = circle(z.O, z.A)
+  z.S = C.OA.south
+  C.SO = circle(z.S, z.O)
+  z.B, z.C = intersection(C.OA, C.SO)
+  C.BC = circle(z.B, z.C)
+  z.D = intersection(C.OA, C.BC)
+  C.CD = circle(z.C, z.D)
+
+  local p1 = C.SO:path(z.C, z.B, 50)
+  local p2 = C.BC:path(z.C, z.D, 50)
+  local p3 = C.CD:path(z.D, z.B, 50)
+  thepath = (-p1) + p2 + p3 }
+\begin{tikzpicture}[scale=.5]
+  \tkzGetNodes
+  \tkzDrawCircles(O,A S,O)
+  \tkzDrawArc(B,C)(D)
+  \tkzDrawArc(C,D)(B)
+  \tkzDrawCoordinates[fill = purple!20,
+                      opacity=.4](thepath)
+  \tkzDrawCoordinates[smooth,red,thick](thepath)
+  \tkzDrawPoints(A,O,B,C,S,D)
+  \tkzLabelPoints(A,B,C)
+\end{tikzpicture}
+\end{tkzexample}
+\endinput

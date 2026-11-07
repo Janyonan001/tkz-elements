@@ -1,0 +1,74 @@
+\newpage
+\section{全局变量与常量}
+本模块定义了 \tkzNamePack{tkz-elements} 中用于精度控制与符号计算的默认值和数学常量。
+
+
+\subsection{全局变量}
+
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{默认设置与常量。}\label{tab:tkz_settings}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{变量} & \textbf{说明} \\
+    \midrule
+    \tkzSysVar{tkz.nb\_dec}  & 格式化所用的小数位数（默认：10） \\
+     \tkzSysVar{tkz.epsilon}  & 浮点数比较所用的容差（$10^{-\texttt{tkz.nb\_dec}}$） \\
+     \tkzSysVar{tkz.dc}        & 输出中显示的小数位数（默认：2） \\
+          \midrule
+     \textbf{常量} & \textbf{说明} \\
+     \midrule
+
+     \tkzConst{tkz.phi}        & 黄金分割比 $\varphi = \dfrac{1 + \sqrt{5}}{2}$ \\
+     \tkzConst{tkz.invphi}     & 黄金分割比的倒数 $1/\varphi = \dfrac{\sqrt{5} - 1}{2}$ \\
+     \tkzConst{tkz.sqrtphi}    & 黄金分割比的平方根 $\sqrt{\varphi}$ \\
+     \tkzConst{tkz.pt}        & 254 / 7227 \\
+     \tkzConst{tkz.deg}        & math.pi /1 80\\
+     \tkzConst{tkz.rad}        & 180 / math.pi \\
+    \bottomrule
+  \end{tabular}
+  \egroup
+
+
+
+\subsection{函数}
+
+  \bgroup
+  \catcode`\_=12
+  \small
+  \captionof{table}{与设置相关的函数。}\label{tab:tkz_settings_functions}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{函数} & \texttt{参考} \\
+    \midrule
+    \tkzFct{tkz}{tkz.reset\_defaults()}   & 第~\ref{ssub:tkz_reset_defaults} 节 \\
+    \tkzFct{tkz}{tkz.set\_nb\_dec(n)}      & 第~\ref{ssub:tkz_set_nb_dec} 节 \\
+    \bottomrule
+  \end{tabular}
+  \egroup
+
+
+
+\subsubsection{函数 \tkzFct{tkz-elements}{reset\_defaults()}}
+\label{ssub:tkz_reset_defaults}
+
+恢复数值精度与格式化的默认值：
+\begin{itemize}
+  \item \code{tkz.nb\_dec = 10}
+  \item \code{tkz.epsilon = 1e-10}
+  \item \code{tkz.dc = 2}
+\end{itemize}
+
+
+\subsubsection{函数 \tkzFct{tkz}{tkz.set\_nb\_dec(n)}}
+\label{ssub:tkz_set_nb_dec}
+
+
+设置浮点数比较所用的小数位数，并相应更新容差：
+\begin{itemize}
+  \item \code{tkz.nb\_dec = $n$}
+  \item \code{tkz.epsilon = $10^{-n}$}
+\end{itemize}
+\endinput

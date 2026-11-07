@@ -1,0 +1,577 @@
+\newpage
+\section{交点}
+\label{sec:intersections}
+
+函数 \tkzFct{tkz-elements}{intersection} 是一个必不可少的几何工具。它计算两个几何对象的交点，这两个对象可以属于以下类：
+
+\begin{itemize}
+  \item \tkzClass{line} 与 \tkzClass{line}，
+  \item \tkzClass{line} 与 \tkzClass{circle}，
+  \item \tkzClass{circle} 与 \tkzClass{circle}，
+  \item \tkzClass{line} 与 \tkzClass{conic}。
+\end{itemize}
+
+注意，\tkzClass{circle} 是与 \tkzClass{conic} 不同的类。
+\code{conic} 类包括抛物线、双曲线和椭圆。
+
+\medskip
+
+该函数接收一对对象作为参数，与顺序无关。结果通常由一个或两个点组成，取决于几何构型。若没有交点，函数不返回任何值（\code{nil}）；结果可用 \code{if not x then} 来判断。任何其他对象对（例如一个圆和一条圆锥曲线，或两条圆锥曲线）都会引发错误。
+
+\medskip
+
+当存在两个交点，而你又：
+\begin{itemize}
+  \item 已经知道其中一个，或
+  \item 想选取距某个参考点最近的那一个，
+\end{itemize}
+时，可以在 \code{opts} 表中使用可选键。
+
+此外，数值稳健性可通过一个可选的容差参数 \code{eps} 控制，它同样存放在 \code{opts} 中。
+
+\subsection{可选参数：\code{known}、\code{near} 和 \code{eps}}
+
+函数 \tkzFct{tkz-elements}{intersection(X, Y, opts)} 计算两个几何对象 \code{X} 和 \code{Y} 之间的交点。可选表 \code{opts} 可包含以下键：
+
+\begin{itemize}
+  \item \tkzKey{known} \tkzOptArg{point} \\
+  当两个交点之一已经已知时使用本选项。
+  函数会把\emph{另一个}解作为第一个返回值。
+  这在其中一个交点已经确定的作图中特别有用：
+
+  \begin{mybox}
+  \begin{verbatim}
+  z.X, z.Y = intersection(C1, C2, {known = z.Y})
+  \end{verbatim}
+  \end{mybox}
+
+  若 \code{z.Y} 是交点之一，函数保证 \code{z.X} 得到另一个。
+
+  \item \tkzKey{near} \tkzOptArg{point} \\
+  使用本选项时，函数先返回距给定参考点最近的那个解：
+
+  \begin{mybox}
+  \begin{verbatim}
+  z.A, z.B = intersection(C1, L, {near = z.O})
+  \end{verbatim}
+  \end{mybox}
+
+  这里，\code{z.A} 将是距 \code{z.O} 最近的交点。
+
+  \item \tkzKey{eps} \tkzOptArg{number} \\
+  这个可选键设定内部用于判断对象是相交、相触还是相切时的数值容差。
+  若省略，则使用全局值 \code{tkz.epsilon}
+  （接受 \code{EPS} 作为别名）：
+
+  \begin{mybox}
+  \begin{verbatim}
+  z.A, z.B = intersection(C1, C2, {eps = 1e-6})
+  \end{verbatim}
+  \end{mybox}
+
+  本选项在涉及近似相切或微小数值不确定性的构型中可提高稳健性。
+
+\end{itemize}
+
+若未提供这些选项中的任何一个，交点将按几何计算所确定的默认顺序返回，并使用全局容差 \code{tkz.epsilon}。
+
+\medskip
+
+\texttt{注意： } 这些选项只影响返回多个点的情形。对于单点相交（例如相切），结果不受影响。不过，\code{eps} 选项始终控制内部使用的数值容差。
+
+\medskip
+\texttt{兼容性说明： }
+为方便起见并向后兼容，\code{intersection} 的第三个参数也可以是一个数值容差：
+\begin{mybox}
+\begin{verbatim}
+z.A, z.B = intersection(C1, C2, 1e-5)
+\end{verbatim}
+\end{mybox}
+此时，该数被解释为 \code{eps} 的值，且不提供其他选项。
+推荐的现代写法是：
+\begin{mybox}
+\begin{verbatim}
+z.A, z.B = intersection(C1, C2, {eps = 1e-5})
+\end{verbatim}
+\end{mybox}
+
+
+
+
+\subsection{直线与直线}
+\label{sub:line_line}
+
+结果是一个点；若两直线平行，则什么也不返回（|nil|）。
+
+\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(1, -1)
+ z.B = point(4, 1)
+ z.C = point(2, 1)
+ z.D = point(4, -2)
+ z.I = point(0, 0)
+ L.AB = line(z.A, z.B)
+ L.CD = line(z.C, z.D)
+ x = intersection(L.AB, L.CD)
+ if not x then
+ 	tex.print("error")
+ else
+ 	z.I = x
+end}
+
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawSegments(A,B C,D)
+   \tkzDrawPoints(A,B,C,D,I)
+   \tkzLabelPoints(A,B,C,D,I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(1, -1)
+ z.B = point(4, 1)
+ z.C = point(2, 1)
+ z.D = point(4, -2)
+ z.I = point(0, 0)
+ L.AB = line(z.A, z.B)
+ L.CD = line(z.C, z.D)
+ x = intersection(L.AB, L.CD)
+ if not x then
+ 	tex.print("error")
+ else
+ 	z.I = x
+end}
+
+\begin{tikzpicture}[scale = 2]
+   \tkzGetNodes
+   \tkzDrawSegments(A,B C,D)
+   \tkzDrawPoints(A,B,C,D,I)
+   \tkzLabelPoints(A,B,C,D,I)
+\end{tikzpicture}
+\end{minipage}
+
+\newpage
+
+\subsection{直线与圆}
+
+结果形如：|point,point|；若无交点则什么也不返回（|nil|）。若直线与圆相切，则两个点相同。可以用下划线忽略其中一个点：|_, point| 或 |point, _|。当交给出两个解时，点的顺序由 |(z.p - z.c)| 的辐角决定，其中 |c| 是圆心，|p| 是交点。第一个解对应最小的辐角（辐角在 0 到 $2\pi$ 之间）。
+
+\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(1, -1)
+ z.B = point(1, 2)
+ L.AB = line(z.A, z.B)
+ z.O = point(2, 1)
+ z.D = point(3, 1)
+ z.E = point(3, 2)
+ L.AE = line(z.A, z.E)
+ C.OD = circle(z.O, z.D)
+ z.I, _ = intersection(L.AB, C.OD)
+ _, z.K = intersection(C.OD, L.AE)}
+
+\begin{tikzpicture}
+\tkzGetNodes
+   \tkzDrawLines(A,B A,E)
+   \tkzDrawCircle(O,D)
+   \tkzDrawPoints(A,B,O,D,I,K)
+   \tkzLabelPoints[left](A,B,O,D,I,K)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(1, -1)
+ z.B = point(1, 2)
+ L.AB = line(z.A, z.B)
+ z.O = point(2, 1)
+ z.D = point(3, 1)
+ z.E = point(3, 2)
+ L.AE = line(z.A, z.E)
+ C.OD = circle(z.O, z.D)
+ z.I, _ = intersection(L.AB, C.OD)
+ _, z.K = intersection(C.OD, L.AE)}
+
+\begin{tikzpicture}[ scale = 2]
+\tkzGetNodes
+\tkzDrawLines[add=.1 and .1](A,B A,E)
+\tkzDrawCircle(O,D)
+\tkzDrawPoints(A,B,O,D,I,K)
+\tkzLabelPoints[left](A,B,O,D,I,K)
+\end{tikzpicture}
+\hfill
+\end{minipage}
+
+\newpage
+
+\subsection{圆与圆}
+
+结果形如：|point,point|；若无交点则什么也不返回（|nil|）。若两圆相切，则两个点相同。可以用下划线忽略其中一个点：|_ , point| 或 |point , _|。与直线和圆的交点一样，考察 |z.p-z.c| 的辐角，其中 |c| 是第一个圆的圆心，|p| 是交点。第一个解对应最小的辐角（辐角在 0 到 $2\pi$ 之间）。
+
+\begin{minipage}{0.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(1, 1)
+ z.B = point(2, 2)
+ z.C = point(3, 3)
+ z.D = point(3, 0)
+ C.AB = circle(z.A, z.B)
+ C.CB = circle(z.C, z.B)
+ z.I, _ = intersection(C.AB, C.CB)
+ C.DC = circle(z.D, z.C)
+ z.J, z.K = intersection(C.DC, C.CB)}
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawCircles(A,B C,B D,C)
+   \tkzDrawPoints(A,I,C,D,J,K)
+   \tkzLabelPoints(A,I,C,D,J,K)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(1, 1)
+ z.B = point(2, 2)
+ z.C = point(3, 3)
+ z.D = point(3, 0)
+ C.AB = circle(z.A, z.B)
+ C.CB = circle(z.C, z.B)
+ z.I, _ = intersection(C.AB, C.CB)
+ C.DC = circle(z.D, z.C)
+ z.J, z.K = intersection(C.DC, C.CB)}
+
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawCircles(A,B C,B D,C)
+ \tkzDrawPoints(A,I,C,D,J,K)
+ \tkzLabelPoints(A,I,C,D,J,K)
+\end{tikzpicture}
+\end{minipage}
+
+另一个示例：\ref{sub:the_figure_pappus_circle}
+\newpage
+
+\subsection{直线与圆锥曲线}
+\label{sub:line_conic}
+下面这个示例比较复杂，但它展示了 Lua 的能力。交点的指定比前一个稍微复杂一些，因为必须考虑表征长轴的那个辐角。原理相同，但要减去这个辐角。具体而言，需要考察椭圆中心与各交点所连直线的斜率，以及长轴的斜率。
+
+对于抛物线或双曲线，两个点按到直线第一个点（|pa|）的距离递增排序。一条平行于抛物线轴、或平行于双曲线渐近线的直线，只与圆锥曲线交于一个点，该点单独返回；渐近线与双曲线不相交。
+\vspace{1em}
+
+\begin{minipage}{0.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.a = point(5, 2)
+ z.b = point(-4, 0)
+ L.ab = line(z.a, z.b)
+ z.c = L.ab.mid
+ z.v = L.ab:point(-0.2)
+ local a = tkz.length(z.c, z.v)
+ local c = 0.5 * tkz.length(z.a, z.b)
+ local e = c / a
+ z.K = L.ab:report(a ^ 2 / c, z.c)
+ z.Kp = (z.K - z.a):orthogonal(2):at(z.K)
+ L.dir = line(z.K, z.Kp)
+ CO.EL = conic(z.b, L.dir, e)
+ PA.EL = CO.EL:points(0, 1, 50)
+ z.m = point(2, 4)
+ z.n = point(4, 4)
+ L.mn = line(z.m, z.n)
+ z.r, z.s = intersection(CO.EL, L.mn)}
+ \end{verbatim}
+ \end{minipage}
+\begin{minipage}{0.5\textwidth}
+\directlua{
+ init_elements()
+ z.a = point(5, 2)
+ z.b = point(-4, 0)
+ L.ab = line(z.a, z.b)
+ z.c = L.ab.mid
+ z.v = L.ab:point(-0.2)
+ local a = tkz.length(z.c, z.v)
+ local c = 0.5 * tkz.length(z.a, z.b)
+ local e = c / a
+ z.K = L.ab:report(a ^ 2 / c, z.c)
+ z.Kp = (z.K - z.a):orthogonal(2):at(z.K)
+ L.dir = line(z.K, z.Kp)
+ CO.EL = conic(z.b, L.dir, e)
+ PA.EL = CO.EL:points(0, 1, 50)
+ z.m = point(2, 4)
+ z.n = point(4, 4)
+ L.mn = line(z.m, z.n)
+ z.r, z.s = intersection(CO.EL, L.mn)}
+
+\begin{center}
+\begin{tikzpicture}[scale =.5]
+   \tkzGetNodes
+   \tkzDrawLines[red](a,b r,s)
+   \tkzDrawSegments(c,r c,s)
+   \tkzDrawPoints(a,b,c,r,s)
+   \tkzLabelPoints(a,b,c,r,s)
+   \tkzDrawCoordinates[smooth,red](PA.EL)
+   \tkzFillAngles[green!30,opacity=.4](v,c,s)
+   \tkzFillAngles[green!80,opacity=.4](v,c,r)
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\begin{verbatim}
+  \begin{tikzpicture}[scale =.5]
+     \tkzGetNodes
+     \tkzDrawLines[red](a,b r,s)
+     \tkzDrawSegments(c,r c,s)
+     \tkzDrawPoints(a,b,c,r,s)
+     \tkzLabelPoints(a,b,c,r,s)
+     \tkzDrawCoordinates[smooth,red](PA.EL)
+     \tkzFillAngles[green!30,opacity=.4](v,c,s)
+     \tkzFillAngles[green!80,opacity=.4](v,c,r)
+  \end{tikzpicture}
+\end{verbatim}
+
+
+\subsubsection{与圆锥曲线各子类的交点}
+
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, -2)
+ L.dir = line(z.A, z.B)
+ z.F = point(2, 2)
+ CO.EL = conic(z.F, L.dir, 0.8)
+ CO.PA = conic(z.F, L.dir, 1)
+ CO.HY = conic(z.F, L.dir, 1.2)
+ PA.EL = CO.EL:points(0, 1, 50)
+ PA.PA = CO.PA:points(-5, 5, 50)
+ PA.HY = CO.HY:points(-5, 5, 50)
+ z.K = CO.EL.K
+ z.u, z.v = CO.EL.major_axis:get()
+ z.x = L.dir:report(-4, z.K)
+ z.y = L.dir:report(4, z.K)
+ z.r = point(0, 4)
+ z.s = point(4, 1)
+ L.rs = line(z.r, z.s)
+ z.u_1, z.u_2 = intersection(L.rs, CO.EL)
+ z.v_1, z.v_2 = intersection(L.rs, CO.PA)
+ z.w_1, z.w_2 = intersection(L.rs, CO.HY)}
+\begin{tikzpicture}
+ \tkzGetNodes
+ \tkzDrawCoordinates[smooth](PA.EL)
+ \tkzDrawCoordinates[smooth](PA.PA)
+ \tkzDrawCoordinates[smooth](PA.HY)
+ \tkzDrawLines[add =.5 and .5](r,s u,v)
+ \tkzDrawLines(x,y)
+ \tkzDrawPoints[red](u_1,u_2,v_2,v_1,w_1,w_2)
+\end{tikzpicture}
+\end{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, -2)
+ L.dir = line(z.A, z.B)
+ z.F = point(2, 2)
+ CO.EL = conic(z.F, L.dir, 0.8)
+ CO.PA = conic(z.F, L.dir, 1)
+ CO.HY = conic(z.F, L.dir, 1.2)
+ PA.EL = CO.EL:points(0, 1, 50)
+ PA.PA = CO.PA:points(-5, 5, 50)
+ PA.HY = CO.HY:points(-5, 5, 50)
+ z.K = CO.EL.K
+ z.u, z.v = CO.EL.major_axis:get()
+ z.x = L.dir:report(-4, z.K)
+ z.y = L.dir:report(4, z.K)
+ z.r = point(0, 4)
+ z.s = point(4, 1)
+ L.rs = line(z.r, z.s)
+ z.u_1, z.u_2 = intersection(L.rs, CO.EL)
+ z.v_1, z.v_2 = intersection(L.rs, CO.PA)
+ z.w_1, z.w_2 = intersection(L.rs, CO.HY)}
+
+\begin{center}
+  \begin{tikzpicture}[scale =.75]
+  \tkzGetNodes
+  \tkzDrawCoordinates[smooth](PA.EL)
+  \tkzDrawCoordinates[smooth](PA.PA)
+  \tkzDrawCoordinates[smooth](PA.HY)
+  \tkzDrawLines[add =.5 and .5](r,s u,v)
+  \tkzDrawLines(x,y)
+  \tkzDrawPoints[red](u_1,u_2,v_2,v_1,w_1,w_2)
+  \end{tikzpicture}
+\end{center}
+
+\subsubsection{直线与抛物线的交点（详解）}
+\label{ssub:intersection_line_parabola_explained}
+
+在这个示例中，我们要找一条内接于一个三角形的抛物线，即与三角形三边都相切的抛物线。
+我不打算细讲得到该抛物线的第一部分。你会注意到这一行
+
+\begin{mybox}
+\begin{verbatim}
+ L.euler = T:euler_line():swap_line()
+\end{verbatim}
+\end{mybox}
+
+它交换了欧拉线的两个端点，稍后我们会看到这一点。
+
+为了构造切点，需要求出抛物线与各边的交点：
+
+\begin{mybox}
+\begin{verbatim}
+ z.ta = intersection(PA, T.bc)
+ z.tb = intersection(PA, T.ca)
+ z.tc = intersection(PA, T.ab)
+\end{verbatim}
+\end{mybox}
+
+下面我们详细说明如何求直线 $(ab)$ 与抛物线的交点。这里欧拉线充当抛物线的准线。它的两个端点已被交换，以保持横坐标的正确顺序——即左侧为负、右侧为正。
+
+为简化计算，把坐标系平移到以抛物线顶点为原点是有益的。从 $K$ 指向 $F$ 的焦轴（\code{major\_axis}）成为纵轴，而横轴的选取使新坐标系为 \code{右手系}。
+
+我在代码中保留了 |z.U = OCCS.x| 和 |z.V = OCCS.y|，以便可视化新坐标系，例如用 |\tkzDrawSegments[red,->](S,U S,V)|。这个新坐标系是这样创建的：
+
+\begin{mybox}
+\begin{verbatim}
+ O.SKF  = occs(L.KF,z.S)
+\end{verbatim}
+\end{mybox}
+
+直线 $(KF)$，即抛物线的对称轴，成为纵轴。在这个新坐标系中，抛物线的方程为 $y = \dfrac{x^2}{2p}$，其中 $p$ 是距离 $KF$，也称为\emph{通径}。
+
+\code{occs} 类的 \code{coordinates} 方法可用来取得每个点在新坐标系中的坐标。\code{param\_line} 函数计算直线方程的系数（该函数目前是内部的，其名字可能改变）。然后用 \code{solve\_para\_line} 求直线与抛物线的公共点（同样，该函数是内部的，可能修改）。
+
+得到的结果是两个横坐标，必须放在过 $S$ 且与焦轴正交的那条轴上。这就是为什么正确放置曲线很重要。如果你对欧拉线去掉 |swap_line|，会看到曲线变成了原来的镜像。抛物线整体不变，但交点会变。
+
+最后，放置这些交点的横坐标，然后求过这些横坐标、与欧拉线正交的直线与直线 $(ab)$ 的交点。
+
+注意：这种几何方法比用公式直接求交点坐标更合适。因为那些坐标会表示在新坐标系中，还需要再做一次变换才能回到原坐标系。
+
+\begin{verbatim}
+\directlua{
+   init_elements()
+   z.A = point(0, 0)
+   z.B = point(6, 0)
+   z.C = point(2, 3)
+   T.ABC  = triangle(z.A, z.B, z.C)
+   L.euler = T.ABC:euler_line():swap_line()
+   z.F = T.ABC:kimberling(110)
+   z.H = T.ABC.orthocenter
+   z.O = T.ABC.circumcenter
+   z.Ω = point(0, 0)
+   z.i = point(1, 0)
+   z.j = point(0, 1)
+   CO.PA  = conic(z.F, L.euler, 1)
+   PA.curve = CO.PA:points(-3.5, 5.5, 50)
+   local p = CO.PA.p
+   z.K  = CO.PA.K
+   z.S  = tkz.midpoint(z.F,z.K)
+   L.KF = CO.PA.major_axis
+   z.ta = intersection(CO.PA,T.ABC.bc)
+   z.tb = intersection(CO.PA,T.ABC.ca)
+   z.tc = intersection(CO.PA,T.ABC.ab)
+% new occs
+  O.SKF = occs(L.KF, z.S)
+  z.U = O.SKF.x
+  z.V = O.SKF.y
+% line a,b
+  z.a = point(3, 6)
+  z.b = point(8, -1)
+  L.ab = line(z.a, z.b)
+% coordinates in the new occs
+  Xa,Ya = O.SKF:coordinates(z.a)
+  Xb,Yb = O.SKF:coordinates(z.b)
+% solve in the new occs
+  local r,s = tkz.line_coefficients(Xa, Ya ,Xb, Yb)
+  r1,r2 = tkz.solve_quadratic_(1, -2 * p * r, -2 * p * s)
+  z.x = O.SKF.abscissa:report(r1, z.K)
+  z.y = O.SKF.abscissa:report(r2, z.K)
+  L1 = L.euler:ortho_from(z.x)
+  L2 = L.euler:ortho_from(z.y)
+  z.s_1 = intersection(L.ab, L1)
+  z.s_2 = intersection(L.ab, L2)}
+  \begin{tikzpicture}
+  \tkzGetNodes
+   \tkzDrawCoordinates[smooth,purple,thick](PA.curve)
+   \tkzDrawLines[add = .2 and 1](A,B A,C B,C K,F O,H)
+   \tkzDrawPolygon[thick,cyan](A,B,C)
+   \tkzDrawSegment[blue](a,b)
+   \tkzDrawPoints(F,K,H,S,O)
+   \tkzDrawPoints(A,B,F,K,S,ta,tb,tc)
+   \tkzDrawPoints[red,size=2](s_1,s_2)
+   \tkzLabelPoints[red,above](s_1)
+   \tkzLabelPoints[red,right](s_2)
+   \tkzLabelPoints(F,S,O,A,B)
+   \tkzLabelPoints[above](C)
+   \tkzLabelPoints[left](H,K)
+  \end{tikzpicture}
+\end{verbatim}
+
+\directlua{
+   init_elements()
+   z.A = point(0, 0)
+   z.B = point(6, 0)
+   z.C = point(2, 3)
+   T.ABC  = triangle(z.A, z.B, z.C)
+   L.euler = T.ABC:euler_line():swap_line()
+   z.F = T.ABC:kimberling(110)
+   z.H = T.ABC.orthocenter
+   z.O = T.ABC.circumcenter
+   z.Ω = point(0, 0)
+   z.i = point(1, 0)
+   z.j = point(0, 1)
+   CO.PA  = conic(z.F, L.euler, 1)
+   PA.curve = CO.PA:points(-3.5, 5.5, 50)
+   local p = CO.PA.p
+   z.K  = CO.PA.K
+   z.S  = tkz.midpoint(z.F,z.K)
+   L.KF = CO.PA.major_axis
+   z.ta = intersection(CO.PA,T.ABC.bc)
+   z.tb = intersection(CO.PA,T.ABC.ca)
+   z.tc = intersection(CO.PA,T.ABC.ab)
+% new occs
+  O.SKF = occs(L.KF, z.S)
+  z.U = O.SKF.x
+  z.V = O.SKF.y
+% line a,b
+  z.a = point(3, 6)
+  z.b = point(8, -1)
+  L.ab = line(z.a, z.b)
+% coordinates in the new occs
+  Xa,Ya = O.SKF:coordinates(z.a)
+  Xb,Yb = O.SKF:coordinates(z.b)
+% solve in the new occs
+  local r,s = tkz.line_coefficients(Xa, Ya ,Xb, Yb)
+  r1,r2 = tkz.solve_quadratic_(1, -2 * p * r, -2 * p * s)
+  z.x = O.SKF.abscissa:report(r1, z.K)
+  z.y = O.SKF.abscissa:report(r2, z.K)
+  L1 = L.euler:ortho_from(z.x)
+  L2 = L.euler:ortho_from(z.y)
+  z.s_1 = intersection(L.ab, L1)
+  z.s_2 = intersection(L.ab, L2)}
+
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawCoordinates[smooth,purple,thick](PA.curve)
+  \tkzDrawLines[add = .2 and 1](A,B A,C B,C K,F O,H)
+  \tkzDrawPolygon[thick,cyan](A,B,C)
+  \tkzDrawSegment[blue](a,b)
+  \tkzDrawPoints(F,K,H,S,O)
+  \tkzDrawPoints(A,B,F,K,S,ta,tb,tc)
+  \tkzDrawPoints[red,size=2](s_1,s_2)
+  \tkzLabelPoints[red,above](s_1)
+  \tkzLabelPoints[red,right](s_2)
+  \tkzLabelPoints(F,S,O,A,B)
+  \tkzLabelPoints[above](C)
+  \tkzLabelPoints[left](H,K)
+\end{tikzpicture}
+\end{center}
+\endinput

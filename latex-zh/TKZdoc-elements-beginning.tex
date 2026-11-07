@@ -1,0 +1,104 @@
+\section{快速入门}
+
+\subsection{第一段代码}
+
+下面是一个帮助你上手的简要介绍。
+我们假设已经安装了 \tkzNamePack{tkz-euclide} 和 \tkzNamePack{tkz-elements} 这两个宏包。
+请使用 \tkzEngine{lualatex} 引擎编译以下代码；你应当得到一条经过点 $A$ 和 $B$ 的直线。
+
+\medskip
+\noindent
+\textbf{注意。}
+\tkzNamePack{tkz-elements} 在 Lua 中完成所有几何定义与计算，
+而 \tkzNamePack{tkz-euclide} 主要用于绘图。
+因此推荐使用 \tkzNamePack{tkz-euclide} 的 \texttt{mini} 选项。
+如果遇到编译问题，只需不加该选项加载 \tkzNamePack{tkz-euclide} 即可。
+
+
+\begin{mybox}{}
+\begin{minipage}{.55\textwidth}
+  \begin{tkzexample}[code only]
+  % !TEX TS-program = lualatex
+  \documentclass{article}
+  \usepackage[mini]{tkz-euclide}
+  \usepackage{tkz-elements}
+  \begin{document}
+  \directlua{
+    init_elements()
+    z.A = point(0, 1)
+    % or z.A = point:new(0, 1)
+    z.B = point(2, 0)
+  }
+  \begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawLine(A,B)
+   \tkzDrawPoints(A,B)
+   \tkzLabelPoints(A,B)
+  \end{tikzpicture}
+  \end{document}
+  \end{tkzexample}
+\end{minipage}
+\begin{minipage}{.35\textwidth}
+  \directlua{
+    z.A = point(0, 1)
+    z.B = point(2, 0)
+  }
+  \begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawLine(A,B)
+   \tkzDrawPoints(A,B)
+   \tkzLabelPoints(A,B)
+  \end{tikzpicture}
+\end{minipage}
+\end{mybox}
+
+\subsection{要点}
+
+以下几点对本说明文档中的大多数代码都至关重要。
+
+\begin{itemize}
+\item \verb|% !TEX TS-program = lualatex|。
+必须使用 \code{lualatex} 进行编译。如果你的编辑器已据此配置，则此行可省略。
+
+\item \verb|\usepackage[mini]{tkz-euclide}|。
+\tkzNamePack{tkz-euclide} 的使用是可选的；但若加载它，建议使用 \code{mini} 选项。
+该选项仅加载绘图宏，而所有计算都由 \code{lua} 处理。
+\textbf{重要提示：}在目前阶段，部分绘图宏尚未完全独立于计算宏。
+如果遇到编译问题，只需不加 \code{mini} 选项加载 \tkzNamePack{tkz-euclide}。
+
+\item \verb|\usepackage{tkz-elements}|。
+此宏包为必需。它提供基于 Lua 的几何引擎以及与 \tkzNamePack{tkz-euclide} 配合使用的辅助宏。
+
+\item \verb|\directlua{...}|。
+所有几何定义与计算都放在这个宏内部（或放在 \texttt{luacode} 环境中，参见 \tkzNamePack{luacode} 宏包）。
+
+\item \verb|init_elements()|。
+每个 Lua 段的开头都应调用此函数。
+它会重置内部表，并清除 \tkzNamePack{tkz-elements} 所使用的全局变量。
+
+\item \verb|\tkzGetNodes|。
+此宏必须放在 \code{tikzpicture} 环境的开头。
+它把在 Lua 中定义的点作为可用节点传递给 TikZ。
+\end{itemize}
+
+
+
+\subsection{测试}
+
+要测试你的安装并跟随本文档中的示例操作，需要加载两个宏包：\tkzNamePack{tkz-euclide} 和 \tkzNamePack{tkz-elements}。第一个宏包会自动加载 \tkzNamePack{\TIKZ}，而后者对所有图形渲染都是必需的。
+
+
+\tkzname{Lua} 代码作为参数传给 \tkzMacro{lualatex}{directlua} 宏。我们通常把这段代码块称为 \tkzname{Lua 部分} \footnote{这段代码也可以放在一个外部文件中，例如 \texttt{file.lua}。}。这一部分完全依赖于 \tkzNamePack{tkz-elements} 宏包。
+
+\tkzEnv{tikz}{tikzpicture} 环境中的一个关键组件是 \tkzMacro{tkz-elements}{tkzGetNodes} 宏。该宏通过创建相应节点，把在 \tkzname{Lua} 中定义的点传递给 \tkzNamePack{\TIKZ}。所有这类点都存放在一个名为 \tkzname{z} 的表中，并使用 \tkzname{z.label} 的语法访问。这些标签随后会在 \tkzNamePack{tkz-euclide} 中重复使用。
+
+当你通过为一个点赋予标签和坐标来定义它时，它在内部被表示为一个复数——即该点的附标。这种表示方式使得该点能够在一个正交直角坐标系中定位。
+
+如果你想用另一种方式来渲染对象，那么需要修改的就是这个宏。例如，第~\ref{sec:metapost} 节介绍了 \tkzMacro{tkz-elements}{tkzGetNodesMP}，它是一个支持与 \code{MetaPost} 通信的变体。
+
+另一个关键要素是使用 \tkzFct{tkz-elements}{init\_elements()} 函数，它在处理多个图形时会清除内部表\footnote{所有几何对象都存放在 Lua 表中。这些表必须定期清理，尤其是在连续创建多个图形时。}。
+
+如果前面的代码一切正常，那么你就可以开始创建几何对象了。第~\ref{sec:class_and_object} 节介绍了可用的选项和对象结构。
+
+最后，熟悉 \tkzNamePack{tkz-euclide} 中的基本绘图命令也很重要，因为它们将用于渲染在 \tkzname{Lua} 中定义的对象。
+\endinput

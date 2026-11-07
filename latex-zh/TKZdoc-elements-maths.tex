@@ -1,0 +1,114 @@
+\newpage
+\section{数学工具}
+
+\tkzname{数学工具}模块提供通用的数学函数，用于求解代数方程与线性方程组。这些工具构成 \tkzNamePack{tkz-elements} 库中各种几何或代数运算的计算基础。
+
+主要特性包括：
+\begin{itemize}
+\item 求解一次、二次或三次多项式方程。
+\item 通过增广矩阵变换求解线性方程组。
+\end{itemize}
+
+这些函数同时支持符号计算与数值计算流程，适用于教学演示、示例说明或计算几何等场景。
+
+
+\subsection*{函数概览}
+
+\begin{center}
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{数学函数}
+\begin{tabular}{ll}
+\toprule
+\textbf{名称}  & \texttt{参考} \\
+\midrule
+\tkzFct{tkz}{tkz.solve(...)} & \\
+\midrule
+\tkzFct{tkz}{tkz.solve\_linear\_system} & \\
+\bottomrule
+\end{tabular}
+\egroup
+\end{center}
+
+
+\subsection{\tkzFct{tkz}{solve(...)}}
+这个通用函数用于求解一次、二次或三次多项式方程，系数可为实数或复数。它根据参数个数分派到具体的求解器。
+
+\medskip
+\texttt{语法：}
+
+
+\begin{verbatim}
+x = solve(a, b) -- solves ax + b = 0
+x1, x2 = solve(a, b, c) -- solves ax^2 + bx + c = 0
+x1, x2, x3 = solve(a, b, c, d) -- solves ax^3 + bx^2 + cx + d = 0
+\end{verbatim}
+
+\medskip
+\texttt{参数：}
+
+\begin{itemize}
+\item 2 个参数：$a$、$b$ —— 一次方程 $ax + b = 0$ 的系数。
+\item 3 个参数：$a$、$b$、$c$ —— 二次方程的系数。
+\item 4 个参数：$a$、$b$、$c$、$d$ —— 三次方程的系数。
+\end{itemize}
+
+\medskip
+\texttt{返回值：}
+
+根据方程次数而定：
+\begin{itemize}
+\item \code{solve(a,b)} 返回一个值（若 $a = 0$ 则报错）。
+\item \code{solve(a,b,c)} 返回两个根（实根；若为复根且暂不支持则返回 \code{false}）。
+\item \code{solve(a,b,c,d)} 最多返回三个实根（目前不支持复根）。
+\end{itemize}
+
+\medskip
+\texttt{示例：}
+
+\begin{verbatim}
+x = solve(2, -4) -- x = 2
+x1, x2 = solve(1, -3, 2) -- x1 = 2, x2 = 1
+x1, x2, x3 = solve(1, -6, 11, -6) -- x1 = 1, x2 = 2, x3 = 3
+\end{verbatim}
+
+\medskip
+\texttt{注意：}
+
+\begin{itemize}
+\item 对于有复数解的二次方程，该函数目前返回 \code{false, false}。
+\item 三次方程求解采用卡尔达诺（Cardano）方法，仅限于实根，并假定 $a \ne 0$。
+\item 内部使用 \code{tkz.solve\_quadratic} 与 \code{tkz.solve\_cubic} 两个函数。
+\end{itemize}
+
+\subsection{函数 \tkzFct{math}{solve\_linear\_system(M, N)}}
+在增广矩阵 $[M\|N]$ 上使用高斯–约当消去法求解线性方程组 $MX = N$。
+
+\begin{itemize}
+\item \texttt{M} 是系数矩阵（$m \times n$）。
+\item \texttt{N} 是右端列向量（$m \times 1$）。
+\item 若解存在，返回唯一解向量 $X$（$n \times 1$）。
+\end{itemize}
+
+\medskip
+\texttt{返回值：}
+
+\begin{itemize}
+\item 返回一个新的 \tkzClass{matrix} 对象表示解。
+\item 在以下情况下返回 |nil| 并给出错误信息：
+\begin{itemize}
+\item 方程组不相容（无解），
+\item 方程组欠定（有无穷多解），
+\item 维数不匹配。
+\end{itemize}
+\end{itemize}
+
+\texttt{使用示例：}
+
+\begin{tkzexample}[code only]
+M = matrix({{2,1}, {4,-6}})
+N = matrix({{5}, {-2}})
+X = solve_linear_system(M, N)
+\end{tkzexample}
+\endinput

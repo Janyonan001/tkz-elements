@@ -1,0 +1,62 @@
+\newpage
+\section{Metapost}
+\label{sec:metapost}
+
+本文仅作指引之用。由于我并不熟悉 \tkzNamePack{metapost}，我只是编写了最少量的代码来演示如何操作。我发现传递点的唯一途径是借助外部文件。宏 \tkzMacro{tkz-elements}{tkzGetNodesMP} 即可完成这项工作。下面是它的代码。
+
+\texttt{说明：}
+这种做法是最简且实验性的。这里展示的 MetaPost 集成主要用于演示：来自 Lua 的点数据可以在其他图形系统中复用。尽管 \tkzNamePack{tkz-elements} 并不官方支持 MetaPost，本示例说明了基于外部文件的通信如何作为传递几何信息的通用方法。
+
+\begin{tkzexample}[code only]
+\def\tkzGetNodesMP#1{\directlua{
+  local out = assert(io.open("#1.mp", "w"))
+  local names = {}
+  for K, _ in pairs(z) do
+    table.insert(names, tostring(K))
+  end
+  table.sort(names)
+  out:write("pair ", table.concat(names, ", "), ";\string\n")
+  for _, name in ipairs(names) do
+    local V = z[name]
+    if V then
+      out:write(name, " := (", V.re, "cm,", V.im, "cm);\string\n")
+    end
+  end
+  out:close()
+}}
+\end{tkzexample}
+
+\begin{minipage}{.5\textwidth}
+\directlua{
+  z.A = point(0, 1)
+  z.B = point(2, 0)
+}
+\tkzGetNodesMP{myfic}
+
+\begin{mplibcode}
+  input myfic.mp ;
+   pickup pencircle scaled 1mm;
+  draw A; draw B;
+   pickup defaultpen;
+  draw A--B;
+\end{mplibcode}
+\end{minipage}
+\hspace{4cm}
+\begin{minipage}{.5\textwidth}
+  \begin{tkzexample}[code only]
+\directlua{
+  z.A = point(0, 1)
+  z.B = point(2, 0)
+}
+\tkzGetNodesMP{myfic}
+
+\begin{mplibcode}
+  input myfic.mp ;
+   pickup pencircle scaled 1mm;
+  draw A; draw B;
+   pickup defaultpen;
+  draw A--B;
+\end{mplibcode}
+  \end{tkzexample}
+\end{minipage}
+\endinput

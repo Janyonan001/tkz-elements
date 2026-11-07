@@ -1,0 +1,285 @@
+\newpage
+\section{简介}
+\subsection{几何构造理念}
+\tkzNamePack{tkz-elements} 围绕经典欧几里得几何的原则而构建，强调只用无刻度直尺和圆规即可完成的作图。与代数或数值定义相比，本库更偏好声明式、几何化的方式。
+
+这一理念意味着，所有几何对象——点、直线、圆、三角形等等——主要由其他点来定义。诸如坐标、距离或角度等显式数值会被刻意避免，除非它们对作图必不可少。这符合传统的尺规作图思维：几何推理来自可视化的构型，而不是来自数字。
+
+例如：
+\begin{itemize}
+  \item 圆由其圆心和圆周上一点确定，
+  \item 垂直平分线（中垂线）利用中点和对称性来构造，
+  \item 角由三个点确定，而不是直接给出一个数值。
+\end{itemize}
+
+这一设计决策也解释了为什么基于标量值的构造器（例如 OCCS，即"一个圆心加一个标量"）不在默认接口之中。使用它们会引入数值依赖，与预期的几何抽象相悖。
+
+\bigskip
+尽管 \tkzNamePack{tkz-elements} 推崇一种高层的、基于点的几何方法，但它在内部依赖 \textbf{Lua} 来完成所有必要的计算。Lua 并不作为一种脚本工具暴露给用户，而是充当一个强大的计算引擎，在幕后实现精确而稳健的几何运算。
+
+这种关注点分离让用户可以完全专注于几何构造，同时又能受益于 Lua 的计算精度和性能。下一节将说明，在本宏包的语境下 Lua 如何与 \LaTeX 结合——它不是作为一个编程层，而是作为一个不可见的伙伴，支撑起高级的几何构造。
+
+
+\subsection{与 Lua 配合}
+\tkzNamePack{tkz-elements} 的主要目的是执行几何计算，并用 \tkzname{Lua} 来定义点。你可以把它看作一个计算内核，既可由 \tkzNamePack{tkz-euclide} 使用，也可直接与 \tkzNamePack{\TIKZ} 配合使用。
+
+\tkzname{Lua} 代码有两种执行方式：直接使用 \tkzMacro{lualatex}{directlua} 原语，或在 \tkzNamePack{luacode} 宏包（须单独加载）提供的 \tkzEnv{luacode}{luacode} 环境中执行。原先的 \texttt{tkzelements} 环境已被移除。
+使用 \tkzMacro{lualatex}{directlua} 时，尤其是在复杂文档中，你可以用 \tkzFct{tkz-elements}{init\_elements()} 函数来重置内部数据结构——例如坐标表和缩放因子。
+
+\begin{minipage}[t]{.52\textwidth}\vspace{0pt}%
+   要点如下：
+   \begin{itemize}
+      \item 源文件必须以 \tkzRHand\ {\color{red}\uline{ \color{black}UTF-8}} 编码保存。
+      \item 必须使用 \tkzRHand\ {\color{red}\uline{ \color{black}Lua\LATEX{}}} 进行编译。
+      \item 你需要加载 \tkzNamePack{tkz-euclide} 和 \code{tkz-elements}。
+      \item 所有定义和计算都在一个 \tkzClass{occs}（正交笛卡尔坐标系）中进行，既可通过 \tkzMacro{lualatex}{directlua} 宏使用 Lua，也可在 \tkzEnv{tkz-elements}{tkzelements} 环境中使用。
+   \end{itemize}
+
+右侧是一个最小模板。
+
+代码主要分为两部分：Lua 代码（使用 \tkzMacro{lualatex}{directlua} 执行，或放在 \tkzEnv{luacode}{luacode} 环境中），以及 \tkzEnv{tikz}{tikzpicture} 环境——绘图命令（通常来自 \tkzNamePack{tkz-euclide}）就在此环境中发出。
+
+使用 \tkzNamePack{tkz-euclide} 时，推荐使用 \code{mini} 选项，因为它只加载绘图所需的宏。
+不过在目前阶段，某些绘图宏尚未完全独立于计算宏；
+如果出现编译问题，干脆不加此选项直接加载 \tkzNamePack{tkz-euclide} 即可。
+
+在 \tkzname{Lua} 部分中，最佳做法是始终调用
+\tkzFct{tkz-elements}{init\_elements()} 函数。
+该函数会重置内部表并清空内部数据结构。
+\textbf{重要：} 从此时起，在 \tkzname{Lua} 代码中必须避免任何缩放操作。
+
+
+\vspace*{4.1 cm}%
+\end{minipage}\hspace*{\fill}
+\begin{minipage}[t]{.45\textwidth}\vspace{0pt}%
+\begin{mybox}
+\begin{verbatim}
+% !TEX TS-program = lualatex
+% Created by Alain Matthes
+\documentclass{standalone}
+\usepackage[mini]{tkz-euclide}
+% or simply TikZ
+\usepackage{tkz-elements}
+begin{document}
+
+\directlua{
+init_elements()
+% definition of some points
+z.A = point(   ,   )
+z.B = point(   ,   )
+% or
+z.A = point:new(   ,   )
+z.B = point:new(   ,   )
+
+ ...code...
+}
+
+\begin{tikzpicture}
+% points transfer to Nodes
+% from Lua to tikz (tkz-euclide)
+\tkzGetNodes
+
+\end{tikzpicture}
+\end{document}
+\end{verbatim}
+\end{mybox}
+\end{minipage}
+
+\subsection{主流程}
+
+\tikzset{concept/.append style={fill={none}}}
+\tikzset{root concept/.style=   {minimum size=3cm,text width=2.8cm}}%
+\tikzset{level 1 concept/.append style={minimum size=4cm, font=\large, text width=3cm}}%
+\begin{tikzpicture}
+  \path[mindmap,concept color=orange,text=black]
+    node[concept] {传递\\\textcolor{orange}{ \textbackslash{tkzGetNodes}}}
+    child[concept color=red,grow=right] {
+      node[concept] {绘图\\\textcolor{red}{tkz-euclide}\\\textcolor{red}{\TIKZ}} }
+    child[concept color=purple,grow=left] {
+    node[concept] {定义\\计算\\\textcolor{purple}{tkz-elements}} };
+\end{tikzpicture}
+
+取得绘图所需的全部点之后，必须把它们转换成 \tkzname{节点}，以便 \tkzNamePack{\TIKZ} 或 \tkzNamePack{tkz-euclide} 渲染图形。这通过宏 \tkzMacro{tkz-elements}{tkzGetNodes} 完成。该宏遍历表 \tkzname{z} 中的所有元素，使用键（本质上就是点的名字）并取回对应的值，即点（节点）的坐标。
+
+\subsection{完整示例：帕普斯圆}
+\label{sub:the_figure_pappus_circle}
+
+
+
+\subsubsection{图形}
+
+\directlua{
+z.A = point(0, 0)
+z.B = point(10, 0)
+L.AB = line(z.A, z.B)
+z.C = L.AB:gold_ratio()
+L.AC = line(z.A, z.C)
+L.CB = line(z.C, z.B)
+L.AB = line(z.A, z.B)
+z.O_0 = L.AB.mid
+z.O_1 = L.AC.mid
+z.O_2 = L.CB.mid
+C.AB = circle(z.O_0, z.B)
+C.AC = circle(z.O_1, z.C)
+C.CB = circle(z.O_2, z.B)
+z.P = C.CB.north
+z.Q = C.AC.north
+z.O = C.AB.south
+z.c = z.C:north(2)
+C.PC = circle(z.P, z.C)
+C.QA = circle(z.Q, z.A)
+z.P_0 = intersection(C.PC, C.AB)
+z.P_1 = intersection(C.PC, C.AC)
+_, z.P_2 = intersection(C.QA, C.CB)
+T.P = triangle(z.P_0, z.P_1, z.P_2)
+z.O_3 = T.P.circumcenter
+}
+
+\begin{center}
+\begin{tikzpicture}[scale = .75]
+ \tkzGetNodes
+ \tkzDrawCircle[black,fill=yellow!20,opacity=.4](O_0,B)
+ \tkzDrawCircles[teal,fill=teal!40,opacity=.6](O_1,C O_2,B)
+ \tkzDrawCircle[purple,fill=purple!20,opacity=.4](O_3,P_0)
+ \tkzDrawArc[cyan,delta=10](Q,A)(P_0)
+ \tkzDrawArc[cyan,delta=10](P,P_0)(B)
+ \tkzDrawArc[cyan,delta=10](O,B)(A)
+ \tkzDrawPoints(A,B,C,O_0,O_1,O_2,P,Q,P_0,P_0,P_1,P_2,O)
+ \tkzLabelPoints(A,B,C,O_0,O_1,O_2,P,Q,P_0,P_0,P_1,P_2,O)
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{代码}
+\label{ssub:the_code}
+
+\begin{mybox}{}
+\begin{verbatim}
+% !TEX TS-program = lualatex
+\documentclass{article}
+\usepackage[mini]{tkz-euclide} % mini = only tracing function
+\usepackage{tkz-elements}
+\begin{document}
+
+\directlua{
+  init_elements()  % Clear tables
+  z.A = point(0, 0)
+  z.B = point(10, 0)  %  creation of two fixed points $A$ and $B$
+  L.AB = line(z.A, z.B)
+  z.C = L.AB:gold_ratio()       %  use of a method linked to “line”
+  z.O_0 = line(z.A, z.B).mid % midpoint of segment with an attribute of “line”
+  z.O_1 = line(z.A, z.C).mid %  objects are not stored and cannot be reused.
+  z.O_2 = line(z.C, z.B).mid
+  C.AB = circle(z.O_0, z.B)  %  new object “circle” stored and reused
+  C.AC = circle(z.O_1, z.C)
+  C.CB = circle(z.O_2, z.B)
+  z.P = C.CB.north            %  “north” attribute of a circle
+  z.Q = C.AC.north
+  z.O = C.AB.south
+  z.c = z.C:north(2)   %“north” method of a point (needs a parameter)
+  C.PC = circle(z.P, z.C)
+  C.QA = circle(z.Q, z.A)
+  z.P_0 = intersection(C.PC,C.AB)   %  search for intersections of two circles.
+  z.P_1 = intersection(C.PC,C.AC)   %   idem
+  _,z.P_2 = intersection(C.QA,C.CB)   %  idem
+  T.P = triangle(z.P_0, z.P_1, z.P_2)
+  z.O_3 = T.P.circumcenter  % circumcenter attribute of “triangle”
+}
+\end{verbatim}
+\end{mybox}
+
+\begin{verbatim}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawCircle[black,fill=yellow!20,opacity=.4](O_0,B)
+  \tkzDrawCircles[teal,fill=teal!40,opacity=.6](O_1,C O_2,B)
+  \tkzDrawCircle[purple,fill=purple!20,opacity=.4](O_3,P_0)
+  \tkzDrawArc[cyan,delta=10](Q,A)(P_0)
+  \tkzDrawArc[cyan,delta=10](P,P_0)(B)
+  \tkzDrawArc[cyan,delta=10](O,B)(A)
+  \tkzDrawPoints(A,B,C,O_0,O_1,O_2,P,Q,P_0,P_0,P_1,P_2,O)
+  \tkzLabelPoints(A,B,C,O_0,O_1,O_2,P,Q,P_0,P_0,P_1,P_2,O)
+\end{tikzpicture}
+\end{document}
+\end{verbatim}
+
+\subsection{另一个带注释的示例：南极点}
+下面是另一个带注释的示例
+
+\begin{mybox}{}
+\begin{verbatim}
+% !TEX TS-program = lualatex
+\documentclass{standalone}
+\usepackage[mini]{tkz-euclide}
+\usepackage{tkz-elements}
+\begin{document}
+\directlua{
+ init_elements()                     % Clear tables
+ z.A = point(2, 4)
+ z.B = point(0, 0)                   % three fixed points are used
+ z.C = point(8, 0)                   %
+ T.ABC = triangle(z.A, z.B, z.C)     % we create a new triangle object
+ C.ins = T.ABC:in_circle()           % we get the incircle of this triangle
+ z.I = C.ins.center                  % center is an attribute of the circle
+ z.T = C.ins.through                 % through is also an attribute
+ z.I, z.T = C.ins:get()              % get() is a shortcut
+ C.cir = T.ABC:circum_circle()       % we get the  circumscribed circle
+ z.W = C.cir.center                  % we get the center of this circle
+ z.O = C.cir.south                   % now we get the south pole of this circle
+ L.AO = line(z.A, z.O)               % we create an object "line"
+ L.BC = T.ABC.bc                     % we get the line (BC)
+ z.I_A = intersection(L.AO, L.BC)    % we search the intersection of the last lines
+}
+\end{verbatim}
+\end{mybox}
+
+\directlua{
+ init_elements()
+ z.A = point(2, 4)
+ z.B = point(0, 0)
+ z.C = point(8, 0)
+ T.ABC = triangle(z.A, z.B, z.C)
+ C.ins = T.ABC:in_circle()
+ z.I = C.ins.center
+ z.T = C.ins.through
+ C.cir = T.ABC:circum_circle()
+ z.W = C.cir.center
+ z.O = C.cir.south
+ L.AO = line(z.A, z.O)
+ L.BC = T.ABC.bc
+ z.I_A = intersection(L.AO, L.BC)
+}
+
+\begin{center}
+  \begin{tikzpicture}[ scale= 1.2]
+  \tkzGetNodes
+  \tkzDrawCircles(W,A I,T)
+  \tkzDrawArc(O,C)(B)
+  \tkzDrawPolygon(A,B,C)
+  \tkzDrawSegments[new](A,O B,O C,O)
+  \tkzDrawLine(B,I)
+  \tkzDrawPoints(A,B,C,I,I_A,W,O)
+  \tkzFillAngles[green!20,opacity=.3](A,O,B A,C,B)
+  \tkzFillAngles[teal!20,opacity=.3](O,B,C B,C,O B,A,O O,A,C)
+  \tkzLabelPoints(I,I_A,W,B,C,O)
+  \tkzLabelPoints[above](A)
+  \end{tikzpicture}
+\end{center}
+
+\vspace{12pt}
+下面是用于出图的 \tkzEnv{tikz}{tikzpicture} 环境：
+\begin{verbatim}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawCircles(W,A I,T)
+\tkzDrawArc(O,C)(B)
+\tkzDrawPolygon(A,B,C)
+\tkzDrawSegments[new](A,O B,O C,O)
+\tkzDrawLine(B,I)
+\tkzDrawPoints(A,B,C,I,I_A,W,O)
+\tkzFillAngles[green!20,opacity=.3](A,O,B A,C,B)
+\tkzFillAngles[teal!20,opacity=.3](O,B,C B,C,O B,A,O O,A,C)
+\tkzLabelPoints(I,I_A,W,B,C,O)
+\tkzLabelPoints[above](A)
+\end{tikzpicture}
+\end{verbatim}
+\endinput

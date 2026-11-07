@@ -1,0 +1,368 @@
+\newpage
+\section{\tkzClass{quadrilateral} 类}
+
+\vspace{1em}
+变量 \tkzVar{quadrilateral}{Q} 持有一个表，用于存放四边形。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐使用 \code{Q}。如果你使用自定义变量（例如 Quad），则必须手动初始化它。如果使用了 \code{Q}，\tkzFct{tkz-elements}{init\_elements()} 函数会重新初始化该表。
+
+
+\subsection{创建四边形}
+\label{sub:creating_a_quadrilateral}
+\tkzClass{quadrilateral} 类需要四个点。点的顺序决定四边形的边。
+
+\medskip
+该对象通常存放在 \tkzVar{quadrilateral}{Q} 中，这是推荐的变量名。
+
+\begin{mybox}
+\begin{verbatim}
+Q.ABCD = quadrilateral:new(z.A, z.B, z.C, z.D)
+\end{verbatim}
+\end{mybox}
+
+\textbf{简写形式。}
+
+也提供了简写构造器：
+
+\begin{mybox}
+\begin{verbatim}
+Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+\end{verbatim}
+\end{mybox}
+
+\subsection{四边形的属性}
+四个点按顺序给出；不做检验。
+
+\begin{center}
+ \code{ 创建：Q.new = quadrilateral(z.A,z.B,z.C,z.D)}
+\end{center}
+
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{四边形的属性。}\label{quadrilateral:attributes}
+  \begin{tabular}{lll}
+  \toprule
+  \textbf{属性}         & \textbf{用法} & \\
+  \tkzAttr{quadrilateral}{pa}   & |z.A = Q.new.pa| & \\
+  \tkzAttr{quadrilateral}{pb}   & |z.B = Q.new.pb| & \\
+  \tkzAttr{quadrilateral}{pc}   & |z.C = Q.new.pc| & \\
+  \tkzAttr{quadrilateral}{pd}   & |z.D = Q.new.pd| & \\
+  \tkzAttr{quadrilateral}{type} & |Q.new.type= 'quadrilateral'|  &\\
+  \tkzAttr{quadrilateral}{center}    & |z.I = Q.new.center| & 对角线交点\\
+  \tkzAttr{quadrilateral}{g}    & |z.G = Q.new.g| & 重心\\
+  \tkzAttr{quadrilateral}{a}    & |AB = Q.new.a| & AB 的长度\\
+  \tkzAttr{quadrilateral}{b}    & |BC = Q.new.b| & BC 的长度\\
+  \tkzAttr{quadrilateral}{c}    & |CD = Q.new.c| & CD 的长度\\
+  \tkzAttr{quadrilateral}{d}    & |DA = Q.new.d| & DA 的长度\\
+  \tkzAttr{quadrilateral}{ab}   & |Q.new.ab|   &  过两个顶点的直线   \\
+  \tkzAttr{quadrilateral}{ac}   & |Q.new.ac|   &  同上。 \\
+  \tkzAttr{quadrilateral}{da}   & |Q.new.da|   &  同上。 \\
+  \tkzAttr{quadrilateral}{bc}   & |Q.new.bc|   &  同上。 \\
+  \tkzAttr{quadrilateral}{bd}   & |Q.new.bd|   &  同上。 \\
+  \tkzAttr{quadrilateral}{cd}   & |Q.new.cd|   &  同上。 \\
+  \bottomrule
+  \end{tabular}
+  \egroup
+
+
+\subsubsection{四边形的属性}
+
+\vspace{1em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.B = point(4, 0)
+z.C = point(5, 1)
+z.D = point(0, 3)
+Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+z.I = Q.ABCD.i
+z.G = Q.ABCD.g}
+
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawSegments(A,C B,D)
+\tkzDrawPoints(A,B,C,D,I,G)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.C = point(5, 1)
+ z.D = point(0, 3)
+ Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+ z.I = Q.ABCD.center
+ z.G = Q.ABCD.g}
+
+\begin{center}
+  \begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C,D)
+  \tkzDrawSegments(A,C B,D)
+  \tkzDrawPoints(A,B,C,D,I,G)
+  \end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\subsubsection{四边形示例}
+高等欧几里得几何 2013 年 6 月 26 日补充材料\\
+
+\texttt{几何平均的构造：}
+
+
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.B = point(1, 4)
+z.C = point(3.5, 4)
+z.D = point(5, 0 )
+Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+z.I = Q.ABCD.center
+L.ll = Q.ABCD.da:ll_from(z.I)
+z.H = intersection(L.ll, Q.ABCD.ab)
+z.Hp = intersection(L.ll, Q.ABCD.cd)
+z.M =  Q.ABCD.ab.mid
+C.MA = circle(z.M, z.A)
+L.perp = Q.ABCD.ab:ortho_from(z.H)
+_,z.P = intersection (C.MA, L.perp)
+T.PAB = triangle (z.P, z.A, z.B)
+L.bis =  T.PAB:bisector ()
+z.G = L.bis.pb
+L.llg = Q.ABCD.da:ll_from(z.G)
+L.llm = Q.ABCD.da:ll_from(z.M)
+z.Gp = intersection(L.llg, Q.ABCD.cd)}
+\begin{center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawCircle(M,A)
+\tkzDrawSegments[red](H,H')
+\tkzDrawSegments[blue](G,G')
+\tkzDrawSegments[dashed](P,H P,B P,A P,G A,C B,D)
+\tkzDrawPoints(A,B,C,D,H,I,M,P,G,G',H')
+\tkzLabelPoints(A,D,I)
+\tkzLabelPoints[above](B,C,P)
+\tkzLabelPoints[above right=-3pt](H,G)
+\tkzLabelPoints[right](G',H')
+ \tkzLabelSegment[above](B,C){$b$}
+ \tkzLabelSegment[below](A,D){$a$}
+\end{tikzpicture}
+\end{center}
+
+
+
+\begin{proof}
+给定一个梯形，其平行边为 $AD$ 和 $BC$。
+
+设 H 为过 $I$ 且平行于边 $AD$ 的直线的端点。则 $HH' = \dfrac{2ab}{a+b}$。
+
+$PH$ 垂直于 $AB$
+
+$(PG)$ 是 $\widehat{APB}$ 的角平分线
+
+ $GG' = \dfrac{a \cdot \sqrt{b} + b \cdot \sqrt{a}}{\sqrt{a}+\sqrt{b}}
+= \dfrac{\sqrt{ab}(\sqrt{a}+\sqrt{b})}{\sqrt{a}+\sqrt{b}} = \sqrt{ab} $
+\end{proof}
+
+\texttt{代码：}
+
+\begin{verbatim}
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.B = point(1, 4)
+z.C = point(3.5, 4)
+z.D = point(5, 0 )
+Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+z.I = Q.ABCD.center
+L.ll = Q.ABCD.da:ll_from (z.I)
+z.H = intersection(L.ll, Q.ABCD.ab)
+z.Hp = intersection(L.ll, Q.ABCD.cd)
+z.M =  Q.ABCD.ab.mid
+C.MA = circle(z.M,z.A)
+L.perp = Q.ABCD.ab:ortho_from(z.H)
+_,z.P = intersection(C.MA, L.perp)
+T.PAB = triangle(z.P, z.A, z.B)
+L.bis =  T.PAB:bisector()
+z.G = L.bis.pb
+L.llg = Q.ABCD.da:ll_from(z.G)
+L.llm = Q.ABCD.da:ll_from(z.M)
+z.Gp = intersection(L.llg, Q.ABCD.cd)}
+\end{verbatim}
+
+\subsection{四边形的方法}
+
+\vspace{1em}
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{四边形的方法。}\label{quadrilateral:methods}
+  \begin{tabular}{ll}
+  \toprule
+  \textbf{方法} & \texttt{参考}    \\
+  \midrule
+  \tkzMeth{quadrilateral}{new()}& [\ref{sub:creating_a_quadrilateral}]\\
+
+  \tkzMeth{quadrilateral}{is\_cyclic ()} & [\ref{ssub:iscyclic}]\\
+  \tkzMeth{quadrilateral}{is\_convex ()} & [\ref{ssub:isconvex}]\\
+  \tkzMeth{quadrilateral}{poncelet\_point()} & [\ref{ssub:poncelet_point}]\\
+  \tkzMeth{quadrilateral}{area()} & [\ref{ssub:quadrilateral_area}]\\
+  \tkzMeth{quadrilateral}{get(<i>)} & [\ref{ssub:method_quadrilateral_get}]\\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+
+
+
+\subsubsection{方法 \tkzMeth{quadrilateral}{get(<i>)}}
+\label{ssub:method_quadrilateral_get}
+
+该方法返回定义四边形对象的各个点。
+
+\begin{itemize}
+  \item \code{Q.ABCD:get()} 按顺序返回四个顶点：\code{pa}、\code{pb}、\code{pc}、\code{pd}；
+  \item \code{Q.ABCD:get(i)}（\code{i} 取 1 到 4）只返回第 \code{i} 个顶点；例如 \code{Q.ABCD:get(2)} 等价于 \code{Q.ABCD.pb}。
+\end{itemize}
+
+\begin{tkzexample}[code only]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(2, 0)
+  z.C = point(3, 2)
+  z.D = point(0, 1)
+  Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+  z.E, z.F, z.G, z.H = Q.ABCD:get()
+  z.K = Q.ABCD:get(3)
+}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{quadrilateral}{is\_cyclic()}}
+\label{ssub:iscyclic}
+
+若四个顶点共圆（容差为 \code{tkz.epsilon}）则返回 \code{true}，否则返回 \code{false}。
+
+\textbf{圆内接四边形}
+
+\vspace{1em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.D = point:polar(4, tkz.tau / 3)
+ L.DB = line(z.D, z.B)
+ T.equ = L.DB:equilateral()
+ z.C = T.equ.pc
+ Q.new = quadrilateral(z.A, z.B, z.C, z.D)
+ bool = Q.new:is_cyclic()
+ if bool == true then
+ 	C.cir = triangle(z.A, z.B, z.C):
+ 	 circum_circle()
+ 	z.O = C.cir.center
+ end}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C,D)
+  \tkzDrawPoints(A,B,C,D)
+  \tkzDrawCircle(O,A)
+  \ifthenelse{\equal{\tkzUseLua{bool}}{
+     true}}{\tkzDrawCircle(O,A)}{}
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C,D)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.B = point(4, 0)
+z.D = point:polar(4, tkz.tau / 3)
+L.DB = line(z.D, z.B)
+T.equ = L.DB:equilateral()
+z.C = T.equ.pc
+Q.new = quadrilateral(z.A, z.B, z.C, z.D)
+bool = Q.new:is_cyclic()
+if bool == true then
+	C.cir = triangle(z.A, z.B, z.C):circum_circle()
+	z.O = C.cir.center
+end
+}
+\begin{center}
+\begin{tikzpicture}[scale = .75]
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C,D)
+  \tkzDrawPoints(A,B,C,D)
+  \tkzDrawCircle(O,A)
+  \ifthenelse{\equal{\tkzUseLua{bool}}{
+   true}}{\tkzDrawCircle(O,A)}{}
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C,D)
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{quadrilateral}{is\_convex()}}
+\label{ssub:isconvex}
+
+若四边形为凸则返回 \code{true}，否则返回 \code{false}。三个连续顶点共线的四边形不是凸的。
+
+\begin{verbatim}
+if Q.ABCD:is_convex() then ... end
+\end{verbatim}
+
+\subsubsection{方法 \tkzMeth{quadrilateral}{area()}}
+\label{ssub:quadrilateral_area}
+
+返回四边形的面积，无论是否为凸。对于自交四边形会引发错误。
+
+\begin{verbatim}
+local s = Q.ABCD:area()
+\end{verbatim}
+
+
+
+
+
+
+
+\subsubsection{方法 \tkzMeth{quadrilateral}{poncelet\_point}}
+\label{ssub:poncelet_point}
+
+定义见 [\ref{ssub:method_triangle_poncelet_point}]。
+Poncelet 点对任意四边形都有定义；若有三个顶点共线则引发错误。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ z.A = point(1, 1)
+ z.B = point(6, 0)
+ z.D = point(0, 5)
+ z.C = point(6, 2)
+ Q.ABCD = quadrilateral(z.A, z.B, z.C, z.D)
+ z.P = Q.ABCD:poncelet_point()
+ T.ABC = triangle(z.A,z.B,z.C)
+ z.I = T.ABC.eulercenter
+ z.Mc = tkz.midpoint(z.A, z.B)
+ T.ABD = triangle(z.A, z.B, z.D)
+ z.I1 = T.ABD.eulercenter}
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygons(A,B,C,D)
+  \tkzDrawPoints(A,B,C,D,P,Mc)
+  \tkzDrawCircles[red](I,Mc I1,Mc)
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C,D,P)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+\endinput

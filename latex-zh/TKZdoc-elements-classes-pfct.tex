@@ -1,0 +1,237 @@
+%--------------------------------------------------------------------
+\newpage
+\section{\tkzClass{pfct} 类}
+\label{sec:class_pfct}
+
+\tkzClass{pfct} 类表示一条参数曲线
+\[
+t \longmapsto \bigl(x(t),y(t)\bigr),
+\]
+在 Lua 中定义并求值。一个 \tkzClass{pfct} 对象封装了两个表达式（或可调用的 Lua 函数），分别描述曲线的 $x$ 分量和 $y$ 分量，并配有用于求值、采样和几何构造的方法。
+
+按照约定，参数函数对象存放在一个名为 \tkzVar{pfct}{PF} 的 Lua 表中。虽然这个名字不是强制的，但为了在各示例和文档中保持一致，强烈建议使用 \texttt{PF}。\texttt{PF} 的每个条目都把一个符号名（例如 \texttt{lis}）与一个 \tkzClass{pfct} 类的对象关联起来。如果使用自定义表名，则必须手动初始化它。如果 \texttt{PF} 表已经定义，\tkzFct{tkz-elements}{init\_elements()} 函数会重置它。
+
+\paragraph{数学表达式。}
+定义 \tkzClass{pfct} 对象的所有表达式都按标准的 Lua 规则求值。一个 \tkzClass{pfct} 对象可以在某个参数值处求值、转换成点、采样成一条 \tkzClass{path}，或导出为适合 TikZ \texttt{plot file} 输入的数据文件。
+
+\paragraph{重要。}
+在函数和参数函数的定义中（\tkzClass{fct} 和 \tkzClass{pfct}），
+表达式必须使用标准数学记号书写。
+\emph{不得}使用 Lua 前缀 \texttt{math.}。
+
+与此相反，在 \tkzNamePack{tkz-elements} 的所有其他方法和 Lua 代码片段中，
+适用标准 Lua 语法；每当调用 Lua 数学函数时，都必须使用前缀 \texttt{math.}。为方便起见，用户可以在自己的 Lua 代码中定义局部别名，例如 \code{local sin, cos, pi = math.sin, math.cos, math.pi}。
+
+\medskip
+正确：
+\begin{verbatim}
+sin(x), exp(-x^2)
+\end{verbatim}
+
+错误（在 \tkzClass{fct} 和 \tkzClass{pfct} 中）：
+\begin{verbatim}
+math.sin(x), math.exp(-x^2)
+\end{verbatim}
+
+\subsection{pfct 类的方法}
+\vspace{1em}
+
+\bgroup
+  \small
+  \captionof{table}{pfct 的方法。}\label{pfct:methods}
+  \begin{tabular}{ll}
+  \toprule
+  \texttt{方法} & \texttt{参考} \\
+  \midrule
+  \texttt{构造器} & \\
+  \midrule
+  \tkzFct{pfct}{new(exprx,expry)}       & [\ref{ssub:method_pfct_new}] \\
+  \tkzMeth{pfct}{compile()}   & [\ref{ssub:method_pfct_compile}] \\
+  \midrule
+  \texttt{返回实数的方法} & \\
+  \midrule
+  \tkzMeth{pfct}{x(t)}                 & [\ref{ssub:method_pfct_x}] \\
+  \tkzMeth{pfct}{y(t)}                 & [\ref{ssub:method_pfct_y}] \\
+  \tkzMeth{pfct}{eval(t)}              & [\ref{ssub:method_pfct_eval}] \\
+  \tkzMeth{pfct}{point(t)}             & [\ref{ssub:method_pfct_point}] \\
+  \tkzMeth{pfct}{at(t)}                & \code{point} 的别名 \\
+  \midrule
+  \texttt{返回路径的方法} & \\
+  \midrule
+  \tkzMeth{pfct}{path(tmin,tmax,n)}    & [\ref{ssub:method_pfct_path}] \\
+  \midrule
+  \texttt{变换与文件} & \\
+  \midrule
+  \tkzMeth{pfct}{set\_scale(sx,sy)}     & [\ref{ssub:method_pfct_scale}] \\
+  \tkzMeth{pfct}{scale(sx,sy)}         & [\ref{ssub:method_pfct_scale}] \\
+  \tkzMeth{pfct}{set\_map(fn)}         & [\ref{ssub:method_pfct_map}] \\
+  \tkzMeth{pfct}{map(fn)}             & [\ref{ssub:method_pfct_map}] \\
+  \tkzMeth{pfct}{file(tmin,tmax,n,name)} & [\ref{ssub:method_pfct_file}] \\
+  \tkzMeth{pfct}{jobfile(tmin,tmax,n,<suffix>)} & [\ref{ssub:method_pfct_file}] \\
+  \bottomrule
+  \end{tabular}
+\egroup
+
+%-------------------- 细节 ---------------------------------------
+\subsubsection{构造器 \tkzFct{pfct}{new(exprx,expry)}}
+\label{ssub:method_pfct_new}
+
+\texttt{描述：}由两个表达式或可调用的 Lua 函数创建一个参数函数对象，二者分别描述分量 $x(t)$ 和 $y(t)$。当以字符串给出时，它们表示变量 \texttt{t} 中的 Lua 表达式，按标准 Lua 规则求值（不带 \texttt{math.} 前缀，见上文）。对象创建时，无效表达式会引发错误。
+
+\texttt{参数：}\par
+\begin{itemize}
+\item \code{exprx}：\texttt{t} 中的一个字符串表达式，或表示 $x(t)$ 的可调用 Lua 函数；
+\item \code{expry}：\texttt{t} 中的一个字符串表达式，或表示 $y(t)$ 的可调用 Lua 函数。
+\end{itemize}
+
+\texttt{返回：} 一个 \tkzClass{pfct} 对象。
+
+\subsubsection{方法 \tkzMeth{pfct}{compile()}}
+\label{ssub:method_pfct_compile}
+
+\texttt{描述：}返回对象本身；表达式在对象创建时即被编译。这是一个低层辅助函数，主要供内部使用。
+
+\subsubsection{方法 \tkzMeth{pfct}{eval(t)}}
+\label{ssub:method_pfct_eval}
+
+\texttt{描述：}返回 $x(t), y(t)$（已施加缩放和映射）；若曲线在 $t$ 处无定义则返回 \code{nan}。此时 \tkzMeth{pfct}{point} 会引发错误。
+
+
+\subsubsection{方法 \tkzMeth{pfct}{x(t)}}
+\label{ssub:method_pfct_x}
+
+\texttt{描述：}在参数 \code{t} 处求参数曲线的 $x$ 分量。
+
+\medskip
+\texttt{返回：} 一个数。
+
+\subsubsection{方法 \tkzMeth{pfct}{y(t)}}
+\label{ssub:method_pfct_y}
+
+\texttt{描述：}在参数 \code{t} 处求参数曲线的 $y$ 分量。
+
+\medskip
+\texttt{返回：} 一个数。
+
+\subsubsection{方法 \tkzMeth{pfct}{point(t)}}
+\label{ssub:method_pfct_point}
+
+
+\texttt{描述：}构造与该参数曲线关联的点 $(x(t),y(t))$。该方法在数值求值与几何构造之间架起了一座直接的桥梁。
+
+\medskip
+\texttt{返回：} 一个 \tkzClass{point}。
+
+\medskip
+\texttt{示例：}
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ PF.lem = pfct("cos(t+pi/2)", "sin(2*t)")
+ PA.courbe = PF.lem:path(0, 2*math.pi, 200)
+ z.A = PF.lem:point(math.pi/8)
+ }
+\begin{center}
+ \begin{tikzpicture}[scale=2]
+\tkzGetNodes
+  \tkzDrawCoordinates[smooth,cyan](PA.courbe)
+  \tkzDrawPoint[red](A)
+\end{tikzpicture}
+ \end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{pfct}{path(tmin,tmax,n)}}
+\label{ssub:method_pfct_path}
+
+\texttt{描述：}在区间 $[tmin,tmax]$ 上以 \code{n} 个子区间对参数 $t$ 采样，返回对应的 \tkzClass{path}。无效值（NaN、无穷）可能按内部策略被跳过。
+
+\texttt{返回：} 一个 \tkzClass{path}。
+
+\medskip
+\texttt{示例 1：}
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+ init_elements()
+ PF.lis = pfct("sin(5*t)", "cos(3*t)")
+ PA.curve = PF.lis:path(0, 2*math.pi, 400)
+ }
+
+\begin{center}
+ \begin{tikzpicture}[scale=2]
+  \tkzDrawCoordinates[smooth,cyan](PA.curve)
+\end{tikzpicture}
+ \end{center}
+\end{tkzexample}
+
+\medskip
+\texttt{示例 2：}
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+ init_elements()
+ PF.ff = pfct("cos(t)+(t)*sin(t)",
+              "sin(t)-(t)*cos(t)")
+ PA.c_1 = PF.ff:path(0, math.pi, 1000)
+ PA.c_2 = PF.ff:path(math.pi, 2 * math.pi, 1000)
+ }
+\begin{center}
+ \begin{tikzpicture}[scale=.75]
+  \tkzInit[xmin=-5,xmax=2,ymin=-5,ymax=3]
+  \tkzGrid
+  \tkzAxeXY
+  \tkzDrawCoordinates[smooth,thick,red](PA.c_1)
+  \tkzDrawCoordinates[smooth,thick,cyan](PA.c_2)
+ \end{tikzpicture}
+ \end{center}
+ \end{tkzexample}
+
+ \medskip
+ \texttt{示例 3：}
+ \begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+  init_elements()
+  PF.ff = pfct("t * sin((1 / t))", "t * cos((1 / t))")
+  PA.c_1 = PF.ff:path(math.pi/128, math.pi/16, 1000)
+  PA.c_2 = PF.ff:path(math.pi/16, math.pi, 1000)
+  PA.curve = PA.c_1 + PA.c_2
+  z.Ax = point(1, -1)
+  z.Ay = point(1, 2.5)
+  }
+
+\begin{center}
+   \begin{tikzpicture}[scale=2]
+ \tkzGetNodes
+ \tkzInit[xmin=-1,xmax=1,ymin=-1,ymax=3]
+ \tkzGrid
+ \tkzDrawLine[thick,red](Ax,Ay)
+ \tkzDrawX[label={$x(t) = t*sin((1/t)$},
+     below= -18pt,noticks=false]
+ \tkzLabelX[text=blue,below = 3pt]
+ \tkzDrawY[label={$y(t) = t*cos(1/t)$},
+     right= 18pt,noticks=false]
+ \tkzDrawCoordinates[smooth,cyan](PA.curve)
+ \end{tikzpicture}
+  \end{center}
+  \end{tkzexample}
+
+%--------------------------------------------------------------------
+
+
+
+
+\subsubsection{方法 \tkzMeth{pfct}{set\_scale(sx,sy)} 与 \tkzMeth{pfct}{scale(sx,sy)}}
+\label{ssub:method_pfct_scale}
+
+把坐标分别乘以 \code{sx} 和 \code{sy}；\code{set\_scale} 修改对象本身，\code{scale} 返回一个修改后的副本。
+
+\subsubsection{方法 \tkzMeth{pfct}{set\_map(fn)} 与 \tkzMeth{pfct}{map(fn)}}
+\label{ssub:method_pfct_map}
+
+应用函数 \code{fn(x, y, t, self)}，返回新坐标 $(X, Y)$；\code{set\_map} 修改对象本身，\code{map} 返回一个修改后的副本。
+
+\subsubsection{方法 \tkzMeth{pfct}{file(tmin,tmax,n,name)} 与 \tkzMeth{pfct}{jobfile(tmin,tmax,n,<suffix>)}}
+\label{ssub:method_pfct_file}
+
+把点 $(x, y)$ 写入一个可供 \code{\textbackslash draw plot file} 使用的文件；非有限值会被跳过。\code{jobfile} 使用名字 \code{<jobname>-<suffix>.table}（默认后缀为 \code{param}）。
+
+\endinput
+%--------------------------------------------------------------------

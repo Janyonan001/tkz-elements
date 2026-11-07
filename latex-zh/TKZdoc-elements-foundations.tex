@@ -1,0 +1,129 @@
+%--------------------------------------------------------------------
+\section{几何关系 API}
+\label{sec:geometric_relations_api}
+
+\subsection{一般原则}
+
+在 \tkzNamePack{tkz-elements} 中，几何对象提供一个统一的方法
+\[
+\code{object:position(other\_object[, EPS])}
+\]
+用于判定几何关系。
+
+判定结果取决于第二个参数（\code{other\_object}）的类型。
+
+\medskip
+所有位置判定均带有容差。
+若未指定，可选参数 \code{EPS} 默认为全局值
+\tkzVar{tkz}{tkz.epsilon}。
+
+\medskip
+\textbf{约定：}
+所有判定结果均以\emph{大写符号字符串}返回，
+供 Lua 代码中做逻辑比较使用。
+
+%--------------------------------------------------------------------
+\subsection{点与对象}
+
+当被检测的对象是一个点时，结果描述该点相对于某个区域（或边界）的归属关系。
+
+\medskip
+可能的返回值：
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"IN"}  & 严格位于区域内部， \\
+\code{"ON"}  & 位于边界上（在容差范围内）， \\
+\code{"OUT"} & 严格位于区域外部。
+\end{tabular}
+\end{center}
+
+\medskip
+示例：
+\begin{itemize}
+\item \code{circle:position(point)} \quad（\code{"IN"}、\code{"ON"}、\code{"OUT"}）
+\item \code{triangle:position(point)} \quad（\code{"IN"}、\code{"ON"}、\code{"OUT"}）
+\item \code{conic:position(point)} \quad（\code{"IN"}、\code{"ON"}、\code{"OUT"}）
+\item \code{line:position(point)} \quad（\code{"ON"} 或 \code{"OUT"}）
+\end{itemize}
+
+%--------------------------------------------------------------------
+\subsection{对象与对象}
+
+当两个参数都是几何对象时，结果描述它们之间的相互几何关系。
+
+\subsubsection*{直线与直线}
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"INTERSECT"} & 两直线交于一点， \\
+\code{"PARALLEL"}  & 不同的平行直线， \\
+\code{"IDENTICAL"} & 重合的直线。
+\end{tabular}
+\end{center}
+
+\subsubsection*{直线与圆}
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"DISJOINT"} & 无交点， \\
+\code{"TANGENT"}  & 恰有一个公共点， \\
+\code{"SECANT"}   & 两个交点。
+\end{tabular}
+\end{center}
+
+\subsubsection*{圆与圆}
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"DISJOINT\_EXT"} & 两圆外离， \\
+\code{"TANGENT\_EXT"}  & 两圆外切， \\
+\code{"SECANT"}        & 两个交点， \\
+\code{"TANGENT\_INT"}  & 两圆内切， \\
+\code{"DISJOINT\_INT"} & 一个圆严格位于另一个圆内部， \\
+\code{"CONCENTRIC"}    & 圆心相同、半径不同， \\
+\code{"IDENTICAL"}     & 两圆重合。
+\end{tabular}
+\end{center}
+
+%--------------------------------------------------------------------
+\subsection{三角形与圆锥曲线}
+
+对于 \tkzClass{triangle} 和 \tkzClass{conic}，方法 \code{position()}
+目前仅支持传入点作为参数。
+
+\subsubsection*{三角形与点}
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"IN"}  & 严格位于三角形内部， \\
+\code{"ON"}  & 位于边上或顶点上， \\
+\code{"OUT"} & 位于三角形外部。
+\end{tabular}
+\end{center}
+
+\subsubsection*{圆锥曲线与点}
+
+\begin{center}
+\begin{tabular}{ll}
+\code{"IN"}  & 位于圆锥曲线所围区域内部（按其类型而定）， \\
+\code{"ON"}  & 位于圆锥曲线上， \\
+\code{"OUT"} & 位于相应区域外部。
+\end{tabular}
+\end{center}
+
+\medskip
+\texttt{注意：}对于双曲线和抛物线，\code{"IN"} 与
+\code{"OUT"} 的含义取决于该圆锥曲线类型所关联的区域及其
+构造数据（焦点/准线或等价表示）。
+
+%--------------------------------------------------------------------
+\subsection{设计理念}
+
+\begin{itemize}
+\item 用单一的多态方法集中处理几何关系判定。
+\item 大写符号结果保证了清晰性与稳定性。
+\item 数值容差提高了边界情形附近的稳健性。
+\item 该 API 可扩展：今后可能支持更多对象类型。
+\item 若早期版本中曾存在旧的布尔方法，后续可能提供向后兼容的封装。
+\end{itemize}

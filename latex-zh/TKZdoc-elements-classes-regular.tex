@@ -1,0 +1,190 @@
+\newpage
+\section{\tkzClass{regular polygon} 类}
+
+变量 \tkzVar{regular\_polygon}{RP} 持有一个表，用于存放正多边形。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐使用 \code{RP}。如果你使用自定义变量（例如 REP），则必须手动初始化它。如果使用了 \code{RP}，\tkzFct{tkz-elements}{init\_elements()} 函数会重新初始化该表。
+
+
+\subsection{创建正多边形}
+
+\tkzClass{regular\_polygon} 类根据圆心、第一个顶点和边数来构造一个正多边形。
+
+\medskip
+结果通常存放在 \tkzVar{regular\_polygon}{RP} 中。
+
+\begin{mybox}
+\begin{verbatim}
+RP.hex = regular_polygon:new(z.O, z.A, 6)
+\end{verbatim}
+\end{mybox}
+
+\textbf{简写形式。}
+
+为简洁起见，使用简写形式：
+
+\begin{mybox}
+\begin{verbatim}
+RP.hex = regular_polygon(z.O, z.A, 6)
+\end{verbatim}
+\end{mybox}
+
+\subsection{Regular\_polygon 的属性}
+\label{sub:regular_polygon_attributes}
+
+\begin{mybox}
+创建 | RP.IA = regular_polygon(z.I,z.A,6)|
+\end{mybox}
+
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{Regular\_polygon 的属性。}\label{regular:attributes}
+  \begin{tabular}{ll}
+  \toprule
+  \texttt{属性}      & \textbf{用法}  \\
+ \midrule
+  \tkzAttr{regular\_polygon}{center}  & |z.I = RP.IA.center|  \\
+  \tkzAttr{regular\_polygon}{vertices}   & 包含所有顶点附标的数组  \\
+  \tkzAttr{regular\_polygon}{through} & 第一个顶点  \\
+  \tkzAttr{regular\_polygon}{circle}  & 定义以 I 为圆心、过 A 的圆 \\
+  \tkzAttr{regular\_polygon}{type}    & |RP.IA.type= 'regular\_polygon'|   \\
+  \tkzAttr{regular\_polygon}{side}    & |s = RP.IA.side| ; s = 边长\\
+  \tkzAttr{regular\_polygon}{circumradius}&  |RP.IA.circumradius| ; 外接圆半径 \\
+  \tkzAttr{regular\_polygon}{inradius}&  |RP.IA.inradius| ; 内切圆半径   \\
+  \tkzAttr{regular\_polygon}{apothem}    &  |RP.IA.apothem| ; 边心距（与内切圆半径相同）   \\
+  \tkzAttr{regular\_polygon}{apothem\_foot} & |z.H = RP.IA.apothem_foot| ; 圆心在第一条边上的投影 \\
+  \tkzAttr{regular\_polygon}{nb}      & |RP.IA.nb| ; 边数 \\
+  \tkzAttr{regular\_polygon}{perimeter} & |RP.IA.perimeter| ; 周长 \\
+  \tkzAttr{regular\_polygon}{area}    & |RP.IA.area| ; 面积 \\
+  \tkzAttr{regular\_polygon}{angle}   &  |RP.IA.angle| ; 圆心与两个相邻顶点所成的角   \\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+
+
+
+
+\subsubsection{五边形}
+\label{ssub:pentagon}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+init_elements()
+z.O = point(0, 0)
+z.I = point(1, 3)
+z.A = point(2, 0)
+RP.five  = regular_polygon(z.I, z.A, 5)
+RP.five:name("P_")
+C.ins  = circle:radius(z.I,
+             RP.five.inradius)
+z.H = RP.five.apothem
+}
+\begin{tikzpicture}[scale = .75]
+\def\nb{\tkzUseLua{RP.five.nb}}
+\tkzGetNodes
+\tkzDrawCircles(I,A I,H)
+\tkzDrawPolygon(P_1,P_...,P_\nb)
+\tkzDrawPoints[red](P_1,P_...,P_\nb,H,I)
+\tkzLabelPoints[red](I,A,H)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+   init_elements()
+   z.O = point(0, 0)
+   z.I = point(1, 3)
+   z.A = point(2, 0)
+   RP.five = regular_polygon(z.I, z.A, 5)
+   RP.five:name("P_")
+   C.ins  = circle:radius(z.I, RP.five.inradius )
+   z.H = RP.five.apothem_foot
+  }
+
+\begin{center}
+  \begin{tikzpicture}[scale = .75]
+  \def\nb{\tkzUseLua{RP.five.nb}}
+  \tkzGetNodes
+  \tkzDrawCircles(I,A I,H)
+  \tkzDrawPolygon(P_1,P_...,P_\nb)
+  \tkzDrawPoints[red](P_1,P_...,P_\nb,H,I)
+  \tkzLabelPoints[red](I,A,H)
+  \end{tikzpicture}
+\end{center}
+
+
+\end{minipage}
+
+\subsection{Regular\_polygon 的方法}
+\label{sub:regular_polygon_methods}
+
+
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{regular\_polygon 的方法。}\label{regular:methods}
+\begin{tabular}{ll}
+\toprule
+\texttt{构造器}&\\  \\
+\midrule
+\tkzFct{regular\_polygon}{new(O,A,n)} & [\ref{ssub:function_regular_new}] \\
+\midrule
+\texttt{返回圆的方法}&\\
+\midrule
+\tkzMeth{regular\_polygon}{incircle()} & [\ref{ssub:method_regular_incircle}]\\
+\midrule
+\texttt{返回点的方法}&\\
+\midrule
+\tkzMeth{regular\_polygon}{get(<i>)} & [\ref{ssub:method_regular_get}] \\
+\midrule
+\texttt{其他方法}&\\
+\midrule
+\tkzMeth{regular\_polygon}{name (string)} & [\ref{ssub:method_regular_name}] \\
+\bottomrule %
+\end{tabular}
+\egroup
+
+
+\subsubsection{方法 \tkzMeth{regular\_polygon}{new(pt, pt, n)}}
+\label{ssub:function_regular_new}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(0, -4)
+  z.O = point(0, 0)
+  RP.six = regular_polygon(z.O, z.A, 6)
+  RP.six:name("A_")
+  z.i, z.p = RP.six:incircle():get()}
+
+\begin{tikzpicture}[gridded,scale=.75]
+  \tkzGetNodes
+  \tkzDrawCircles[red](O,A)
+  \tkzDrawCircles[teal](i,p)
+  \tkzDrawPolygon(A_1,A_...,A_6)
+  \tkzDrawPoints[red](A_1,A_...,A_6)
+  \tkzLabelPoints[red](A_1,A_...,A_6)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{regular\_polygon}{get(<i>)}}
+\label{ssub:method_regular_get}
+
+\code{get()} 返回所有顶点；\code{get(i)} 返回第 i 个顶点（$1 \le i \le n$）。无效的索引会引发错误。
+
+\begin{verbatim}
+z.A, z.B, z.C = RP.tri:get()
+z.B = RP.tri:get(2)
+\end{verbatim}
+
+\subsubsection{方法 \tkzMeth{regular\_polygon}{incircle()}}
+\label{ssub:method_regular_incircle}
+
+见前一个示例 [\ref{ssub:function_regular_new}]
+
+\subsubsection{方法 \tkzMeth{regular\_polygon}{name(s)}}
+\label{ssub:method_regular_name}
+
+\code{RP.six:name("A\_")} 会创建点 \code{z.A\_1}、……、\code{z.A\_6}。
+
+见 [\ref{ssub:function_regular_new}]
+\endinput

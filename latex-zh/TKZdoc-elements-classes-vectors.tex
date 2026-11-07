@@ -1,0 +1,641 @@
+\newpage
+
+\section{vector 类}
+\label{sec:class_vector}
+
+\tkzname{vector} 对象表示从尾点 $A$ 到头点 $B$ 的有向线段。
+在内部，它由两个点 \tkzAttr{vector}{za} 和 \tkzAttr{vector}{zb} 构建而成，并将其解释为复数。
+该向量同时存储其几何端点和解析数据（分量、长度、方向）。
+
+
+
+变量 \tkzVar{vector}{V} 保存一个用于存储向量的表。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐约定使用 \code{V}。如果你使用自定义变量（例如 Vectors），则必须手动初始化它。函数 \code{init\_elements()} 在被调用时会重新初始化 \code{V} 表。
+
+\vspace{1em}
+事实上，与其说它们是严格数学意义上的向量，不如说它们是一类有向线段。
+
+一个向量通过给出两个点（即两个附标）来定义。
+|V.AB = vector(z.A, z.B)| 创建向量 $(\overrightarrow{AB})$，即以 $A$ 为起点、表示一个向量的有向线段。这里定义了一些基本运算，例如加法、减法以及数乘。
+
+
+\subsection{创建向量}
+\label{sub:creating_a_vector}
+
+\tkzClass{vector} 类表示两个点之间的向量，或一个给定坐标的自由向量。
+
+\medskip
+结果通常存储在 \tkzVar{vector}{V} 中。
+
+\medskip
+\textbf{简写：}
+\begin{mybox}
+\begin{verbatim}
+V.v1 = vector:new(z.A, z.B) -- from A to B
+简写形式与之等价：
+V.v1 = vector(z.A, z.B)
+\end{verbatim}
+\end{mybox}
+
+
+
+\subsection{向量的属性}
+
+\vspace{1em}
+
+  \bgroup
+  \small
+  \catcode`_=12
+  \captionof{table}{向量的属性。}\label{vector:attributes}
+  \begin{tabular}{ll}
+  \toprule
+  \texttt{属性}      & \texttt{参考}\\
+  \midrule
+  \tkzAttr{vector}{tail}     &  \\
+  \tkzAttr{vector}{head}     &  [\ref{ssub:attributes_vector_head}] \\
+  \tkzAttr{vector}{type}     &  [\ref{ssub:attributes_vector_type}] \\
+  \tkzAttr{vector}{slope}    &  [\ref{ssub:attributes_vector_slope}] \\
+  \tkzAttr{vector}{z}        &  [\ref{ssub:attributes_vector_z}] \\
+  \tkzAttr{vector}{dx}       &  [\ref{ssub:attributes_vector_d}] \\
+  \tkzAttr{vector}{dy}       &  [\ref{ssub:attributes_vector_d}]\\
+  \tkzAttr{vector}{norm}     &  [\ref{ssub:attributes_vector_norm}]\\
+  \tkzAttr{vector}{mtx}      &  [\ref{ssub:attributes_vector_mtx}] \\
+  \bottomrule
+  \end{tabular}
+  \egroup
+
+
+\subsubsection{属性 \tkzAttr{vector}{head}}
+\label{ssub:attributes_vector_head}
+
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ z.C = point(1, 2)
+ z.D = point(2, 1)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ V.w = V.u + V.v
+ z.E = V.w.head}
+\begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,O,E)
+  \tkzDrawSegments[->,red](A,B)
+  \tkzDrawSegments[->,cyan](A,E)
+  \tkzDrawSegments[->,blue](C,D B,E)
+  \tkzLabelSegment(A,B){$\overrightarrow{u}$}
+  \tkzLabelSegment(C,D){$\overrightarrow{v}$}
+  \tkzLabelSegment(A,E){$\overrightarrow{w}$}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\begin{tkzexample}[code only]
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ z.C = point(1, 2)
+ z.D = point(2, 1)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ V.w = V.u + V.v
+ z.E = V.w.head}
+\end{tkzexample}
+\end{minipage}
+
+
+\subsubsection{属性 \tkzAttr{vector}{type}}
+\label{ssub:attributes_vector_type}
+沿用前面的数据：
+
+\begin{mybox}
+\code{|V.u.type = 'vector'|}
+\end{mybox}
+
+\subsubsection{属性 \tkzAttr{vector}{slope}}
+\label{ssub:attributes_vector_slope}
+该属性给出支撑某个向量代表的直线的斜率。
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+   z.A = point(-1, 0)
+   z.B = point (3, 3)
+   V.u = vector(z.A, z.B)
+   local d = math.deg(V.u.slope)
+   tex.print(utils.format_number(d,3))}
+\end{tkzexample}
+
+\subsubsection{属性 \tkzAttr{vector}{dx}、\tkzAttr{vector}{dy}}
+\label{ssub:attributes_vector_d}
+
+这些属性给出向量在参考基下的坐标。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(0, 1)
+  z.B = point(3, 4)
+  z.C = point(3, 2)
+  z.D = point(4, 1)
+  V.u = vector(z.A, z.B)
+  V.v = vector(z.C, z.D)
+  V.w = V.u + V.v
+  z.E = V.w.head
+  local pc = string.char(37)
+  local format = "("..pc.."g,"..pc.."g)"
+  tex.print("(dx,dy) =
+     ",string.format(format, V.w.dx, V.w.dy))
+  }
+\begin{center}
+  \begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,E)
+  \tkzDrawSegments[->,red](A,B C,D)
+  \tkzDrawSegments[->,blue](A,E B,E)
+  \tkzDrawPoints(A,C)
+\end{tikzpicture}
+  \end{center}
+\end{tkzexample}
+
+
+\subsubsection{属性 \tkzAttr{vector}{norm}}
+\label{ssub:attributes_vector_norm}
+该属性给出两端点之间线段的长度。
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+   z.A = point(-1, 0)
+   z.B = point(3, 3)
+   V.u = vector(z.A, z.B)
+   V.d = V.u.norm
+   tex.print("norm = ",V.d)}
+\end{tkzexample}
+
+\subsubsection{属性 \tkzAttr{vector}{mtx}}
+\label{ssub:attributes_vector_mtx}
+这里将一个以 \code{column vector}（列向量）形式表示的矩阵与所讨论的向量关联起来。
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+   z.O = point(1, 0)
+   z.I = point(2, 1)
+   V.u = vector(z.O, z.I)
+   V.u.mtx:print()
+   V.v = V.u.mtx:transpose()
+   V.v:print()}
+\end{tkzexample}
+
+\subsubsection{属性 \tkzAttr{vector}{z}}
+\label{ssub:attributes_vector_z}
+该属性对于使用 \code{\^{}} 和 \code{..} 元方法非常有用。
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+ z.A = point(1, 1)
+ z.B = point(2, -1)
+ z.C = point(0, 1)
+ z.D = point(3, 2)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ n = V.u.z ^ V.v.z
+ m = V.u.z .. V.v.z
+ tex.print("determinant(u,v) = "..tostring(n))
+ tex.print('\\\\')
+ tex.print("dot product(u,v) = "..tostring(m))
+}
+\end{tkzexample}
+
+
+\newpage
+
+\subsection{vector 类的元方法概览}
+
+\vspace{1em}
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{vector 类的方法。}\label{vector:metamethods}
+\begin{tabular}{ll}
+\toprule
+\texttt{元方法} & \texttt{参考} \\
+\midrule
+\tkzMeta{vector}{add(u,v)}   & [\ref{ssub:method_vector_add}]  \\
+\tkzMeta{vector}{sub(u,v)}   & [\ref{ssub:method_vector_sub}]  \\
+\tkzMeta{vector}{unm(u)}     & [\ref{ssub:method_vector_unm}] \\
+\tkzMeta{vector}{mul(k,u)}   & [\ref{ssub:method_vector_mul}]        \\
+\tkzMeta{vector}{pow(k,u)}   & [\ref{ssub:method_vector_det}]        \\
+\tkzMeta{vector}{concat(k,u)}& [\ref{ssub:method_vector_dot}]        \\
+\bottomrule
+  \end{tabular}
+\egroup
+
+
+
+\subsection{元方法示例}
+
+\subsubsection{方法 \tkzMeth{vector}{add}}
+\label{ssub:method_vector_add}
+
+加法定义如下：
+
+设 V.AB + V.CD 得到一个向量 V.AE，其定义如下
+
+如果 $\overrightarrow{CD} = \overrightarrow{BE} $，则 $\overrightarrow{AB} + \overrightarrow{CD} = \overrightarrow{AB} + \overrightarrow{BE} =\overrightarrow{AE}$
+
+\begin{verbatim}
+z.A  = point(0, 1)
+z.B  = point(3, 4)
+z.C  = point(3, 2)
+z.D  = point(4, 1)
+V.AB = vector(z.A, z.B)
+V.CD = vector(z.C, z.D)
+V.AE = V.AB + V.CD  % possible V.AB:add(V.CD)
+z.E  = V.AE.head % we recover the final point (head)
+\end{verbatim}
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ z.C = point(3, 2)
+ z.D = point(4, 1)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ V.w = V.u + V.v % or V.u:add(V.v)
+ z.E = V.w.head}
+\begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,E)
+  \tkzDrawSegments[->,red](A,B)
+  \tkzDrawSegments[->,cyan](A,E)
+  \tkzDrawSegments[->,blue](C,D B,E)
+  \tkzLabelSegment(A,B){$\overrightarrow{u}$}
+  \tkzLabelSegment(C,D){$\overrightarrow{v}$}
+  \tkzLabelSegment(A,E){$\overrightarrow{w}$}
+\end{tikzpicture}
+\end{tkzexample}
+
+
+\subsubsection{方法 \tkzMeth{vector}{sub}}
+\label{ssub:method_vector_sub}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ z.C = point(3, 2)
+ z.D = point(4, 1)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ V.w = V.u - V.v
+ z.E = V.w.head}
+
+\begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,E)
+  \tkzDrawSegments[->,red](A,B)
+    \tkzDrawSegments[->,cyan](A,E)
+   \tkzDrawSegments[->,blue](C,D B,E)
+  \tkzLabelSegment(A,B){$\overrightarrow{u}$}
+  \tkzLabelSegment(C,D){$\overrightarrow{v}$}
+  \tkzLabelSegment(A,E){$\overrightarrow{w}$}
+\end{tikzpicture}
+\end{tkzexample}
+
+
+\subsubsection{方法 \tkzMeth{vector}{mul}}
+\label{ssub:method_vector_mul}
+这当然就是数乘。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ z.C = point(3, 2)
+ z.D = point(4, 1)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.C, z.D)
+ V.w = V.u + 2 * V.v
+ z.E = V.w.head}
+
+\begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,E)
+  \tkzDrawSegments[->,red](A,B)
+    \tkzDrawSegments[->,cyan](A,E)
+   \tkzDrawSegments[->,blue](C,D B,E)
+  \tkzLabelSegment(A,B){$\overrightarrow{u}$}
+  \tkzLabelSegment(C,D){$\overrightarrow{v}$}
+  \tkzLabelSegment(A,E){$\overrightarrow{w}$}
+\end{tikzpicture}
+\end{tkzexample}
+
+
+\subsubsection{方法 \tkzMeth{vector}{unm}}
+\label{ssub:method_vector_unm}
+
+这个元方法让你可以书写 \code{V.w = -V.v}
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(0, 1)
+  z.B = point(3, 3)
+  z.C = point(3, 2)
+  z.D = point(4, 1)
+  V.u = vector(z.A, z.B)
+  V.v = vector(z.C, z.D)
+  V.v = -V.v
+  V.w = V.u + V.v
+  z.E = V.w.head}
+\begin{center}
+  \begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzLabelPoints(A,B,C,D,E)
+  \tkzDrawSegments[->,red](A,B)
+  \tkzDrawSegments[->,cyan](A,E)
+  \tkzDrawSegments[->,blue](D,C B,E)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{vector}{\textasciicircum{}}}
+\label{ssub:method_vector_det}
+这里不是指幂运算（那在这里没有意义），而是指两个向量的行列式。注意：所使用的参考系是正交且右手的。
+
+\begin{mybox}
+|V.u = vector(z.A, z.B) with z.A = point(xa, ya) and z.B = point(xb, yb)|
+|V.v = vector(z.C, z.D) with z.C = point(xc, yc) and z.D = point(xd, yd)|
+then |V.u ^ V.v = xa * yb -  xb * ya|
+\end{mybox}
+
+注：|u ^ v = u.norm * v.norm * sin(u,v)|
+
+\subsubsection{方法 \tkzMeth{vector}{..}}
+\label{ssub:method_vector_dot}
+这里不是指拼接（那在这里没有意义），而是指两个向量的点积。注意：所使用的参考系是正交且右手的。
+
+\begin{mybox}
+|V.u = vector(z.A, z.B) with z.A = point(xa, ya) and z.B = point(xb, yb)|
+|V.v = vector(z.C, z.D) with z.C = point(xc, yc) and z.D = point(xd, yd)|
+then |V.u .. V.v = xa * xb +  ya * yb|
+\end{mybox}
+
+注：|V.u .. V.v = V.u.norm * V.v.norm * cos(V.u,V.v)|
+
+
+我们将使用最后这两个方法。利用在本宏包所使用的右手正交参考系中表示出的点积和行列式，我们可以求出该角的余弦和正弦。
+
+\begin{minipage}{.5\textwidth}
+\directlua{
+ z.O = point(0, 0)
+ z.A = point(5, 0)
+ z.B = point(1, -4)
+ V.u = vector(z.O, z.A)
+ V.v = vector(z.O, z.B)
+ local dp = V.u .. V.v % dot product
+ local d = V.u ^ V.v % determinant
+ % costheta = dp / (u.norm * v.norm)
+ % sintheta = d / (u.norm * v.norm)
+  an = math.atan(d / dp)}
+  \begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawSegments[>=stealth,->](O,A O,B)
+  \tkzDrawPoints(O)
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[left](O)
+  \tkzMarkAngle[<-,>=stealth](B,O,A)
+  \tkzLabelAngle[pos=2](B,O,A){$\directlua{
+  local format = string.char(37) .. ".2f"
+  tex.print(string.format( format , math.deg(an)))}$ deg}
+  \end{tikzpicture}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\begin{tkzexample}[code only]
+\directlua{
+  z.O = point(0, 0)
+  z.A = point(5, 0)
+  z.B = point(1, -4)
+  V.u = vector(z.O, z.A)
+  V.v = vector(z.O, z.B)
+  local dp = V.u .. V.v % dot product
+  local d = V.u ^ V.v % determinant
+  % costheta = dp / (u.norm * v.norm)
+  % sintheta = d / (u.norm * v.norm)
+  an = math.atan(d / dp)}
+\end{tkzexample}
+\end{minipage}
+
+显示角度测量值所需的代码如下：
+
+\begin{tkzexample}[code only]
+  \tkzLabelAngle[pos=2](B,O,A){$\directlua{
+  local format = string.char(37) .. ".2f"
+  tex.print(string.format( format , math.deg(an)))}$ deg}
+\end{tkzexample}
+
+% subsubsection method_vector_dot（结束）`
+
+
+
+\smallskip
+  \tkzClass{vector} 类所提供的主要方法总结如下。
+
+\medskip
+\small
+\captionof{table}{vector 类的方法。}\label{vector:methods}
+\begin{tabular}{ll}
+\toprule
+\texttt{方法} & \texttt{参考} \\
+\midrule
+\texttt{构造函数} & \\
+\midrule
+\tkzMeth{vector}{new(pt, pt)} & \ref{sub:creating_a_vector} \\
+\midrule
+\texttt{返回布尔值的方法} & \\
+\midrule
+\tkzMeth{vector}{is\_zero([EPS])} & \\
+\tkzMeth{vector}{is\_parallel(v,[EPS])} & \\
+\tkzMeth{vector}{is\_orthogonal(v,[EPS])} & \\
+\midrule
+\texttt{返回点的方法} & \\
+\midrule
+\tkzMeth{vector}{get()}   & [\ref{sub:vector_other_methods}] \\
+\midrule
+\texttt{返回数值的方法} & \\
+\midrule
+\tkzMeth{vector}{dot(v)}        & [\ref{sub:vector_other_methods}] \\
+\tkzMeth{vector}{cross(v)}      & [\ref{sub:vector_other_methods}] \\
+\tkzMeth{vector}{angle\_to(v)}  & [\ref{sub:vector_other_methods}] \\
+\midrule
+\texttt{返回向量的方法} & \\
+\midrule
+\tkzMeth{vector}{add(v)}        & [\ref{sub:vector_other_methods}] \\
+\tkzMeth{vector}{scale(d)}      & [\ref{sub:vector_other_methods}] \\
+\tkzMeth{vector}{normalize()}   & [\ref{ssub:method_vector_normalize}]     \\
+\tkzMeth{vector}{at (pt)}       & [\ref{ssub:method_vector_at}]            \\
+\tkzMeth{vector}{rotate($\theta$)} & [\ref{sub:vector_other_methods}] \\
+\tkzMeth{vector}{orthogonal([side],[length])} & [\ref{ssub:method_vector_orthogonal_r}] \\
+\bottomrule
+\end{tabular}
+
+
+
+\subsection{返回布尔值}
+
+\subsubsection{判定谓词：\tkzMeth{vector}{is\_zero}、\tkzMeth{vector}{is\_parallel}、\tkzMeth{vector}{is\_orthogonal}}
+
+\begin{verbatim}
+if V:is_zero() then ... end
+if V:is_parallel(W) then ... end
+if V:is_orthogonal(W) then ... end
+\end{verbatim}
+
+这些方法检验向量之间的基本几何关系，使用一个可选的
+容差 \tkzKey{EPS}，默认为 \tkzSysVar{tkz.epsilon}。它们很方便，
+尤其在数值计算中需要判定两个方向是否应视为平行或正交时。
+
+\subsection{返回向量}
+
+
+\subsubsection{方法 \tkzMeth{vector}{normalize()}}
+\label{ssub:method_vector_normalize}
+该方法产生一个与原向量共线的归一化（单位）向量。
+
+ \begin{tkzexample}[latex = .5\textwidth]
+   \directlua{
+   init_elements()
+   z.A = point(0, 1)
+   z.B = point(3, 4)
+   V.AB = vector(z.A, z.B)
+   V.AN = V.AB:normalize()
+   z.N = V.AN.head}
+   \begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawSegments(A,B)
+   \tkzDrawPoints(A,B,N)
+   \tkzLabelPoints(A,B,N)
+   \end{tikzpicture}
+ \end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{vector}{at()}}
+\label{ssub:method_vector_at}
+
+ \begin{tkzexample}[latex = .5\textwidth]
+   \directlua{
+   init_elements()
+   z.A = point(0, 1)
+   z.B = point(3, 4)
+   z.O = point(0, 0)
+   V.AB = vector(z.A, z.B)
+   V.OC = V.AB:at(z.O)
+   z.C = V.OC.head}
+   \begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawSegments(A,B O,C)
+   \tkzDrawPoints(A,B,O,C)
+   \tkzLabelPoints(A,B,O,C)
+   \end{tikzpicture}
+ \end{tkzexample}
+
+\subsubsection{方法  \tkzMeth{vector}{orthogonal([side],[length])}}
+\label{ssub:method_vector_orthogonal_r}
+
+\begin{verbatim}
+Vperp  = V:orthogonal()           -- default: "ccw"
+VperpC = V:orthogonal("cw")       -- clockwise orthogonal
+Vlen   = V:orthogonal("ccw", 2.0) -- orthogonal of prescribed length
+\end{verbatim}
+
+\tkzMeth{vector}{orthogonal} 方法构造一个与 \code{V} 正交、
+且尾点相同的向量：
+\begin{itemize}
+  \item 可选参数 \tkzKey{side} 可取 \code{"ccw"}（逆时针，
+        默认值）或 \code{"cw"}（顺时针），
+  \item 可选参数 \tkzKey{length} 可用于指定所得向量的模；
+        若省略，则长度由当前向量旋转决定。
+\end{itemize}
+
+\subsection{其他方法}
+\label{sub:vector_other_methods}
+
+\begin{itemize}
+  \item \tkzMeth{vector}{get()} 返回向量的尾点和头点。
+  \item \tkzMeth{vector}{add(v)} 返回两个向量之和，以
+        当前向量的尾点为起点（亦可写作 \code{V + W}）。
+  \item \tkzMeth{vector}{scale(d)} 返回乘以 \code{d} 后的向量，
+        尾点相同（亦可写作 \code{d * V}）。
+  \item \tkzMeth{vector}{dot(v)} 返回点积（亦可写作 \code{V .. W}）。
+  \item \tkzMeth{vector}{cross(v)} 返回叉积
+        $x_V y_W - y_V x_W$（亦可写作 \code{V \textasciicircum{} W}）。
+  \item \tkzMeth{vector}{angle\_to(v)} 返回从当前向量到
+        \code{v} 的有向角，取值范围为 $[0, 2\pi)$。
+  \item \tkzMeth{vector}{rotate(theta)} 返回绕其尾点旋转
+        \code{theta}（弧度）后的向量。
+\end{itemize}
+
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(3, 1)
+ z.C = point(1, 2)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.A, z.C)
+ z.S = V.u:add(V.v).head
+ z.R = V.u:rotate(math.pi / 2).head
+ z.D = V.u:scale(-0.5).head
+ tex.print("dot = " .. V.u:dot(V.v) .. ", cross = " .. V.u:cross(V.v)..", angle = " .. tkz.round(math.deg(V.u:angle_to(V.v)), 2) .. " degrees")}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawSegments[->](A,B A,C A,S A,R A,D)
+\tkzDrawPoints(A,B,C,S,R,D)
+\tkzLabelPoints(A,B,C,S,R,D)
+\end{tikzpicture}
+\end{verbatim}
+
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(3, 1)
+ z.C = point(1, 2)
+ V.u = vector(z.A, z.B)
+ V.v = vector(z.A, z.C)
+ z.S = V.u:add(V.v).head
+ z.R = V.u:rotate(math.pi / 2).head
+ z.D = V.u:scale(-0.5).head
+ tex.print("dot = " .. V.u:dot(V.v) .. ", cross = " .. V.u:cross(V.v)..", angle = " .. tkz.round(math.deg(V.u:angle_to(V.v)), 2) .. " degrees")
+   tex.print('\\\\')}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawSegments[->](A,B A,C A,S A,R A,D)
+\tkzDrawPoints(A,B,C,S,R,D)
+\tkzLabelPoints(A,B,C,S,R,D)
+\end{tikzpicture}
+
+\begin{tkzexample}[latex=.5\textwidth]
+ \directlua{
+ init_elements()
+ z.A = point(0, 1)
+ z.B = point(3, 4)
+ V.AB = vector(z.A, z.B)
+ V.AR = V.AB:orthogonal(2 * math.sqrt(2))
+ z.R = V.AR.head
+ V.AS = V.AB:orthogonal("cw",2)
+ z.S = V.AS.head}
+\begin{center}
+ \begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzDrawSegments[>=stealth,->,
+    red](A,B A,R A,S)
+  \tkzLabelPoints(A,B,R,S)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+
+\endinput

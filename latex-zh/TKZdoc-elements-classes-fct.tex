@@ -1,0 +1,377 @@
+%--------------------------------------------------------------------
+\newpage
+\section{\tkzClass{fct} 类}
+\label{sec:class_fct}
+
+\tkzClass{fct} 类表示一个实值函数
+\[
+x \longmapsto f(x)
+\]
+在 Lua 中定义并求值。一个 \tkzClass{fct} 对象封装的是 (i) 一个数值表达式（以变量 \texttt{x} 中的字符串给出），或 (ii) 一个可调用的 Lua 函数，并配有用于求值、采样和几何构造的方法。
+
+按照约定，函数对象存放在一个名为 \tkzVar{fct}{F} 的 Lua 表中。虽然这个名字不是强制的，但为了在各示例和文档中保持一致，强烈建议使用 \texttt{F}。\texttt{F} 的每个条目都把一个符号名（例如 \texttt{fa}）与一个 \tkzClass{fct} 类的对象关联起来。如果使用自定义表名，则必须手动初始化它。如果 \texttt{F} 表已经定义，\tkzFct{tkz-elements}{init\_elements()} 函数会重置它。
+
+\paragraph{数学表达式。}
+定义 \tkzClass{fct} 对象的所有表达式都按标准的 Lua 规则求值。一个 \tkzClass{fct} 对象可以在某个实数处求值、在一个区间上采样、转换成一个 \tkzClass{path}（供 TikZ 绘图），或导出到一个数据文件。
+
+\paragraph{重要。}
+在函数和参数函数的定义中（\tkzClass{fct} 和 \tkzClass{pfct}），
+表达式必须使用标准数学记号书写。
+\emph{不得}使用 Lua 前缀 \texttt{math.}。
+
+与此相反，在 \tkzNamePack{tkz-elements} 的所有其他方法和 Lua 代码片段中，
+适用标准 Lua 语法；每当调用 Lua 数学函数时，都必须使用前缀 \texttt{math.}。为方便起见，用户可以在自己的 Lua 代码中定义局部别名，例如 \code{local sin, cos, pi = math.sin, math.cos, math.pi}。
+
+
+\medskip
+正确：
+\begin{verbatim}
+sin(x), exp(-x^2)
+\end{verbatim}
+
+错误（在 \tkzClass{fct} 和 \tkzClass{pfct} 中）：
+\begin{verbatim}
+math.sin(x), math.exp(-x^2)
+\end{verbatim}
+
+\subsection{fct 类的方法}
+\tkzClass{fct} 类提供一组紧凑的方法，围绕以下三点：\emph{(i)} 创建一个函数对象，\emph{(ii)} 对它求值，以及 \emph{(iii)} 产生一个 \tkzClass{path} 或一个数据文件。
+
+\vspace{1em}
+
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{fct 的方法。}\label{fct:methods}
+\begin{tabular}{ll}
+\toprule
+\texttt{方法} & \texttt{参考} \\
+\midrule
+\texttt{创建} & \\
+\midrule
+\tkzFct{fct}{new(expr\_or\_fn)}   & [\ref{ssub:method_fct_new}] \\
+\tkzMeth{fct}{compile()}      & [\ref{ssub:method_fct_compile}] \\
+\midrule
+\texttt{实数 / 求值} & \\
+\midrule
+\tkzMeth{fct}{eval(x)}             & [\ref{ssub:method_fct_value}] \\
+\midrule
+\texttt{点 / 路径} & \\
+\midrule
+\tkzMeth{fct}{set\_scale(x)}     & [\ref{ssub:method_fct_set_scale}] \\
+\tkzMeth{fct}{point(x)}     & [\ref{ssub:method_fct_point}] \\
+\tkzMeth{fct}{path(xmin,xmax,n)}   & [\ref{ssub:method_fct_path}] \\
+\midrule
+\texttt{切线} & \\
+\midrule
+\tkzMeth{fct}{tangent(x0,<h>,<tol>)} & [\ref{ssub:fct_tangent}] \\
+\tkzMeth{fct}{half\_tangents(x0,<h>)} & [\ref{ssub:method_fct_half_tangents}] \\
+\bottomrule
+\end{tabular}
+\egroup
+%-------------------- 细节 ---------------------------------------
+\subsubsection{构造器 \tkzFct{fct}{new(expr\_or\_fn)}}
+\label{ssub:method_fct_new}
+
+\texttt{描述：}由一个 Lua 表达式（字符串）或一个可调用的 Lua 函数创建一个函数对象。当以字符串给出时，它表示变量 \texttt{x} 中的一个表达式，按标准 Lua 规则求值（不带 \texttt{math.} 前缀，见上文）。对象创建时，无效表达式会引发错误。
+
+\medskip
+\texttt{参数：}\par
+\begin{itemize}
+\item \code{expr\_or\_fn}：以下二者之一
+  \begin{itemize}
+    \item 表示 \texttt{x} 中一个表达式的字符串，或
+    \item 一个可调用的 Lua 函数 \texttt{f(x)}。
+  \end{itemize}
+\end{itemize}
+
+\medskip
+\texttt{返回：} 一个 \tkzClass{fct} 对象。
+
+\medskip
+\texttt{示例：}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  F.f = fct("x*exp(-x^2)+1")
+  tex.print(F.f:eval(0))
+}
+\end{verbatim}
+
+
+
+\subsubsection{方法 \tkzMeth{fct}{compile()}}
+\label{ssub:method_fct_compile}
+
+\texttt{描述：}返回 Lua 函数 $x \mapsto f(x)$（表达式在对象创建时即被编译）。这是一个低层辅助函数，主要供内部使用。
+
+\subsubsection{方法 \tkzMeth{fct}{eval(x)}}
+\label{ssub:method_fct_value}
+
+\texttt{描述：}在实数 \code{x} 处求函数值。
+
+\medskip
+\texttt{返回：} 一个数（若表达式在该处无定义，则可能为 \texttt{nan} 或无穷）。当 $f$ 在该点无定义时，\tkzMeth{fct}{point}、\tkzMeth{fct}{tangent} 和 \tkzMeth{fct}{half\_tangents} 会引发错误。
+
+\begin{verbatim}
+  init_elements()
+  F.fa = fct("sin(x) + x")
+  PA.curve = F.fa:path(-2, 5, 200)
+  z.A = F.fa:point(1.3)
+  tex.print(F.fa:eval(math.pi/2))
+\end{verbatim}
+
+
+\subsubsection{方法 \tkzMeth{fct}{point(x)}}
+\label{ssub:method_fct_point}
+
+\texttt{描述：}构造与该函数关联的点 $(x,f(x))$。该方法在数值求值与几何构造之间架起了一座直接的桥梁。
+
+\medskip
+\texttt{返回：} 一个 \tkzClass{point}。
+
+\medskip
+\texttt{示例：}
+\begin{verbatim}
+  init_elements()
+  F.fa = fct("sin(x)+x")
+  PA.curve = F.fa:path(-2, 5, 200)
+  z.A = F.fa:point(1.5)
+  % or z.A = point(1.3, F.fa:eval(1.3) )
+\end{verbatim}
+
+\subsubsection{方法 \tkzMeth{fct}{path(xmin,xmax,n)}}
+\label{ssub:method_fct_path}
+
+\texttt{描述：}在 $[xmin,xmax]$ 上以 \code{n} 个子区间采样该函数，返回一个 \tkzClass{path}。无效值会被跳过（取决于内部策略）。
+
+\medskip
+\texttt{返回：} 一个 \tkzClass{path}。
+
+\medskip
+\texttt{示例：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  F.fa = fct("sin(x) + x")
+  PA.curve = F.fa:path(-1, 5, 200)
+  z.A = F.fa:point(math.pi/2)
+}
+\begin{tikzpicture}[scale=.75,gridded]
+  \tkzInit[xmin=-1,xmax=5,ymin=-1,ymax=2]
+  \tkzDrawX\tkzDrawY
+  \tkzGetNodes
+  \tkzDrawCoordinates[smooth,blue,
+                  thick](PA.curve)
+  \tkzDrawPoint[red](A)
+%  \tkzDrawPointsOnGraph[blue]{0,1,2}{fa}
+%  \tkzDrawPointOnGraph[red]{-1}{fa}
+\end{tikzpicture}
+\end{tkzexample}
+
+%
+
+% ------------------------------------------------------------
+% fct : set_scale
+% ------------------------------------------------------------
+
+\subsubsection{方法 \tkzMeth{fct}{set\_scale}}
+\label{ssub:method_fct_set_scale}
+
+该方法对函数图像施加各向异性缩放。
+
+\medskip
+\texttt{语法：}
+\begin{quote}
+F:set\_scale(sx, sy)
+\end{quote}
+
+\medskip
+\texttt{参数：}
+\begin{itemize}
+\item \texttt{sx}：施加于 $x$ 坐标的缩放因子。
+\item \texttt{sy}：施加于 $y$ 坐标的缩放因子。
+\end{itemize}
+
+\medskip
+\texttt{描述：}
+
+设 $f(x)$ 为原函数。
+施加 \texttt{set\_scale(sx, sy)} 之后，一个生成的点
+
+\[
+(x, f(x))
+\]
+
+变为
+
+\[
+(s_x x,\; s_y f(x)).
+\]
+
+该缩放影响由 \texttt{point(x)} 和 \texttt{path(xmin, xmax, n)} 产生的几何输出。
+
+函数的解析表达式保持不变。
+
+\medskip
+\texttt{示例：}
+
+\begin{tkzexample}[vbox]
+\directlua{
+  init_elements()
+  F.f73 = fct("(1./90000)*x*x*x-(1./100)*x*x+(113./36)*x")
+            :set_scale(1/100, 1/400)
+  PA.scaled = F.f73:path(0, 800, 200)
+  z.A  = F.f73:point(600)
+  z.Pl, z.Pr = F.f73:tangent(600)
+}
+\begin{center}
+\begin{tikzpicture}[scale=1.75]
+\tkzGetNodes
+\tkzInit[xmin=0,xmax=800,xstep=100,
+         ymin=0,ymax=2000,ystep=400]
+\tkzGrid
+\tkzAxeXY
+\tkzDrawCoordinates[smooth,red](PA.scaled)
+\tkzDrawPoint[red,size=4](A)
+\tkzDrawLine[blue,add = .5 and .5](Pl,Pr)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+
+
+\subsubsection{方法 \tkzMeth{fct}{tangent(x0,<h>,<tol>)}}
+\label{ssub:fct_tangent}
+
+该方法返回两个点，它们定义了横坐标 \texttt{x0} 处的切线。
+如果曲线在 \texttt{x0} 处表现正则，则返回单条切线。
+如果曲线有一个角点（左右斜率明显不同），
+则该方法返回两个半切点。
+
+\medskip
+
+\texttt{参数：}
+\begin{itemize}
+\item \texttt{x0}：求值切线的横坐标。
+\item \texttt{h}（可选）：传给 \texttt{half\_tangents} 的有限差分步长。
+\item \texttt{tol}（可选）：用于判定左右斜率是否确定同一条切线的容差。默认值：\texttt{1e-3}。
+\end{itemize}
+
+\medskip
+
+\texttt{返回：}
+两个点 \texttt{P1}、\texttt{P2}，它们确定一个切线方向。
+它们构造在距点 $P=(x0,f(x0))$ 单位距离处。
+
+\medskip
+
+\texttt{行为：}
+
+\begin{itemize}
+  \item 如果函数在 $x_0$ 局部光滑（即左右斜率足够接近），则用中心差商计算出唯一的切线方向。
+  \item 如果斜率差异显著（例如尖点或棱角），则返回两个半切线。
+\end{itemize}
+
+\medskip
+
+\texttt{示例：}
+
+\begin{tkzexample}[vbox]
+\directlua{
+  init_elements()
+  F.f691 = fct("x*exp(x)")
+  PA.curve = F.f691:path(-5, 1, 200)
+  PA.from = path:new()
+  PA.to   = path:new()
+  for x=-4, 1, 0.5 do
+    local Pl, Pr = F.f691:tangent(x)
+    PA.from:add_point(Pl)
+    PA.to:add_point(Pr)
+  end}
+
+\begin{center}
+ \begin{tikzpicture}[scale=2]
+\tkzGetNodes
+\tikzstyle{tan style}=[-]
+\tkzInit[xmin=-5,xmax=2,ymin=-1,ymax=3]
+\tkzDrawXY
+\tkzDrawCoordinates[smooth,red](PA.curve)
+\tkzText[draw,color = red,
+     fill = orange!20](1.5,1.5){$y = xe^x$}
+\tkzDrawSegmentsFromPaths[draw,color=blue,
+  line width=.4pt,add=.5 and .5](PA.from,PA.to)
+\end{tikzpicture}
+\end{center}
+
+\end{tkzexample}
+
+
+% ------------------------------------------------------------
+% fct : half_tangents
+% ------------------------------------------------------------
+
+\subsubsection{方法 \tkzMeth{fct}{half\_tangents}}
+\label{ssub:method_fct_half_tangents}
+
+该方法在横坐标 \texttt{x0} 处用有限差分近似计算两个半切线方向。
+它主要用于：当曲线有角点或尖点时，提供两个点来确定两个可能的切线方向。
+
+\texttt{语法：}
+\begin{quote}
+Pl, Pr, ml, mr = F:half\_tangents(x0, h)
+\end{quote}
+
+\texttt{参数：}
+\begin{itemize}
+\item \texttt{x0}：求值切线方向的横坐标。
+\item \texttt{h}（可选）：有限差分步长。若省略，则选择一个默认值（相对于 \texttt{x0}）。
+\end{itemize}
+
+\texttt{返回：}
+\begin{itemize}
+\item \texttt{Pl}、\texttt{Pr}：位于左右切线方向上的两个点。它们构造在距点 $P=(x0,f(x0))$ 单位距离处。
+\item \texttt{ml}、\texttt{mr}：对应的左右斜率。
+\end{itemize}
+
+\texttt{描述：}
+
+设 $P=(x_0,f(x_0))$。该方法计算
+$P_+=(x_0+h,f(x_0+h))$ 和 $P_-=(x_0-h,f(x_0-h))$，并计算斜率
+
+\[
+m_r=\frac{f(x_0+h)-f(x_0)}{(x_0+h)-x_0}, \qquad
+m_l=\frac{f(x_0)-f(x_0-h)}{x_0-(x_0-h)}.
+\]
+
+然后它返回对应方向（左/右）上的两个点，并归一化使得 $\overline{PPl}=\overline{PPr}=1$。
+
+\texttt{示例：}
+
+\begin{tkzexample}[vbox]
+\directlua{
+init_elements()
+  F.f67 = fct("(exp(x)-1)/(exp(1)-1)"):set_scale(10, 10)
+  PA.scaled = F.f67:path(0, 1, 200)
+  z.P0l, z.P0r = F.f67:half_tangents(0)
+  z.P1l, z.P1r = F.f67:half_tangents(1)
+  z.P0 = F.f67:point(0)
+  z.P1 = F.f67:point(1)
+}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.20]
+\tkzGetNodes
+\tkzInit[xmax=1,ymax=1,xstep=0.1,ystep=0.1]
+\tkzGrid(0,0)(1,1)
+\tkzAxeXY
+\tkzDrawCoordinates[smooth,red,thick](PA.scaled)
+ \tkzText[draw,color = red,fill = orange!20](0.5,0.6)%
+{$f(x)=\dfrac{\text{e}^x-1}{\text{e}-1}$}
+\tkzDrawSegments[>=stealth,->,cyan, thick, add = 0 and 4](P0,P0r P1,P1l)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}[vbox]
+\endinput

@@ -1,0 +1,44 @@
+# artefacts LaTeX   LaTeX 生成产物
+*.aux
+*.log
+*.toc
+*.out
+*.synctex.gz
+*.nav
+*.snm
+*.fls
+*.fdb_latexmk
+*.idx
+*.ilg
+*.ind
+*.bbl
+*.blg
+latex-zh.zip
+
+# 原文 
+/latex/
+
+
+# fichiers produits par la compilation de la doc 文档编译生成的文件
+doc/latex/tmp.table
+doc/latex/myfic.mp
+
+# builds locaux 本地构建
+/build/
+doc/latex/build
+doc/build/
+.DS_Store
+__MACOSX/
+
+# Editors / tools 编辑器 / 工具
+.nova/
+.git.bak-*/
+Claude outputs/
+
+# ignorer les scripts en général 一般情况下忽略脚本
+*.sh
+*.zsh
+
+# MAIS garder ceux du dossier scripts/ 但是保留 scripts / 文件夹下的那些文件
+!scripts/*.sh
+!scripts/*.zsh

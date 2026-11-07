@@ -1,0 +1,1246 @@
+\newpage
+ \section{辅助函数}
+
+除了面向对象的构造之外，本宏包还提供一组辅助函数。这些函数并非严格必需，但可简化许多几何运算并缩短代码。是否使用取决于具体场景；本着本宏包的精神，更推荐使用对象。
+
+\medskip
+它们可以：
+\begin{itemize}
+  \item 直接进行几何计算，而无需定义中间对象（例如直线或三角形），
+  \item 快速测试（共线、垂直），
+  \item 或访问常用构造（中点、重心、角平分线）。
+\end{itemize}
+
+这些工具遵循与宏包其余部分相同的约定，既可接受点对象，也可接受复数（在适用时）。当你希望脚本尽量精简、避免显式声明变量时，通常在 Lua 代码块中使用它们。
+
+\medskip
+\texttt{示例：}
+
+下面在不定义直线的情况下计算线段中点：
+\begin{mybox}
+\begin{verbatim}
+z.M = tkz.midpoint(z.A, z.B)
+\end{verbatim}
+\end{mybox}
+这样就无需先定义 \code{L.AB = line(z.A, z.B)} 再访问 \code{L.AB.mid}。
+
+\texttt{概览：}下表汇总了可用的函数：
+
+
+\bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{辅助函数。}\label{misc}
+  \begin{tabular}{ll}
+  \toprule
+  \textbf{函数} & \texttt{参考}\\
+  \midrule
+  \tkzFct{tkz}{tkz.length(z1, z2) }   &  [\ref{sub:length_of_a_segment}]  \\
+  \tkzFct{tkz}{tkz.midpoint(z1, z2)} &  [\ref{sub:midpoint_and_midpoints}] \\
+
+  \tkzFct{tkz}{tkz.midpoints(z1, z2, ..., zn)} & [\ref{sub:midpoint_and_midpoints}]\\
+
+  \tkzFct{tkz}{tkz.is\_linear(z1, z2, z3) }   & [\ref{sub:alignment_or_orthogonality}]  \\
+  \tkzFct{tkz}{tkz.is\_ortho(z1, z2, z3)} &  [\ref{sub:alignment_or_orthogonality}]\\
+
+  \tkzFct{tkz}{tkz.bisector(z1, z2, z3)} &  [\ref{sub:bisector}; \ref{sub:bisector_and_altitude}; \ref{sub:tkz.get_angle}] \\
+
+  \tkzFct{tkz}{tkz.bisector\_ext(z1, z2, z3)} &  [\ref{sub:bisector_and_altitude}] \\
+
+  \tkzFct{tkz}{tkz.altitude(z1, z2, z3)} & [\ref{sub:bisector_and_altitude}] \\
+
+
+
+  \tkzFct{tkz}{tkz.get\_angle(z1, z2, z3)} &  [\ref{sub:tkz.get_angle}] \\
+
+ \tkzFct{tkz}{tkz.inner\_angle(z1, z2, z3)} & [\ref{sub:tkz_inner_angle}] \\
+
+  \tkzFct{tkz}{tkz.angle\_normalize(an) }  & [\ref{sub:tkz_angle_normalize}] \\
+
+\tkzFct{tkz}{tkz.get\_angle\_normalize} & [\ref{sub:tkz.get_angle_normalize}] \\
+
+\tkzFct{tkz}{tkz.angle\_between\_vectors} & [\ref{sub:angle_between_vectors}]\\
+
+
+  \tkzFct{tkz}{tkz.barycenter (\{z1,n1\},\{z2,n2\}, ...)} & [\ref{sub:misc_barycenter}]  \\
+
+  \tkzFct{tkz}{tkz.dot\_product(z1, z2, z3)} & [\ref{sub:dot_or_scalar_product}] \\
+  \tkzFct{tkz}{tkz.parabola(pta, ptb, ptc)} & [\ref{tkz:parabola}] \\
+
+  \tkzFct{tkz}{tkz.nodes\_from\_paths} & \ref{sub:tkz_nodes_from_paths}\\
+
+  \tkzFct{tkz}{tkz.fsolve(f, a, b, n [, opts])} & \ref{sub:fsolve}\\
+
+  \tkzFct{tkz}{tkz.derivative(f, x0 [, accuracy])} & \ref{sub:derivative}\\
+  \bottomrule
+  \end{tabular}
+  \egroup
+
+
+
+
+\subsection{线段长度}
+\label{sub:length_of_a_segment}
+
+函数 \tkzFct{tkz}{tkz.length(z1, z2)} 返回两点之间的欧氏距离。它等价于：
+
+\begin{mybox}
+\begin{verbatim}
+point.abs(z1 - z2)
+\end{verbatim}
+\end{mybox}
+
+这个快捷方式让你无需显式处理复数即可计算线段长度。
+
+\medskip
+\texttt{替代方式：}
+
+如果你需要把线段定义为 \tkzClass{line} 对象以便后续使用（例如绘制它，或访问中点、方向等其他属性），可以使用：
+
+\begin{mybox}
+\begin{verbatim}
+L.AB = line(z.A, z.B)
+l = L.AB.length
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{建议：}
+
+简单的距离计算使用 \code{tkz.length(z1, z2)}，尤其是在计算或条件判断中。如果你在做一个完整的构造、需要更多几何属性，则应优先把线段显式定义为直线对象。
+
+\subsection{中点}
+\label{sub:midpoint_and_midpoints}
+
+与 \tkzFct{tkz}{length} 一样，函数 \tkzFct{tkz}{tkz.midpoint(z1, z2)} 提供了计算线段中点的快捷方式：
+
+\begin{mybox}
+\begin{verbatim}
+z.M = tkz.midpoint(z.A, z.B)
+\end{verbatim}
+\end{mybox}
+
+这等价于创建一个 \tkzClass{line} 对象并访问其中点：
+
+\begin{mybox}
+\begin{verbatim}
+L.AB = line(z.A, z.B)
+z.M = L.AB.mid
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{多边形链的中点：}
+要计算折线的中点，使用函数 |tkz.midpoints(...)|。该函数返回依次相邻各段 $z_1z_2$、$z_2z_3$、……、$z_{n-1}z_n$ 的中点。
+
+\begin{mybox}
+\begin{verbatim}
+z.MA, z.MB, z.MC = tkz.midpoints(z.A, z.B, z.C, z.D)
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{中点三角形：}
+对于三角形，常需要计算中点三角形——由三边中点构成的三角形。定义三角形对象后：
+
+\begin{mybox}
+\begin{verbatim}
+T.abc = triangle(z.a, z.b, z.c)
+z.ma, z.mb, z.mc = T.abc:medial()
+\end{verbatim}
+\end{mybox}
+
+这等价于直接调用 \tkzFct{tkz}{midpoints}：
+
+\begin{mybox}
+\begin{verbatim}
+z.mc, z.ma, z.mb = tkz.midpoints(z.a, z.b, z.c)
+\end{verbatim}
+\end{mybox}
+
+如果你已经有一个三角形对象，也可以写成：
+
+\begin{mybox}
+\begin{verbatim}
+z.mc, z.ma, z.mb = tkz.midpoints(T.ABC:get())
+\end{verbatim}
+\end{mybox}
+
+这样就无需手动提取三角形的顶点，但更推荐使用 |T.abc:medial()|。
+
+\medskip
+\texttt{建议：}
+
+当不需要对象时，用 \tkzFct{tkz}{midpoint} 或 \tkzFct{tkz}{midpoints} 快速计算。在结构化构造中工作时，优先使用 \tkzMeth{triangle}{medial()} 等对象方法。
+
+\subsection{角平分线}
+\label{sub:bisector}
+
+函数 \tkzFct{tkz}{tkz.bisector(z1, z2, z3)} 与 \tkzFct{tkz}{tkz.bisector\_ext(z1, z2, z3)} 分别为给定点定义内角平分线与外角平分线。
+
+这两个函数返回一个 \tkzClass{line} 对象，表示以点 \code{z1} 为端点的角 $\widehat{z_2 z_1 z_3}$ 的平分线。
+
+\medskip
+\texttt{内角平分线：}
+ 下面定义从 \code{z.A} 出发的角 $ \widehat{BAC}$ 的内角平分线，所得直线存为 \code{L.Aa}。
+
+\begin{mybox}
+\begin{verbatim}
+  L.Aa = tkz.bisector(z.A, z.B, z.C)
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{外角平分线：}
+
+下面定义顶点 \code{z.A} 处的外角平分线。它与内角平分线垂直，也从 \code{z.A} 出发。
+
+\begin{mybox}
+\begin{verbatim}
+  L.Aa = tkz.bisector_ext(z.A, z.B, z.C)
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{建议：}
+当你需要把角平分线显式作为 \tkzClass{line} 对象时（例如用于求交或绘图），使用这些函数。如果你在三角形对象内部工作，某些方法也可能直接提供角平分线。
+
+\subsection{重心}
+\label{sub:misc_barycenter}
+
+函数 \tkzFct{tkz}{tkz.barycenter} 计算任意多个带权点的重心（质量中心）。它是一个通用函数，独立于几何对象工作。
+
+\medskip
+\texttt{语法：}
+
+该函数接受可变数量的参数。每个参数必须是形如下面的表：
+
+\begin{center}
+\code{\{point, weight\}}
+\end{center}
+
+
+下面是三个等权点的例子：
+\begin{mybox}
+\begin{verbatim}
+z.G = tkz.barycenter({z.A, 1}, {z.B, 1}, {z.C, 1})
+\end{verbatim}
+\end{mybox}
+
+这计算的是三角形 $ABC$ 的重心。用对象属性也可得到同样结果：
+
+\begin{mybox}
+\begin{verbatim}
+T.ABC = triangle(z.A, z.B, z.C)
+z.G = T.ABC.centroid
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{一般情形：}
+
+该函数可应用于任意多个带任意权的点：
+
+\begin{mybox}
+\begin{verbatim}
+z.G = tkz.barycenter({z.A, 2}, {z.B, 3}, {z.C, 1}, {z.D, 4})
+\end{verbatim}
+\end{mybox}
+
+这计算：
+\[
+G = \frac{2A + 3B + C + 4D}{10}
+\]
+
+\medskip
+\texttt{使用场景：}
+
+\begin{itemize}
+  \item 处理任意带权点集时使用 \tkzFct{tkz}{tkz.barycenter}。
+  \item 在三角形几何中，优先使用 \code{T.ABC.centroid}，它会自动计算并保存。
+\end{itemize}
+
+\medskip
+\texttt{注意：}
+
+结果以 \tkzClass{point} 对象返回，可用于后续任何构造。
+
+
+
+%%%----------------------------------------------------
+%%%----------------- ANGLES ----------------------
+%%%----------------------------------------------------
+
+
+\subsection{角度与常量 \code{tkz.tau}}
+
+\tkzname{tkz-elements} 中的大多数三角与几何计算
+都以弧度表示。因此一整圈用常量
+\[
+\tau = 2\pi
+\]
+表示。
+
+为方便起见，$\tau$ 的值对用户可用，即
+
+
+\verb|tkz.tau = 2 * math.pi|
+
+
+在处理规范化或周期角度时，这个常量特别有用。例如：
+
+\begin{itemize}
+  \item \code{tkz.tau / 4} 对应直角（$90^\circ$），
+  \item \code{tkz.tau / 2} 对应 $180^\circ$，
+  \item \code{3 * tkz.tau / 2} 对应 $270^\circ$，
+  \item \code{a \% tkz.tau} 把任意角度 \code{a} 规范化到区间 $[0,\tau)$。
+\end{itemize}
+
+使用 $\tau$ 可避免在数值代码中显式出现 $2\pi$，
+并提高几何计算的可读性。
+
+%%----------------------------------------------------
+%%----------------- GET_ANGLE  base ----------------------
+%%----------------------------------------------------
+
+\subsection{函数 \tkzFct{tkz}{tkz.get\_angle(pa, pb, pc)}}
+\label{sub:tkz.get_angle}
+
+函数 \tkzFct{tkz}{tkz.get\_angle} 在给定三点 \tkzname{A}、\tkzname{B}、\tkzname{C} 时，返回某点处的有向角。
+
+它计算顶点 $A$ 处的有向角 $\widehat{BAC}$，即从向量 $\overrightarrow{AB}$ 旋转到向量 $\overrightarrow{AC}$ 所成的角，以弧度表示。
+
+\medskip
+\texttt{语法：}
+
+\begin{mybox}
+\verb|an = tkz.get_angle(pa, pb, pc)|
+\end{mybox}
+
+
+\texttt{参数：}
+\begin{itemize}
+  \item \code{pa}、\code{pb}、\code{pc} —— 三个点（Lua 复数）。
+\end{itemize}
+
+\texttt{返回值：}
+\begin{itemize}
+  \item 一个有向角（Lua number），以弧度表示，区间为 $(-\pi, \pi]$。
+\end{itemize}
+
+\medskip
+
+\texttt{示例：}
+
+下面的代码以点 \code{a} 为顶点计算两个角 $ \widehat{CAB}$，并用 \code{tkzround} 格式化显示：
+
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+  init_elements()
+  z.a = point(0, 0)
+  z.b = point(-2, -2)
+  z.c = point(0, 3)
+  ang_cb = tkz.round(
+    tkz.get_angle(z.a, z.c, z.b), 3)
+  ang_bc = tkz.round(
+    tkz.get_angle(z.a, z.b, z.c), 3)
+}
+\begin{center}
+\begin{tikzpicture}[scale = 1.2]
+  \tkzGetNodes
+  \tkzDrawLines[red](a,b a,c)
+  \tkzDrawPoints(a,b,c)
+  \tkzLabelPoints(a,b,c)
+  \tkzMarkAngle[->](c,a,b)
+  \tkzLabelAngle(c,a,b){%
+      \tkzUseLua{ang_cb}}
+  \tkzMarkAngle[->](b,a,c)
+  \tkzLabelAngle(b,a,c){%
+     \tkzUseLua{ang_bc}}
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+%%----------------------------------------------------
+%%----------------- INNER_ANGLE  ----------------------
+%%----------------------------------------------------
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.inner\_angle(pa, pb, pc)}}
+\label{sub:tkz_inner_angle}
+
+函数 \verb|\tkzFct{tkz}{tkz.inner_angle}| 在给定三点 \tkzname{pa}、\tkzname{pb}、\tkzname{pc} 时，返回某点处的（无向）内角。
+
+它对应有向角 $\widehat{BAC}$ 的绝对值，以弧度表示。
+
+\medskip
+\texttt{语法：}
+
+\begin{mybox}
+\verb|an = tkz.inner_angle(pa, pb, pc)|
+\end{mybox}
+
+\texttt{参数：}
+\begin{itemize}
+  \item \code{pa}、\code{pb}、\code{pc} —— 三个点。
+\end{itemize}
+
+\texttt{返回值：}
+\begin{itemize}
+  \item 一个无向角，以弧度表示，区间为 $[0, \pi]$。
+\end{itemize}
+
+\medskip
+该函数特别适用于处理三角形的角：
+\[
+\alpha = \texttt{tkz.inner\_angle}(A,B,C),\quad
+\beta  = \texttt{tkz.inner\_angle}(B,C,A),\quad
+\gamma = \texttt{tkz.inner\_angle}(C,A,B).
+\]
+
+
+%%----------------------------------------------------
+%%----------------- NORMALIZE_ANGLE  ----------------------
+%%----------------------------------------------------
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.angle\_normalize}}
+\label{sub:tkz_angle_normalize}
+
+函数 \verb|\tkzFct{tkz}{tkz.angle\_normalize}| 把一个实角规范化到区间
+$[0, 2\pi)$。
+
+\medskip
+\texttt{语法：}
+
+\verb|an2 = tkz.angle_normalize(an1)|
+
+
+\texttt{参数：}
+\begin{itemize}
+  \item \code{an1} —— 一个实数（弧度角）。
+\end{itemize}
+
+\texttt{返回值：}
+\begin{itemize}
+  \item \code{an2} —— 同一个角，对 $2\pi$ 取模后落入 $[0, 2\pi)$。
+\end{itemize}
+
+\medskip
+\texttt{应用：}
+
+为计算平面上线段的方向，我们使用函数 \tkzFct{point}{arg(z)}，它返回正水平轴与复数 \code{z} 所表示向量之间的夹角（弧度）。根据向量方向不同，该值可能为负，也可能大于 $2\pi$。
+
+\medskip
+为保证一致性（尤其是比较角度或排序角度时），函数
+
+\tkzFct{tkz}{tkz.angle\_normalize(an)} 把任意角度映射到区间 $[0, 2\pi]$。
+
+\medskip
+\texttt{示例：}
+
+下面的例子计算并显示三个向量 \code{(ab)}、\code{(ac)}、\code{(ad)} 的斜率（夹角）。它同时显示原始角度与规范化后的角度。
+\begin{Verbatim}
+\directlua{%
+init_elements()
+   z.a = point(0, 0)
+   z.b = point(-3, -3)
+   z.c = point(0, 3)
+   z.d = point(2, -2)
+   local angle = point.arg(z.b - z.a)
+   tex.print('slope of (ab): '..tostring(angle)..'\\\\')
+   tex.print('slope normalized of (ab): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+   local angle    = point.arg (z.c-z.a)
+   tex.print('slope of (ac): '..tostring(angle)..'\\\\')
+   tex.print('slope normalized of (ac): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+   local angle    = point.arg (z.d-z.a)
+   tex.print('slope of (ad): '..tostring(angle)..'\\\\')
+   tex.print('slope normalized of (ad): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+}
+\end{Verbatim}
+\directlua{%
+init_elements()
+z.a = point(0, 0)
+z.b = point(-3, -3)
+z.c = point(0, 3)
+z.d = point(2, -2)
+local angle = point.arg (z.b-z.a)
+tex.print('slope of (ab): '..tostring(angle)..'\\\\')
+tex.print('slope normalized of (ab): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+local angle = point.arg (z.c-z.a)
+tex.print('slope of (ac): '..tostring(angle)..'\\\\')
+tex.print('slope normalized of (ac): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+local angle = point.arg (z.d-z.a)
+tex.print('slope of (ad): '..tostring(angle)..'\\\\')
+tex.print('slope normalized of (ad): '..tostring(tkz.angle_normalize(angle))..'\\\\')
+}
+
+\begin{minipage}{.5\textwidth}
+\begin{Verbatim}
+  \begin{tikzpicture}[scale = .75]
+     \tkzGetNodes
+     \tkzDrawLines[red](a,b a,c a,d)
+     \tkzDrawPoints(a,b,c,d)
+     \tkzLabelPoints(a,b,c,d)
+  \end{tikzpicture}
+\end{Verbatim}
+
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+  \begin{center}
+    \begin{tikzpicture}[scale = .75]
+       \tkzGetNodes
+       \tkzDrawLines[red](a,b a,c a,d)
+       \tkzDrawPoints(a,b,c,d)
+       \tkzLabelPoints(a,b,c,d)
+    \end{tikzpicture}
+  \end{center}
+\end{minipage}
+
+\medskip
+\texttt{注意：}
+
+在进行角度比较、方向排序（例如凸包算法中），或为后续几何处理规范化输出时，这个技巧必不可少。
+
+%%----------------------------------------------------
+%%----------------- DIRECT_ANGLE  ----------------------
+%%----------------------------------------------------
+
+
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.is\_direct}}
+\label{sub:tkz_is_direct}
+
+函数 \tkzFct{tkz}{tkz.is\_direct} 检测某点处的有向角
+是否为正向（逆时针）。
+
+\medskip
+\texttt{语法：}
+
+\begin{mybox}
+\verb|ok = tkz.is_direct(pa, pb, pc)|
+\end{mybox}
+
+\medskip
+\texttt{参数：}
+\begin{itemize}
+  \item \code{pa}、\code{pb}、\code{pc} —— 三个点。
+\end{itemize}
+
+\medskip
+\texttt{返回值：}
+\begin{itemize}
+  \item 若有向角 $\widehat{BAC}$（从 $\overrightarrow{AB}$ 到 $\overrightarrow{AC}$）$> 0$（正向、逆时针），则返回 \code{true}；
+  \item 否则返回 \code{false}。
+\end{itemize}
+
+%%----------------------------------------------------
+%%-----------------  tkz.get_angle_normalize  -------
+%%----------------------------------------------------
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.get\_angle\_normalize}}
+\label{sub:tkz.get_angle_normalize}
+
+函数 \tkzFct{tkz}{tkz.get\_angle\_normalize} 组合了
+\tkzFct{tkz}{tkz.get\_angle} 与 \tkzFct{tkz}{tkz.angle\_normalize}。
+
+它返回某点处规范化到 $[0, 2\pi)$ 的有向角。
+
+\medskip
+\texttt{语法：}
+
+\begin{mybox}
+\verb|an = tkz.get_angle_normalize(pa, pb, pc)|
+\end{mybox}
+
+\medskip
+\texttt{参数：}
+\begin{itemize}
+  \item \code{pa}、\code{pb}、\code{pc} —— 三个点。
+\end{itemize}
+
+\medskip
+\texttt{返回值：}
+\begin{itemize}
+  \item 一个 $[0, 2\pi)$ 内的实数：\code{pa} 处规范化后的有向角。
+\end{itemize}
+
+%%----------------------------------------------------
+%%-----------------  tkz.angle_between_vectors  -------
+%%----------------------------------------------------
+
+\subsection{函数 \tkzFct{tkz}{tkz.angle\_between\_vectors}}
+\label{sub:tkz_angle_between_vectors}
+
+函数 \code{tkz.angle\_between\_vectors} 返回从向量 $\overrightarrow{AB}$ 到向量 $\overrightarrow{CD}$ 的有向角。
+
+\medskip
+\noindent\textbf{语法：}
+\begin{mybox}
+an = tkz.angle\_between\_vectors(a, b, c, d)
+\end{mybox}
+
+\noindent\textbf{参数：}
+\begin{itemize}
+  \item \code{a}、\code{b} —— 第一个向量的端点（从 \code{a} 到 \code{b}）；
+  \item \code{c}、\code{d} —— 第二个向量的端点（从 \code{c} 到 \code{d}）。
+\end{itemize}
+
+\noindent\textbf{返回值：}
+一个弧度有向角，区间为 $(-\pi,\pi]$，对应把 $\overrightarrow{AB}$ 旋转到 $\overrightarrow{CD}$ 的转角。
+逆时针方向角度为正。
+
+\medskip
+\noindent\textbf{方法：}
+设 $\vec u=\overrightarrow{AB}$、$\vec v=\overrightarrow{CD}$，则
+\[
+  \theta = \operatorname{atan2}\bigl(\det(\vec u,\vec v),\ \vec u\cdot\vec v\bigr),
+  \qquad
+  \det(\vec u,\vec v)=u_x v_y-u_y v_x,
+  \qquad
+  \vec u\cdot\vec v = u_x v_x+u_y v_y .
+\]
+
+\noindent\textbf{说明：}
+\begin{itemize}
+  \item 向量的顺序很重要：交换二者会改变结果的符号。
+  \item 同向的两个向量给出 $0$；反向的两个向量给出 $\pi$。
+  \item 若其中一个向量为零向量（$A=B$ 或 $C=D$），则角度无定义并报错。
+\end{itemize}
+
+\medskip
+\noindent\textbf{示例：}
+\begin{Verbatim}
+\directlua{%
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.C = point(1, 1)
+ z.D = point(1, 4)
+ an = tkz.angle_between_vectors(z.A, z.B, z.C, z.D)
+}
+Angle: \tkzUseLua{string.format('\percentchar.2f', math.deg(an))} degrees
+\end{Verbatim}
+\directlua{%
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.C = point(1, 1)
+ z.D = point(1, 4)
+ an = tkz.angle_between_vectors(z.A, z.B, z.C, z.D)
+}
+Angle: \tkzUseLua{string.format('\percentchar.2f', math.deg(an))} degrees
+
+这里 $\overrightarrow{AB}=(4,0)$、$\overrightarrow{CD}=(0,3)$：
+点积为 $0$，行列式为 $12$，因此结果为
+$\pi/2$，即 $90^\circ$。
+
+\medskip
+\noindent\textbf{其他情形：}
+
+\begin{center}
+\begin{tabular}{lll}
+  \hline
+  $\overrightarrow{AB}$ & $\overrightarrow{CD}$ & 结果 \\
+  \hline
+  $(1,0)$  & $(3,-3)$ & $-\pi/4$ \quad（$-45^\circ$，顺时针） \\
+  $(3,-3)$ & $(1,0)$  & $\pi/4$ \quad（$45^\circ$，交换向量） \\
+  $(2,0)$  & $(-1,0)$ & $\pi$ \quad（$180^\circ$，反向向量） \\
+  $(2,0)$  & $(5,0)$  & $0$ \quad（同向） \\
+  \hline
+\end{tabular}
+\end{center}
+
+\noindent 一个典型用途是求三角形顶点 $A$ 处的有向角：
+\begin{verbatim}
+an = tkz.angle_between_vectors(z.A, z.B, z.A, z.C)  -- angle (AB, AC)
+\end{verbatim}
+%%----------------------------------------------------
+%%-----------------  end ANGLES  -------
+%%----------------------------------------------------
+
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.dot\_product(z1, z2, z3)}}
+\label{sub:dot_or_scalar_product}
+
+该函数计算向量 $\overrightarrow{z_1z_3}$ 与 $\overrightarrow{z_1z_2}$ 的点积（标量积）：
+\[
+(z_3 - z_1) \cdot (z_2 - z_1)
+\]
+
+\texttt{注意：}
+
+ 这等价于 \code{(z2 - z1)..(z3 - z1)}。另见 [\ref{ssub:attributes_vector_z}]
+\label{par:note_dot}
+
+
+它用于检测垂直或度量投影分量。结果为零表示两向量垂直。
+
+\medskip
+\texttt{语法：}
+
+\begin{center}
+\code{tkz.dot\_product(origin, point1, point2)}
+\end{center}
+%
+这返回标量积 $\overrightarrow{z_1z_3} \cdot \overrightarrow{z_1z_2}$。
+
+\texttt{示例。}
+
+下面的例子构造三角形 $ABC$ 及其逆平行三角形，并计算 $\overrightarrow{AC}$ 与 $\overrightarrow{AB}$ 的点积：
+
+\begin{minipage}{0.5\textwidth}
+\begin{Verbatim}
+\directlua{%
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(5, 0)
+ z.C = point(0, 3)
+ T.ABC = triangle(z.A, z.B, z.C)
+ z.A_1,
+ z.B_1,
+ z.C_1  = T.ABC:anti():get()
+ x  = tkz.dot_product(z.A, z.B, z.C)}
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawPolygon(A,B,C)
+   \tkzDrawPoints(A,B,C,A_1,B_1,C_1)
+   \tkzLabelPoints(A,B,C,A_1,B_1,C_1)
+   \tkzDrawPolygon[blue](A_1,B_1,C_1)
+   \tkzText[right](0,-1){dot product =
+                       \tkzUseLua{x}}
+\end{tikzpicture}
+\end{Verbatim}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\directlua{%
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(5, 0)
+ z.C = point(0, 3)
+ T.ABC = triangle(z.A, z.B, z.C)
+ z.A_1,
+ z.B_1,
+ z.C_1  = T.ABC:anti():get()
+ x  = tkz.dot_product(z.A, z.B, z.C)}
+\begin{center}
+  \begin{tikzpicture}[ scale  = .6]
+     \tkzGetNodes
+     \tkzDrawPolygon(A,B,C)
+     \tkzDrawPoints(A,B,C,A_1,B_1,C_1)
+     \tkzLabelPoints(A,B,C,A_1,B_1,C_1)
+     \tkzDrawPolygon[blue](A_1,B_1,C_1)
+     \tkzText[right](0,-1){dot product =\tkzUseLua{x}}
+     \end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\medskip
+\texttt{解读：}
+
+本例中向量 $\overrightarrow{AC}$ 与 $\overrightarrow{AB}$ 的点积为 \tkzUseLua{x}。由于结果为零，两向量垂直。
+
+%
+
+\subsection{共线与垂直测试}
+\label{sub:alignment_or_orthogonality}
+
+函数 \tkzFct{tkz}{tkz.is\_linear} 与 \tkzFct{tkz}{tkz.is\_ortho} 用于检测三点之间的几何关系，即共线与垂直。
+
+\medskip
+\textbf{\tkzFct{tkz}{tkz.is\_linear(z1, z2, z3)}}
+若三点共线——即向量 $\\overrightarrow{z_1z_2}$ 与 $\\overrightarrow{z_1z_3}$ 共线——该函数返回 \code{true}。从几何上说，这意味着三点在同一直线上：
+\[
+(z_2 - z_1) \parallel (z_3 - z_1)
+\]
+
+\begin{mybox}
+\begin{verbatim}
+if tkz.is_linear(z.A, z.B, z.C) then
+  -- the points are collinear
+end
+\end{verbatim}
+\end{mybox}
+
+这段代码取代：
+
+\begin{mybox}
+\begin{verbatim}
+  L.AB = line(z.A, z.B)
+  L.BC = line(z.B, z.C)
+  if L.AB:is_parallel(L.BC) then
+  --  the points are collinear
+end
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\textbf{\tkzFct{tkz}{tkz.is\_ortho(z1, z2, z3)}}
+若向量 $\overrightarrow{z_1z_2}$ 与 $\overrightarrow{z_1z_3}$ 垂直——即它们的标量积为零——该函数返回 \code{true}：
+\[
+(z_2 - z_1) \cdot (z_3 - z_1) = 0
+\]
+
+\begin{mybox}
+\begin{verbatim}
+if tkz.is_ortho(z.A, z.B, z.C) then
+  -- the angle between the segments is 90°
+end
+\end{verbatim}
+\end{mybox}
+
+这段代码取代：
+
+\begin{mybox}
+\begin{verbatim}
+  L.AB = line(z.A, z.B)
+  L.BC = line(z.B, z.C)
+  if L.AB:is_orthogonal(L.BC) then
+  -- the angle between the segments is 90°
+end
+\end{verbatim}
+\end{mybox}
+
+\medskip
+\texttt{使用场景：}
+
+这些函数在判断结构或自动构造中特别有用（例如判断三角形是否为直角或退化）。它们返回布尔值，不创建任何几何对象。
+
+\subsection{角平分线与高}
+\label{sub:bisector_and_altitude}
+
+函数 \tkzFct{tkz}{bisector}、\tkzFct{tkz}{bisector\_ext} 和 \tkzFct{tkz}{altitude} 返回对应于经典三角形构造的 \tkzClass{line} 对象。当你不需要创建完整的 \tkzClass{triangle} 对象、而只想直接得到所需直线或垂足时，它们很有用。
+
+\medskip
+\texttt{内角平分线：}
+
+\code{tkz.bisector(z1, z2, z3)} 返回点 \code{z1} 处的内角平分线，由向量 $\overrightarrow{z_1z_2}$ 与 $\overrightarrow{z_1z_3}$ 计算得到。结果是一个 \tkzClass{line} 对象；其垂足（点 \code{pb}）落在对边上。
+
+\medskip
+\texttt{外角平分线：}
+
+\code{tkz.bisector\_ext(z1, z2, z3)} 返回 \code{z1} 处的外角平分线。它与内角平分线垂直。
+
+\medskip
+\texttt{高：}
+
+\code{tkz.altitude(vertex, foot1, foot2)} 返回从 \code{vertex} 到经过 \code{foot1}、\code{foot2} 的直线的垂线。结果也是一个 \tkzClass{line} 对象；垂足保存在其 \code{pb} 属性中。
+
+\begin{verbatim}
+\directlua{
+ z.a = point(0, 0)
+ z.b = point(5, -2)
+ z.c = point(2, 3)
+ z.i = tkz.bisector(z.a, z.c, z.b).pb
+ z.h = tkz.altitude(z.b, z.a, z.c).pb
+ angic = tkz.round(tkz.get_angle(z.a, z.i, z.c), 2)
+ angci = tkz.round(tkz.get_angle(z.a, z.b, z.i), 2)
+ z.e = tkz.bisector_ext(z.a, z.b, z.c).pb
+
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawPolygon(a,b,c)
+   \tkzDrawSegments(a,i b,h a,e)
+   \tkzDrawPoints(a,b,c,i,h)
+   \tkzLabelPoints(a,b)
+   \tkzLabelPoints[above](c,i,h)
+   \tkzMarkAngle[->](i,a,c)
+   \tkzLabelAngle[font=\tiny,pos=.75](i,a,c){\tkzUseLua{angci}}
+   \tkzMarkAngle[<-](b,a,i)
+   \tkzLabelAngle[font=\tiny,pos=.75](b,a,i){\tkzUseLua{angic}}
+\end{tikzpicture}
+\end{verbatim}
+
+
+\directlua{
+ init_elements()
+ z.a = point(0, 0)
+ z.b = point(5, -2)
+ z.c = point(2, 3)
+ z.i = tkz.bisector(z.a, z.c, z.b).pb
+ z.h = tkz.altitude(z.b, z.a, z.c).pb
+ angic = tkz.round(tkz.get_angle(z.a, z.i, z.c), 2)
+ angci = tkz.round(tkz.get_angle(z.a, z.b, z.i), 2)
+ z.e = tkz.bisector_ext(z.a, z.b, z.c).pb}
+
+\begin{center}
+  \begin{tikzpicture}
+     \tkzGetNodes
+     \tkzDrawPolygon(a,b,c)
+     \tkzDrawSegments(a,i b,h a,e)
+     \tkzDrawPoints(a,b,c,i,h)
+     \tkzLabelPoints(a,b)
+     \tkzLabelPoints[above](c,i,h)
+     \tkzMarkAngle[->](i,a,c)
+     \tkzLabelAngle[font=\tiny,pos=.75](i,a,c){\tkzUseLua{angci}}
+     \tkzMarkAngle[<-](b,a,i)
+     \tkzLabelAngle[font=\tiny,pos=.75](b,a,i){\tkzUseLua{angic}}
+  \end{tikzpicture}
+\end{center}
+
+\medskip
+\texttt{注意：}
+
+这些函数返回完整的 \tkzClass{line} 对象，可以访问其上的点与方向。因此，当你不需要结构化的 \code{triangle} 对象、而想要灵活构造时，它们非常理想。
+
+\subsection{函数 \tkzFct{tkz}{tkz.is\_linear}}
+\label{sub:function_islinear}
+
+函数 \tkzFct{tkz}{tkz.is\_linear(z1, z2, z3)} 检测三点是否共线。若向量 $\overrightarrow{z_1z_2}$ 与 $\overrightarrow{z_1z_3}$ 平行——即三点在同一直线上——它返回 \code{true}：
+\[
+(z_2 - z_1) \parallel (z_3 - z_1)
+\]
+
+这等价于检测三角形 $(z_1, z_2, z_3)$ 的有向面积是否为零。
+
+\medskip
+\texttt{语法：}
+
+\begin{center}
+\code{tkz.is\_linear(z1, z2, z3)} $\rightarrow$ \code{boolean}
+\end{center}
+
+\texttt{示例：}
+
+下面的代码检测点 $A$、$B$、$C$ 是否共线。若是，把新点 $D$ 设为 $(0,0)$；否则设为 $(-1,-1)$。
+
+% \begin{minipage}{0.48\textwidth}
+% \begin{tkzexample}[code only]
+% \directlua{
+  % init_elements()
+  % z.a = point(1, 1)
+  % z.b = point(2, 2)
+  % z.c = point(4, 4)
+  % if tkz.is_linear(z.a, z.b, z.c) then
+  %   z.d = point(0, 0)
+  % else
+  %   z.d = point(-1, -1)
+  % end
+% }
+% \end{tkzexample}
+%
+% \begin{tkzexample}[code only]
+% \begin{tikzpicture}
+  % \tkzGetNodes
+  % \tkzDrawPoints(a,b,c,d)
+  % \tkzLabelPoints(a,b,c,d)
+% \end{tikzpicture}
+% \end{tkzexample}
+% \end{minipage}
+% \hfill
+% \begin{minipage}{0.48\textwidth}
+% \begin{center}
+% \begin{tikzpicture}
+  % \tkzGetNodes
+  % \tkzDrawPoints(a,b,c,d)
+  % \tkzLabelPoints(a,b,c,d)
+% \end{tikzpicture}
+% \end{center}
+% \end{minipage}
+
+\medskip
+\texttt{注意：}
+
+该函数不创建任何几何对象。它用于条件判断或断言中，以便在构造更多元素之前验证配置。
+
+\subsection{函数 \tkzFct{tkz}{tkz.round(num, idp)}}
+\label{sub:function_tkz_round}
+
+该函数把一个实数四舍五入到指定小数位数，并以数值形式返回结果。
+
+\medskip
+\texttt{语法：}
+
+\begin{center}
+\code{local r = tkz.round(3.14159, 2)} \hspace{4em} $\rightarrow$ \code{3.14}
+\end{center}
+
+
+\texttt{参数：}
+
+\begin{itemize}
+\item \code{num} —— 待四舍五入的实数。
+\item \code{idp} —— 可选的小数位数（默认：0）。
+\end{itemize}
+
+\medskip
+\texttt{返回：}
+
+一个四舍五入后的数，类型为 \code{number}。
+
+\medskip
+\texttt{示例。}
+
+\begin{verbatim}
+tkz.round(3.14159, 0) --> 3
+tkz.round(3.14159, 2) --> 3.14
+tkz.round(-2.71828, 3) --> -2.718
+\end{verbatim}
+
+\medskip
+\texttt{相关函数：}
+
+ \tkzFct{utils}{format\_number(x, decimals)} —— 把四舍五入后的数转换为字符串
+
+
+\subsection{函数 \tkzFct{tkz}{tkz.angle\_between\_vectors(a, b, c, d)}}
+\label{sub:angle_between_vectors}
+
+\texttt{用途：}
+
+该函数计算有向向量 $\vec{AB}$（从 \code{a} 到 \code{b}）与有向向量 $\vec{CD}$（从 \code{c} 到 \code{d}）之间的夹角。
+
+该函数特别适用于计算转角，或验证几何配置，例如垂直（角 $=\pm\pi/2$）、共线（角 $=0$ 或 $\pi$）以及方向。
+
+\medskip
+\begin{tabular}{@{}ll@{}}
+\texttt{参数：} & \code{a}、\code{b}、\code{c}、\code{d}（以复数表示的点） \\
+\texttt{返回：} & 弧度角（实数） \\
+\end{tabular}
+
+
+\texttt{示例：}
+
+ 本例使用多种方法确定每个顶点的角度。
+
+\medskip
+\begin{tkzexample}[vbox]
+  \directlua{
+  z.A = point(0, 0)
+  z.B = point(5, 0)
+  z.C = point(1, 4)
+  T.ABC = triangle(z.A, z.B, z.C)
+  }
+  \begin{center}
+    \begin{tikzpicture}
+    \tkzGetNodes
+    %\tkzDrawCircles()
+    \tkzDrawPolygon(A,B,C)
+    \tkzDrawPoints(A,B,C)
+    \tkzLabelPoints(A,B)
+    \tkzLabelPoints[above](C)
+    \tkzLabelAngle(B,A,C){$\tkzPrintNumber[2]{%
+    \tkzUseLua{math.deg(T.ABC.alpha)}}$}
+    \tkzLabelAngle(C,B,A){$\tkzPrintNumber[2]{%
+    \tkzUseLua{math.deg(tkz.get_angle(z.B,z.C,z.A))}}$}
+    \tkzLabelAngle(A,C,B){$\tkzPrintNumber[2]{%
+  \tkzUseLua{math.deg(tkz.angle_between_vectors(z.C,z.A,z.C,z.B))}}$}
+    \end{tikzpicture}
+  \end{center}
+\end{tkzexample}
+
+\subsection{函数 \tkzFct{tkz}{tkz.parabola(pta, ptb, ptc)}}
+\label{tkz:parabola}
+给定三个不共线的点，存在唯一一条抛物线经过它们。
+函数 \tkzFct{tkz}{parabola} 计算插值这三点的二次函数
+\(y = Ax^2 + Bx + C\) 的系数 \(A,B,C\)。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ init_elements()
+ z.a = point(1, 0)
+ z.b = point(3, 2)
+ z.c = point(0, 2)
+ local A,
+ B,
+ C = tkz.parabola(z.a, z.b, z.c)
+
+ function def_curve(t0, t1, n)
+ local p = path()
+ local dt = (t1-t0)/n
+ for t = t0, t1, dt  do
+     local y = A * t^2 + B * t + C
+     local pt = point(t, y)
+     p:add_point(pt)
+  end
+  return p
+ end
+
+ PA.curve = def_curve(-1,3,100)
+}
+
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzInit[xmin = -2,xmax=4,ymin =-1,ymax=6]
+   \tkzDrawX\tkzDrawY
+   \tkzDrawPoints[red,size=4pt](a,b,c)
+  \tkzDrawCoordinates[smooth,purple](PA.curve)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsection{函数 \tkzFct{tkz}{tkz.nodes\_from\_paths}}
+\label{sub:tkz_nodes_from_paths}
+
+\texttt{语法：}
+\verb|tkz.nodes_from_paths(PAcenters, PAthrough [, wbase, tbase, indice])|
+
+\texttt{用途：}
+该函数把两条 Lua 路径中包含的点——一条表示圆心，另一条表示相应的经过点——转移到全局 Lua 表 \tkzVar{point}{z} 中。
+每对点用两个前缀（例如 “w” 和 “t”）加一个索引编号命名。
+
+\texttt{参数：}
+\begin{itemize}
+  \item \verb|PAcenters| —— 包含圆心的路径。
+  \item \verb|PAthrough| —— 包含相应经过点的路径。
+  \item \verb|wbase|（可选）—— 圆心的基础名（默认：\verb|"w"|）。
+  \item \verb|tbase|（可选）—— 经过点的基础名（默认：\verb|"t"|）。
+  \item \verb|indice|（可选）—— 起始索引（默认：\verb|1|）。
+\end{itemize}
+
+\texttt{返回值：}
+无。
+该函数在全局表 \tkzVar{point}{z} 中创建如下 Lua 条目：
+
+\verb|z["w1"]=z.w1, z["t1"]=z.t1, z["w2"], z["t2"], ...|
+
+\texttt{示例：}这里的任务是确定经过点 $P$ 且与直线 $(AB)$、$(CD)$ 都相切的两个圆。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  z.A = point(0, 0)
+  z.B = point(5, 2)
+  z.C = point(0, 1)
+  z.D = point(4, 5)
+  z.P = point(2, 1.5)
+  L.AB = line(z.A, z.B)
+  L.CD = line(z.C, z.D)
+  pc, pt = L.AB:LLP(L.CD, z.P)
+  tkz.nodes_from_paths(pc, pt)}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawLines(A,B C,D)
+  \tkzDrawCircles[thick,red](w1,t1 w2,t2)
+  \tkzDrawPoints(A,B,C,D,P)
+  \tkzLabelPoints(A,B,C,D,P)
+\end{tikzpicture}
+ \end{tkzexample}
+
+\texttt{说明：}
+\begin{itemize}
+  \item 两条路径的点数必须相同；否则错误来自此前的计算。
+  \item 当连续创建多组相切圆时，可选参数 \verb|indice| 很有用，可避免覆盖先前定义的节点。
+  \item 该函数不进行任何绘制。它只定义 Lua 变量，供后续在 TikZ 构造中使用。
+\end{itemize}
+
+\subsection{函数 \tkzFct{tkz}{tkz.fsolve}(f, a, b, n [, opts])}
+\label{sub:fsolve}
+
+\texttt{用途：}
+在区间 \([a,b]\) 上数值搜索函数 \( f(x) \) 的实根。
+
+该区间被分成 \( n \) 个子区间，在每个子区间上进行少量牛顿型迭代（使用数值导数）。
+
+\medskip
+\texttt{语法：}
+\verb|roots = tkz.fsolve(f, a, b [, n, opts])|
+
+\medskip
+\texttt{参数：}
+\begin{itemize}
+  \item \code{f} —— 一元函数（\texttt{function(x) → number}）；
+  \item \code{a}、\code{b} —— 区间端点（\texttt{number}）；
+  \item \code{n} —— 子区间数（默认：\texttt{25}）；
+  \item \code{opts} —— 可选参数表：
+  \begin{itemize}
+    \item \code{tol} —— \(|f(r)|\) 的容差（默认：\texttt{1e-8}）；
+    \item \code{step\_tol} —— 牛顿步长的容差（默认：\texttt{1e-10}）；
+    \item \code{h} —— 数值导数的步长（默认：\texttt{1e-6}）；
+    \item \code{max\_iter} —— 每个种子点的最大迭代次数（默认：\texttt{8}）；
+    \item \code{merge\_eps} —— 合并相近根的距离阈值（默认：\texttt{1e-5}）。
+  \end{itemize}
+\end{itemize}
+
+\medskip
+\texttt{返回：}
+一个 Lua 表（数组），包含在 \([a,b]\) 上找到的所有不同根；
+若无根则返回 \texttt{nil}。
+
+
+\medskip
+\texttt{注意：}
+\begin{itemize}
+  \item 每个子区间 \([x_i, x_{i+1}]\) 独立探索。
+  \item 导数用有限差分
+        \((f(x+h)-f(x))/h\) 近似。
+  \item 相近的根（距离小于 \code{merge\_eps}）会自动合并。
+  \item 该方法对基本搜索简单而稳健，但并非为高精度或高维求解器而设计。
+\end{itemize}
+
+
+\subsection{\tkzFct{tkz}{tkz.derivative}(f, x0 [, accuracy])}
+\label{sub:derivative}
+
+\texttt{用途：}
+用对称有限差分计算数值导数 \( f'(x_0) \)。
+
+\medskip
+\texttt{语法：}
+\verb|df = tkz.derivative(f, x0 [, accuracy])|
+
+\medskip
+\texttt{参数：}
+\begin{itemize}
+  \item \code{f} —— 一元函数（\texttt{function(x) → number}）；
+  \item \code{x0} —— 求导点；
+  \item \code{accuracy} —— 可选增量，控制有限差分的精度（默认：\texttt{1e-6}）。
+\end{itemize}
+
+\medskip
+\texttt{返回：}
+近似导数值 \( f'(x_0) \)；若输入无效则返回 \texttt{nil}。
+
+
+\medskip
+\texttt{注意：}
+\begin{itemize}
+  \item 导数用中心差分公式近似：
+  \[
+     f'(x_0) \approx \frac{f(x_0 + accuracy) - f(x_0 - accuracy)}{2\,accuracy}.
+  \]
+  \item 参数 \code{accuracy} 控制精度与数值稳定性之间的权衡。
+  \item \code{accuracy} 过小可能放大浮点舍入误差。
+\end{itemize}
+
+\subsection{函数 \tkzFct{tkz}{tkz.range}}
+\label{sub:tkz_range}
+
+函数 \tkzname{tkz.range} 创建一个 Lua 表，其中包含按指定步长排列的、介于两个界之间的数字序列（类似于 Python 的 \texttt{range} 函数）。
+
+\texttt{语法：}
+\begin{verbatim}
+ tkz.range(a, b [, step])
+\end{verbatim}
+
+\begin{itemize}
+  \item \code{a}、\code{b} —— 下界与上界。
+  \item \code{step} —— 可选步长（默认：1）。
+        若为递减序列可以为负。
+\end{itemize}
+
+\texttt{返回：}一个 Lua 表 \code{tbl}，包含从 \code{a} 到 \code{b}（含端点）的值。
+
+\medskip
+\texttt{示例：}
+\begin{tkzexample}[code only]
+\directlua{
+local T = tkz.range(5, 1, -1)
+for i, v in ipairs(T) do
+  tex.print(string.format("Value i: v))
+end
+}
+\end{tkzexample}
+
+\texttt{输出：}
+\begin{verbatim}
+Value 1: 5
+Value 2: 4
+Value 3: 3
+Value 4: 2
+Value 5: 1
+\end{verbatim}
+
+\endinput

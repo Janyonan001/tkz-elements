@@ -1,0 +1,150 @@
+\newpage
+
+\section{类与对象}
+\label{sec:class_and_object}
+
+\subsection{类}
+
+面向对象编程（OOP）是一种基于对象概念的编程范式。对象是一种数据结构，同时包含属性（数据）和方法（操作），二者共同定义它的行为。
+
+\vspace{1em}
+类是一种用户自定义的数据类型，用作创建对象的蓝图。它规定了一类对象的结构和共享行为，包括属性的默认值和方法的通用实现\footnote{对象所能执行的一个动作。}。
+
+\subsection{对象}
+对象是类的一个实例。每个对象都封装了属性和方法。属性存储对象特有的信息或性质（通常作为数据表中的字段），而方法定义对象如何行事或如何与其他对象交互。
+
+
+\vspace{1em}
+ 本宏包中的所有对象都是有类型的。当前已定义并使用的类型有：\tkzNameObj{point}、\tkzNameObj{line}、\tkzNameObj{circle}、\tkzNameObj{triangle}、\tkzNameObj{conic}、\tkzNameObj{quadrilateral}、\tkzNameObj{square}、\tkzNameObj{rectangle}、\tkzNameObj{parallelogram}、\tkzNameObj{regular\_polygon}、\tkzNameObj{occs} 和 \tkzNameObj{path}。
+
+
+\subsubsection{创建对象}
+对象通常使用方法 \tkzMeth{obj}{new} 来创建，以点作为参数。
+
+\begin{itemize}
+  \item \tkzClass{point} 类需要两个实数（坐标），
+  \item \tkzClass{regular\_polygon} 类需要两个点和一个整数（边数），
+  \item \tkzClass{occs} 类需要一条直线和一个点，
+  \item \tkzClass{path} 类需要一个由字符串形式的点构成的表。
+\end{itemize}
+
+每个对象通常会被赋予一个名字，并按其类型存放在某个表中。例如：
+\begin{itemize}
+  \item 点存放在全局表 \code{z} 中，
+  \item 直线存放在 \code{L} 中，圆存放在 \code{C} 中，三角形存放在 \code{T} 中，依此类推。
+\end{itemize}
+
+这一约定便于在计算和绘图之间轻松访问与复用。例如：
+
+\begin{mybox}
+\begin{verbatim}
+z.A = point(1, 2)
+z.B = point(4, 5)
+L.AB = line(z.A, z.B)
+\end{verbatim}
+\end{mybox}
+
+
+这里，\code{z.A} 和 \code{z.B} 把点存放在表 \code{z} 中，而由这些点确定的直线则作为 \code{L.AB} 存放在表 \code{L} 中。
+
+\vspace{1em}
+\tkzRHand{} \textbf{注意：}\\
+从第 4 版起，对象创建已得到简化。你不必再调用 \code{object:new(arguments)}，而可以直接使用 \code{object(arguments)}——两种形式等价。
+
+\begin{mybox}
+\begin{verbatim}
+z.A = point(1, 2)           -- short form
+-- equivalent to:
+z.A = point:new(1, 2)
+\end{verbatim}
+\end{mybox}
+
+对象也可以通过对已有对象施加方法来生成。例如，\code{T.ABC:circum\_circle()} 会产生一个新的 \tkzClass{circle} 对象。有些对象属性本身就是对象：\code{T.ABC.bc} 返回一条 \tkzClass{line}，表示三角形 ABC 的边 BC。
+
+\vspace{1em}
+\tkzRHand{} \textbf{重要：}\\
+所有这些具名对象都存放在全局表中。为避免不同图形之间的冲突或残留数据，强烈建议在每次作图开始时调用 \tkzFct{tkz-elements}{init\_elements()} 函数。它会重置环境，确保干净的初始状态。见下一节
+
+\subsubsection{初始化：\tkzFct{tkz-elements}{init\_elements}}
+
+在进行几何作图或计算之前，初始化系统很重要。函数 \tkzFct{tkz-elements}{init\_elements()} 会重置内部表和参数，为新图形做准备。这一步确保环境干净，避免先前定义对象的干扰。
+
+\begin{mybox}
+\begin{verbatim}
+init_elements()
+\end{verbatim}
+\end{mybox}
+
+\textbf{用途。}
+函数 \code{init\_elements} 会清空如下全局表：
+\begin{itemize}
+  \item \tkzname{z}——用于存放点，
+  \item \tkzname{L}、\tkzname{C}、\tkzname{T} 等——用于直线、圆、三角形，
+  \item 以及其他几何结构。
+\end{itemize}
+它还会（重新）设置内部常量的默认值，例如小数位数和浮点容差。
+
+\medskip
+\texttt{何时使用：}
+
+应在以下情况调用本函数：
+\begin{itemize}
+  \item 每次使用 Lua 的新 TikZ 图形开始时，
+  \item 或任何你需要手动重置环境的时候。
+\end{itemize}
+
+\medskip
+\texttt{用法示例。}
+
+下面是一个典型用法：
+
+  \begin{verbatim}
+  \directlua{
+    init_elements()
+    z.A = point(0, 0)
+    z.B = point(3, 4)
+    L.AB = line(z.A, z.B)}
+  \end{verbatim}
+
+
+\medskip
+\texttt{注意。}
+
+如果你谨慎管理对象名，调用 \code{init\_elements} 是可选的；但在迭代式工作流或自动生成图形时，强烈建议调用它，以避免不希望的数据残留。
+
+\subsubsection{属性}
+ \label{ssub:attributes}
+
+属性用标准方法访问。例如，|T.pc| 取回三角形的第三个点，|C.OH.center| 取回圆的圆心。此外，我还添加了一个方法 \tkzMeth{obj}{get()}，它返回一个对象的各个点。该方法适用于直线（pa 和 pc）、三角形（pa、pb 和 pc）以及圆（center 和 through）。
+
+\vspace{1em}
+
+  \texttt{用法示例：}：|z.O, z.T = C.OT:get()| 取回圆的圆心和圆上一点。
+
+\subsubsection{方法}
+\label{ssub:methods}
+
+方法是与对象关联（绑定）的一种操作（函数或过程）。
+
+例如：point 对象用于在竖直方向上确定一个距它一定距离（此处为 2）的新 point 对象。随后就可以绕它旋转各个对象。
+
+\begin{mbox}{}
+\begin{verbatim}
+\directlua{
+      init_elements()
+      z.A = point(1, 0)
+      z.B = z.A:north(2)
+      z.C = z.A:rotation (math.pi / 3, z.B)
+      tex.print(tostring(z.C))
+}
+\end{verbatim}
+\end{mbox}
+
+\directlua{
+   init_elements()
+   z.A = point(1, 0)
+   z.B = z.A:north(2)
+   z.C = z.A:rotation(math.pi / 3, z.B)
+   tex.print(tostring("The coordinates of $C$ are: " .. z.C.re .." and "..z.C.im))
+}
+\endinput

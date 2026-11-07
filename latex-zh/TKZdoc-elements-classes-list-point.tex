@@ -1,0 +1,339 @@
+\section{\tkzClass{list\_point} 类}
+\label{sec:class_list_point}
+
+变量 \tkzVar{list\_point}{LP} 持有一个表，用于存放 \tkzClass{list\_point} 对象。
+它的使用是可选的，用户可以自由选择任何变量名。
+
+\medskip
+
+不过，为了在整个文档中保持一致和可读，
+推荐使用预定义变量 \tkzVar{list\_point}{LP}。
+函数 \tkzFct{tkz-elements}{init\_elements()} 会自动重新初始化该表。
+
+\medskip
+
+\tkzClass{list\_point} 类表示一个有序的点列表。
+它主要用作一个轻量容器，用于存放和处理由几何作图、交点或迭代算法产生的多个点。
+
+与直线或圆等几何对象不同，\tkzClass{list\_point} 对象并不定义内在的几何。
+它的目的是便于在 \tkzname{Lua} 与 \tkzname{TikZ} 之间进行分组、迭代和数据传递。
+
+\medskip
+
+一个 \tkzClass{list\_point} 对象的行为类似于一个以整数为索引的 Lua 表，
+同时提供一组适合几何工作流的便捷方法。
+
+\medskip
+
+\subsection{属性}
+\label{subsec:list_point_attributes}
+
+一个 \tkzClass{list\_point} 对象只有一个属性 \tkzAttr{list\_point}{type}，其值为 \code{"list\_point"}。点的个数由 \tkzMeth{list\_point}{len()}（或 \code{\#LP.x}）给出，第 i 个点由 \tkzMeth{list\_point}{get(i)}（或 \code{LP.x[i]}）给出。
+
+\subsection{创建对象}
+\label{subsec:list_point_create}
+
+\subsubsection{方法 \tkzMeth{list\_point}{new(...)}}
+\label{ssub:meth_list_point_new}
+
+创建一个新的 \tkzClass{list\_point} 对象。
+
+在用户代码中，推荐使用可调用形式 \code{list\_point(...)} 作为构造器。
+在内部，这会调用方法 \tkzMeth{list\_point}{new(...)}。
+
+\medskip
+
+一个 \tkzClass{list\_point} 对象既可以创建为局部 Lua 变量，
+也可以作为表 \tkzVar{list\_point}{LP}（专门用于存放点列表）的一个条目。
+
+\begin{tkzexample}[code only]
+local P = list_point()
+LP.Q = list_point(z.A, z.B, z.C)
+\end{tkzexample}
+
+两种形式都合法，并产生相互独立的 \tkzClass{list\_point} 对象。
+参数必须是点；否则会引发错误。
+
+\medskip
+
+对于临时计算或中间结果，使用局部变量很方便。
+不过，对于打算复用、传递给 \tkzname{TikZ} 或在局部作用域之外访问的对象，建议把它们存放在 \tkzVar{list\_point}{LP} 表中。
+
+\medskip
+
+函数 \tkzFct{tkz-elements}{init\_elements()} 会自动重新初始化
+\tkzVar{list\_point}{LP} 表。
+
+
+% --------------------------------------------------------------------
+\subsection{方法或基本访问器}
+\label{subsec:list_point_accessors}
+
+\vspace{1em}
+\bgroup
+\small
+\captionof{table}{\texttt{list\_point} 的方法。}\label{list_point:methods}
+\begin{tabular}{ll}
+\toprule
+\texttt{方法}  & \texttt{参考} \\
+\midrule
+\texttt{构造器} &    \\
+\midrule
+\tkzMeth{list\_point}{new(...)}   & [\ref{ssub:meth_list_point_new}] \\
+\midrule
+\texttt{返回整数的方法}&\\
+\midrule
+\tkzMeth{list\_point}{len()}      & [\ref{ssub:meth_list_point_len}] \\
+\midrule
+\texttt{返回点的方法}&\\
+\midrule\tkzMeth{list\_point}{get(i)}     & [\ref{ssub:meth_list_point_get}] \\
+\tkzMeth{list\_point}{barycenter()}& [\ref{ssub:meth_list_point_barycenter}]\\
+\midrule
+\texttt{返回 List\_Point 的方法}&\\
+\midrule
+\tkzMeth{list\_point}{add(p)}     & [\ref{ssub:meth_list_point_add}] \\
+\tkzMeth{list\_point}{extend(pl)} & [\ref{ssub:meth_list_point_extend}] \\
+\tkzMeth{list\_point}{map(f)}     & [\ref{ssub:meth_list_point_map}] \\
+\midrule
+\tkzMeth{list\_point}{unpack()}   & [\ref{ssub:meth_list_point_unpack}] \\
+
+
+\tkzMeth{list\_point}{clear()}    & [\ref{ssub:meth_list_point_clear}] \\
+\tkzMeth{list\_point}{foreach(f)} & [\ref{ssub:meth_list_point_foreach}] \\
+
+\tkzMeth{list\_point}{bbox()}     & [\ref{ssub:meth_list_point_bbox}] \\
+
+\tkzMeth{list\_point}{to\_tikz\_path()}& [\ref{ssub:meth_list_point_to_path}] \\
+\tkzMeth{list\_point}{as\_path()}& [\ref{ssub:meth_list_point_as_path}] \\
+\bottomrule
+\end{tabular}
+\egroup
+
+\subsubsection{方法 \tkzMeth{list\_point}{len()}}
+\label{ssub:meth_list_point_len}
+
+返回列表中存放的点的个数。
+
+\subsubsection{方法 \tkzMeth{list\_point}{get(i)}}
+\label{ssub:meth_list_point_get}
+
+\code{get(i)} 返回索引为 \code{i} 的点；\code{get()} 返回所有点。
+
+\subsubsection{方法 \tkzMeth{list\_point}{unpack()}}
+\label{ssub:meth_list_point_unpack}
+
+用 \code{table.unpack} 把所有点作为独立值返回。当需要与期望以逐个点作为参数的函数对接时，该方法很有用。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+init_elements()
+LP.pts = list_point()
+LP.pts:add(point(0,0))
+LP.pts:add(point(1,0))
+LP.pts:add(point(1,1))
+z.A, z.B, z.C = LP.pts:unpack()
+}
+\begin{center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+% --------------------------------------------------------------------
+\subsection{修改方法}
+\label{subsec:list_point_mutators}
+
+\subsubsection{方法 \tkzMeth{list\_point}{add(p)}}
+\label{ssub:meth_list_point_add}
+
+把点 \code{p} 追加到列表末尾，并返回对象本身。若 \code{p} 不是点则引发错误。
+
+\subsubsection{方法 \tkzMeth{list\_point}{extend(pl)}}
+\label{ssub:meth_list_point_extend}
+
+把另一个 \tkzClass{list\_point} 对象 \code{pl} 中的所有点追加进来。若某个元素不是点则引发错误。
+
+\subsubsection{方法 \tkzMeth{list\_point}{clear()}}
+\label{ssub:meth_list_point_clear}
+
+从列表中移除所有点。
+
+
+这些方法就地修改对象，并支持方法链式调用。
+
+% --------------------------------------------------------------------
+\subsection{迭代辅助}
+\label{subsec:list_point_iteration}
+
+\subsubsection{方法 \tkzMeth{list\_point}{foreach(f)}}
+\label{ssub:meth_list_point_foreach}
+
+对点列表中的每个点 \code{p} 及其索引 \code{i} 应用函数 \code{f(p, i)}。
+
+\subsubsection{方法 \tkzMeth{list\_point}{map(f)}}
+\label{ssub:meth_list_point_map}
+
+对每个点应用函数 \code{f(p, i)}，并返回一个新的 \tkzClass{list\_point} 对象，其中包含结果。该函数必须返回一个点。
+
+
+这些方法为几何变换提供了一种函数式编程风格。
+
+% --------------------------------------------------------------------
+\subsection{几何工具}
+\label{subsec:list_point_geometry}
+
+\subsubsection{方法 \tkzMeth{list\_point}{barycenter()}}
+\label{ssub:meth_list_point_barycenter}
+
+返回列表中所有点的重心。
+若列表为空，则该方法返回 \code{nil}。
+
+\subsubsection{方法 \tkzMeth{list\_point}{bbox()}}
+\label{ssub:meth_list_point_bbox}
+
+以四个数返回点集的包围盒：
+\[
+  (x_{\min}, y_{\min}, x_{\max}, y_{\max})
+\]
+
+
+% --------------------------------------------------------------------
+\subsection{TikZ 输出}
+\label{subsec:list_point_output}
+
+\subsubsection{方法 \tkzMeth{list\_point}{to\_tikz\_path()}}
+\label{ssub:meth_list_point_to_path}
+
+把点列表转换成形如下面的 TikZ 路径字符串：
+\[
+  (x_1,y_1) -- (x_2,y_2) -- \dots
+\]
+适合用 TikZ 命令绘图。
+
+\subsubsection{方法 \tkzMeth{list\_point}{as\_path()}}
+\label{ssub:meth_list_point_as_path}
+
+返回一个包含该列表各点的 \tkzClass{path} 对象，可与路径宏配合使用（\code{\textbackslash tkzDrawCoordinates}、\code{\textbackslash tkzDrawPointsFromPath} 等）。见 [\ref{sub:macro_tkzDrawPointsFromPath}] 中的示例。
+
+
+\medskip
+
+这个类在 \tkzname{Lua} 计算与 \tkzname{TikZ} 绘图指令之间架起了一座简洁而有效的桥梁。
+
+
+\subsection{示例}
+\label{subsec:list_point_examples}
+
+% --------------------------------------------------------------------
+\subsubsection{临时点列表}
+\label{ssub:list_point_example_local}
+
+本例说明如何在一次计算中使用局部 \tkzClass{list\_point} 对象来存放临时结果。
+
+\begin{tkzexample}[code only]
+local P = list_point()
+for i = 1, 10 do
+  P:add(z.A + i * (z.B - z.A) / 10)
+end
+local G = P:barycenter()
+\end{tkzexample}
+
+列表 \code{P} 只在本地用于计算一组点的重心。
+
+% --------------------------------------------------------------------
+\subsubsection{把作图结果存放在 \tkzVar{list\_point}{LP} 中}
+\label{ssub:list_point_example_lp}
+
+本例说明如何存放一组交点供稍后使用。
+
+\begin{tkzexample}[code only]
+LP.I = list_point()
+local X, Y = intersection(L.AB, C.circ)
+LP.I:add(X)
+LP.I:add(Y)
+\end{tkzexample}
+
+把点存放在 \tkzVar{list\_point}{LP} 中后，即可供绘图或进一步作图使用。
+
+% --------------------------------------------------------------------
+\subsubsection{迭代作图}
+\label{ssub:list_point_example_iterative}
+
+一个典型用例是逐步构造一族点。
+
+\begin{tkzexample}[code only]
+LP.P = list_point()
+for i = 0, 24 do
+  local t = i / 24
+  LP.P:add(L.AB:point(t))
+end
+\end{tkzexample}
+
+列表 \code{LP.P} 包含一条线段的离散采样。
+
+% --------------------------------------------------------------------
+\subsubsection{函数式变换}
+\label{ssub:list_point_example_map}
+
+本例使用 \tkzMeth{list\_point}{map} 方法来变换一组点。
+
+\begin{tkzexample}[code only]
+local P = list_point(z.A, z.B, z.C)
+LP.Q = P:map(function(p)
+  return z.O:rotation(tkz.tau / 3, p) rotation_(p, tkz.tau / 3, z.O)
+end)
+\end{tkzexample}
+
+原始列表 \code{P} 保持不变，而 \code{LP.Q} 存放变换后的点。
+
+% --------------------------------------------------------------------
+\subsubsection{转换成 TikZ 路径}
+\label{ssub:list_point_example_path}
+
+本例说明 \tkzClass{list\_point} 与 TikZ 之间的交互。
+
+\begin{tkzexample}[code only]
+LP.P = list_point(z.A, z.B, z.C)
+local path = LP.P:to_tikz_path()
+\end{tkzexample}
+
+\tkzMeth{list\_point}{to\_path} 返回的字符串可以直接传给 TikZ 绘图命令。
+
+
+% --------------------------------------------------------------------
+\subsubsection{从 \tkzClass{list\_point} 到 \tkzClass{path}，并用 \tkzNamePack{tkz-euclide} 绘图}
+\label{ssub:list_point_example_points_path_draw}
+
+本例展示一个典型工作流：在 \tkzname{Lua} 中计算一组点，
+把它转换成一个 \tkzClass{path}，然后用 \tkzMeth{tkz-euclide}{tkzDrawPointsFromPath} 画出所得的点。
+
+
+\begin{tkzexample}[latex = .5\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(8, 6)
+  L.AB = line(z.A, z.B)
+  % list of sampled points
+  LP.P = list_point()
+  for i = 0, 12 do
+    LP.P:add(L.AB:point(i/12))
+  end
+  % convert list_point -> path
+  PA.sample = path()
+  for i = 1, LP.P:len() do
+    PA.sample:add_point(LP.P:get(i))
+  end
+}
+\begin{center}
+\begin{tikzpicture}
+\tkzGetNodes
+% draw the points stored in the path
+\tkzDrawPointsFromPath(PA.sample)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+点存放在 \code{LP.P} 中以供稍后复用，而 \code{PA.sample} 包含对应的 TikZ 路径表示，用于绘图。

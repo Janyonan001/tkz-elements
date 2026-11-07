@@ -1,0 +1,214 @@
+\newpage
+\section{angle 类}
+\label{sec:class_angle}
+
+\tkzClass{angle} 类是一个实验性的辅助对象，用于表示
+由三个点定义的角。
+它目前是自包含的，不与其他类交互。
+其主要目的是提供一个简单直接的接口，以获取：
+
+\begin{itemize}
+  \item 有向角（弧度制），
+  \item 归一化到 $[0, 2\pi)$ 的有向角，
+  \item 内角（无向），
+  \item 内角的度数。
+\end{itemize}
+
+\tkzClass{angle} 对象是 \emph{静态的}：所有值都在创建时计算，
+之后不再更新。
+
+\subsection{创建对象}
+\label{ssub:method_angle_new}
+
+\begin{verbatim}
+  local alpha  = angle(z.A, z.B, z.C)   -- equivalent to angle:new(A,B,C)
+  local beta   = angle(z.B, z.C, z.A)
+  local gamma  = angle(z.C, z.A, z.B)
+\end{verbatim}
+
+三个参数分别为：
+\begin{itemize}
+  \item \tkzAttr{angle}{ps}：角的顶点，
+  \item \tkzAttr{angle}{pa}：定义第一条射线的第一个点，
+  \item \tkzAttr{angle}{pb}：定义第二条射线的第二个点。
+\end{itemize}
+
+\subsection{属性}
+
+每个 \tkzClass{angle} 对象内部存储了以下属性：
+
+\vspace{1em}
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{角的属性。}\label{angle:attributes}
+\begin{tabular}{lll}
+\toprule
+\textbf{属性} & \textbf{含义} & \texttt{参考} \\
+\midrule
+\tkzAttr{angle}{ps}   & 角的顶点 & [\ref{par:attr_angle_ps}] \\
+\tkzAttr{angle}{pa}   & 第一个定义点（射线 $[ps\,pa]$） & [\ref{par:attr_angle_pa}] \\
+\tkzAttr{angle}{pb}   & 第二个定义点（射线 $[ps\,pb]$） & [\ref{par:attr_angle_pb}] \\
+\tkzAttr{angle}{type} & 对象类型名，始终为 \texttt{"angle"} & \\
+\tkzAttr{angle}{raw}  & 有向角（弧度），可为负 & [\ref{par:attr_angle_raw}] \\
+\tkzAttr{angle}{norm} & 归一化到 $[0,2\pi)$ 的有向角 & [\ref{par:attr_angle_norm}] \\
+\tkzAttr{angle}{value} & 取值范围为 $[0,\pi]$ 的无向角 & [\ref{par:attr_angle_value}] \\
+\tkzAttr{angle}{deg} & 内角的度数 & [\ref{par:attr_angle_deg}] \\
+
+\bottomrule
+\end{tabular}
+\egroup
+
+\paragraph{\tkzAttr{angle}{ps}}\label{par:attr_angle_ps}
+角的顶点（summit）。
+
+\paragraph{\tkzAttr{angle}{pa}}\label{par:attr_angle_pa}
+定义第一条射线 $[ps\,pa]$ 的点。
+
+\paragraph{\tkzAttr{angle}{pb}}\label{par:attr_angle_pb}
+定义第二条射线 $[ps\,pb]$ 的点。
+
+\paragraph{\tkzAttr{angle}{raw}}\label{par:attr_angle_raw}
+以弧度表示的有向角，从射线 $[ps\,pa]$ 到射线 $[ps\,pb]$，区间为 $(-\pi,\pi]$；它可以为负。
+
+\paragraph{\tkzAttr{angle}{norm}}\label{par:attr_angle_norm}
+归一化到区间 $[0,2\pi)$ 的有向角。
+
+\paragraph{\tkzAttr{angle}{value}}
+\label{par:attr_angle_value}
+返回取值范围为 $[0,\pi]$ 的内角（无向）：
+
+\texttt{示例：}
+\begin{tkzexample}[latex=.45\textwidth]
+  \directlua{%
+  init_elements()
+  z.O = point(0, 1)
+  z.T = point(2, 2)
+  C.OT = circle(z.O, z.T)
+  z.M = C.OT:point(.13)
+  A.OTM = angle(z.O, z.T, z.M)
+  tkzA = A.OTM.value}
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawLines(O,T O,M)
+  \tkzDrawCircle(O,T)
+  \tkzDrawPoints(O,T,M)
+  \tkzLabelPoints(O,T,M)
+  \tkzMarkAngle(T,O,M)
+  \tkzLabelAngle[pos=1.5](T,O,M){%
+  \tkzPN[3]{\tkzUseLua{tkzA}}}
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+\paragraph{\tkzMeth{angle}{deg}}
+\label{par:attr_angle_deg}
+返回以度数表示的内角。
+
+\texttt{示例：}
+
+\begin{tkzexample}[latex=.35\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(0,0)
+  z.B = point(3,0)
+  z.C = point(1,2)
+  A.alpha = angle(z.B, z.A, z.C)
+  tex.print("Angle at A = "..A.alpha.deg.." degrees")
+}
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C)
+  \tkzDrawPoints(A,B,C)
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+也可以这样：
+
+\begin{verbatim}
+   T.ABC = triangle(z.A, z.B, z.C)
+   local val = T.ABC.alpha_.deg
+\end{verbatim}
+
+所有值都是数值标量，对象一旦创建便保持不变。
+
+\texttt{示例：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.C = point(3, 0)
+  z.B = point(3, 2)
+  T.ABC = triangle(z.A, z.B, z.C)
+  A.A = T.ABC.alpha_
+  A.B = T.ABC.beta_
+  T.C = T.ABC.gamma_
+  tex.print("A(value) = \\", A.A.value)
+  tex.print('\\\\')
+  tex.print("A(raw) = \\", A.A.raw)
+  tex.print('\\\\')
+  tex.print("A(deg) = \\", A.A.deg)}
+
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C)
+  \tkzDrawPoints(A,B,C)
+  \tkzLabelPoints(A,C)
+  \tkzLabelPoints[above](B)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+\subsection{方法}
+
+\vspace{1em}
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{angle 的方法。}\label{angle:methods}
+\begin{tabular}{ll}
+\toprule
+\textbf{方法} & \texttt{参考} \\
+\midrule
+\textbf{创建} & \\
+\midrule
+\tkzMeth{angle}{angle(ps, pa, pb)} & [\ref{ssub:method_angle_new}] \\
+\midrule
+\textbf{访问器} & \\
+\midrule
+\tkzMeth{angle}{get()} & [\ref{ssub:method_angle_get}] \\
+\midrule
+\textbf{测试} & \\
+\midrule
+\tkzMeth{angle}{is\_direct()} & [\ref{ssub:method_angle_is_direct}] \\
+
+\bottomrule
+\end{tabular}
+\egroup
+
+
+\subsubsection{\tkzMeth{angle}{get()}}
+\label{ssub:method_angle_get}
+返回三个定义点：
+\begin{verbatim}
+local ps, pa, pb = alpha:get()
+\end{verbatim}
+
+\subsubsection{\tkzMeth{angle}{is\_direct()}}
+\label{ssub:method_angle_is_direct}
+当角为正（逆时针方向）时返回 \verb|true|。
+
+
+
+
+\medskip
+本类是 \emph{实验性的}，在未来版本中可能会发生变化。

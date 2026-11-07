@@ -1,0 +1,419 @@
+% !TEX TS-program = lualatex
+% tkz-elements 的文档 v5.10c
+% 版权所有 (c) 2023–2026 Alain Matthes
+% SPDX-License-Identifier: LPPL-1.3c
+% 维护者: Alain Matthes
+
+\documentclass[
+  DIV=16,
+  fontsize=10,
+  index=totoc,
+  twoside,
+  cadre,
+  headings=small
+]{tkz-doc}
+%\overfullrule=5pt
+\gdef\tkznameofpack{tkz-elements}
+\gdef\tkzversionofpack{6.00c}
+\gdef\tkzdateofpack{\today}
+\gdef\tkznameofdoc{tkz-elements.pdf}
+\let\tkzversionofdoc\tkzversionofpack
+\let\tkzdateofdoc\tkzdateofpack
+\gdef\tkzauthorofpack{Alain Matthes}
+\gdef\tkzadressofauthor{}
+\gdef\tkznamecollection{AlterMundus}
+\gdef\tkzurlauthor{http://altermundus.fr}
+\gdef\tkzengine{lualatex}
+\gdef\tkztranslatorofdoc{翻译：金永权}
+\gdef\tkztranslateraddressofdoc{夏邑县第一高级中学}
+\nameoffile{\tkznameofpack}
+\let\tkzurlauthorcom\tkzurlauthor
+% -- 宏包 ---------------------------------------------------
+\usepackage[dvipsnames,svgnames]{xcolor}
+% 我的宏包
+\usepackage{tkz-base}
+\usetikzlibrary{mindmap,shapes.multipart}
+\usepackage[mini]{tkz-euclide}
+\usepackage{tkz-elements}
+\usepackage{tkzexample}
+\usepackage{pgfornament}
+
+% 屏蔽 mdf 警告（可选）
+\makeatletter
+    \renewcommand*\mdf@PackageWarning[1]{}
+     \renewcommand*\mdf@PackageInfo[1]{}
+\makeatother
+
+% 用于 metapost
+\usepackage{luamplib}
+\everymplib{input mpcolornames; beginfig(1);}
+\everyendmplib{endfig;}
+
+% 用于索引
+\usepackage{scrindex}
+\makeindex
+
+
+\usepackage[colorlinks,pdfencoding=auto, psdextra]{hyperref}
+\hypersetup{
+    linkcolor=black,
+    citecolor=Green,
+    filecolor=Mulberry,
+    urlcolor=orange,
+    menucolor=black,
+    runcolor=Mulberry,
+    linkbordercolor=black,
+    citebordercolor=Green,
+    filebordercolor=Mulberry,
+    urlbordercolor=NavyBlue,
+    menubordercolor=black,
+    runbordercolor=Mulberry,
+    pdfsubject={欧几里得几何},
+    pdfauthor={\tkzauthorofpack},
+    pdftitle={\tkznameofpack},
+    pdfcreator={\tkzengine}
+}
+
+% ...然后是书签
+\usepackage{bookmark}
+
+% 字体
+%<--------------------------------------------------------------------------->
+\usepackage{fontspec}
+\setmainfont{Linux Libertine O}
+% 中文字体支持
+\usepackage{luatexja-fontspec}
+\setmainjfont{Source Han Serif SC}
+\setsansjfont{Source Han Sans SC}
+\setmonojfont{Source Han Sans SC}
+\usepackage{unicode-math}
+\usepackage{concmath-otf}
+\let\rmfamily\ttfamily
+%<--------------------------------------------------------------------------->
+% 加载其他宏包
+\usepackage{pifont}
+\newcommand{\cmark}{\colorbox{green}{\textcolor{white}{\ding{51}}}}
+\newcommand{\xmark}{\colorbox{red}{\textcolor{white}{\ding{55}}}}
+\usepackage{multicol}
+\usepackage[english]{babel}
+\usepackage[normalem]{ulem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{cellspace}
+\usepackage{shortvrb}
+\usepackage{fancyvrb}
+\usepackage{enumitem}
+\usepackage{moreenum}
+\usepackage{textcomp}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{thmtools}
+
+\usepackage[most]{tcolorbox}
+\newtcolorbox{mybox}{
+  enhanced,
+  boxrule=0pt,frame hidden,
+  borderline west={3pt}{0pt}{cyan!75!black},
+  colback=lightgray!10!white,
+  sharp corners
+}
+% 宏包加载完毕
+%<--------------------------------------------------------------------------->
+% 索引样式
+\makeatletter
+\renewenvironment{theindex}
+   {\section*{\indexname}\begin{multicols}{2}%
+    \@mkboth{\MakeUppercase\indexname}%
+  {\MakeUppercase\indexname}%
+    \thispagestyle{plain}\parindent\z@
+    \parskip\z@ \@plus .3\p@\relax
+    \columnseprule \z@
+    \columnsep 35\p@
+    \let\item\@idxitem}
+   {\end{multicols}}
+\makeatother
+% 索引样式结束
+%<--------------------------------------------------------------------------->
+% 索引化
+\newcommand{\tkzAttr}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 属性}!\texttt{#2}}}
+\newcommand{\tkzVar}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 保留变量}!\texttt{#2}}}
+\newcommand{\tkzMeth}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 方法}!\texttt{#2}}}
+\newcommand{\tkzMeta}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 元方法}!\texttt{#2}}}
+\newcommand{\tkzFct}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 函数}!\texttt{#2}}}
+\newcommand{\tkzMod}[1]{\textbf{\texttt{#1}}\index{Modules@模块!#1@\texttt{#1}}}
+\newcommand{\tkzClass}[1]{\textbf{\texttt{#1}}\index{Classes@类!#1@\texttt{#1}}}
+\newcommand{\tkzNameObj}[1]{\textbf{\texttt{#1}}\index{Objects@对象!#1@\texttt{#1}}}
+\newcommand{\tkzMacro}[2]{\textbf{\texttt{\textbackslash#2}}\index{#1_3@\texttt{#1: 宏}!\texttt{#2}}}
+\newcommand{\tkzEngine}[1]{\textbf{\texttt{#1}}\index{Engine@引擎 !#1@\texttt{#1}}}
+\newcommand{\tkzPopt}[2]{\texttt{#2}\index{#1_3@\texttt{#1: 选项}!\texttt{#2}}}
+\newcommand{\tkzEnv}[2]{\textbf{\texttt{#2}}\index{#1_3@\texttt{#1: 环境}!\texttt{#2}}}
+\newcommand{\tkzConst}[1]{\textbf{\texttt{#1}}\index{Constants@常量!#1@\texttt{#1}}}
+\newcommand{\tkzSysVar}[1]{\textbf{\texttt{#1}}\index{Variables system@系统变量!#1@\texttt{#1}}}
+% 函数选项或参数的关键字
+\newcommand{\tkzKey}[1]{\texttt{#1}}
+
+% 可选参数记号，例如 (pt)
+\newcommand{\tkzOptArg}[1]{\ensuremath{(#1)}}
+% 用作函数调用中的可选键的关键字（例如 known, near）
+%\newcommand{\tkzKey}[1]{\texttt{#1}\index{#1@\texttt{#1}}}
+
+% 索引化结束
+%<--------------------------------------------------------------------------->
+% 装饰
+\newcommand{\lefthand}{\ding{43}}
+\newcommand{\tkzimpbf}[1]{\texttt{tkzPopt#1}}
+\newcommand{\tkzRHand}{\textcolor{red}{\lefthand}}
+\newcommand{\smallbf}[1]{\textbf{\small #1}}
+\newcommand{\parallelsum}{\mathbin{\!/\mkern-5mu/\!}}
+\newcommand\LUALATEX{Lua\kern-.01em\LaTeX}%
+% 装饰结束
+%<--------------------------------------------------------------------------->
+% 设置样式
+\tkzSetUpColors[background=white,text=black]
+\tkzSetUpPoint[size=2,color=teal,fill=teal!10]
+\tkzSetUpLine[ultra thin,color=teal]
+\tkzSetUpCompass[color=orange,ultra thin,/tkzcompass/delta=10]
+\tikzset{label style/.append style={below,color=teal,font=\scriptsize}}
+\tikzset{new/.style={color=orange,ultra thin}}
+\tikzset{step 1/.style={color=cyan,ultra thin}}
+\tikzset{step 2/.style={color=purple,ultra thin}}
+\def\tkzar{\hspace{1em}-->\hspace{1em}}
+% 样式设置结束
+%<--------------------------------------------------------------------------->
+% 杂项
+\makeatletter\let\percentchar\@percentchar\makeatother
+\def\luaveclen#1#2{%
+\directlua{tex.print(string.format(
+'\percentchar.5f',math.sqrt((#1)*(#1)+(#2)*(#2))))
+}}
+\let\pmpn\pgfmathprintnumber
+\let\code\tkzname
+% 杂项结束
+%<--------------------------------------------------------------------------->
+% 生成新的目录
+%----------------------------------------------------------
+% 迷你目录"总览"(stoc)，带样式的部分
+%----------------------------------------------------------
+%----------------------------------------------------------
+% 迷你目录"总览"(stoc)：现在包含 \part + \section
+%----------------------------------------------------------
+%==========================================================
+% 迷你目录"总览"(stoc)
+%==========================================================
+
+\DeclareNewTOC[
+  type=overview,
+  listname={总览}
+]{stoc}
+
+%----------------------------------------------------------
+% 保存原始的 KOMA 宏
+%----------------------------------------------------------
+
+\NewCommandCopy{\AddPartTocEntry}{\addparttocentry}
+\NewCommandCopy{\AddSectionTocEntry}{\addsectiontocentry}
+
+%----------------------------------------------------------
+% 将 \part 镜像到 stoc（其后加空行）
+%----------------------------------------------------------
+
+\renewcommand{\addparttocentry}[2]{%
+  \AddPartTocEntry{#1}{#2}%
+  \addxcontentsline{stoc}{part}[{#1}]{#2}%
+  \addtocontents{stoc}{\protect\addvspace{\baselineskip}}%
+}
+
+%----------------------------------------------------------
+% 将 \section 镜像到 stoc
+%----------------------------------------------------------
+
+\renewcommand{\addsectiontocentry}[2]{%
+  \AddSectionTocEntry{#1}{#2}%
+  \addxcontentsline{stoc}{section}[{#1}]{#2}%
+}
+
+%----------------------------------------------------------
+% 总览（stoc）的样式
+%----------------------------------------------------------
+
+\BeforeStartingTOC[stoc]{%
+
+  % PART 条目——代码样式
+  \DeclareTOCStyleEntry[
+    beforeskip=.6\baselineskip,
+    entryformat=\ttfamily\bfseries,
+    pagenumberformat=\ttfamily\bfseries,
+    linefill=\hfill
+  ]{part}{part}
+
+  % SECTION 条目——紧凑
+  \DeclareTOCStyleEntry[
+    beforeskip=0pt
+  ]{section}{section}
+}
+%==========================================================
+%--------------------------------------------------------------------------------------------------------------------
+
+\hbadness=10000
+%<--------------------------------------------------------------------------->
+\AtBeginDocument{\MakeShortVerb{\|}}
+
+\begin{document}
+
+\parindent=0pt
+\tkzTitleFrame{tkz-elements \tkzversionofpack\\Euclidean Geometry\\中译版}
+\clearpage
+
+\renewcommand{\contentsname}{目录}
+\renewcommand{\indexname}{索引}
+
+\defoffile{
+	本文件汇集了关于 \tkzNamePack{\tkznameofpack} 的说明，这是一个全面的 \tkzname{Lua} 库，用于处理在欧几里得几何中构造对象所需的全部计算。本文档必须使用 Lua\LATEX 编译。\\
+
+	使用 \tkzNamePack{tkz-elements} 时，所有定义和计算都完全在 Lua 中完成，采用面向对象的编程模型。点、直线、三角形、圆锥曲线等核心几何实体都以对象类的形式实现。\\
+	计算完成后，图形渲染通常交由 \tkzNamePack{tkz-euclide} 处理；当然，如有需要，你也可以直接使用 \TIKZ{}。\\
+
+	我在开发这个宏包的过程中接触并学习了 Lua 和面向对象编程，因此某些部分可能仍有改进的空间。如果你愿意贡献代码或提出建议，欢迎通过电子邮件与我联系。
+}
+
+\presentation
+
+\vspace*{4em}
+
+\lefthand\ 致谢：我收到了许多宝贵的建议、意见和指正，来自 \\ \tkzimp{Nicolas Kisselhoff}、\tkzimp{David Carlisle}、\tkzimp{Roberto Giacomelli} 和 \tkzimp{Qrrbrbirlbel}。\\
+特别感谢 \tkzimp{Wolfgang Büchel} 在修正示例方面做出的宝贵贡献。
+
+\vspace*{1em}
+\lefthand\ 我还要向 \tkzimp{Eric Weisstein}（\href{http://mathworld.wolfram.com/about/author.html}{MathWorld} 的创建者）表示感谢。
+
+\vspace*{1em}
+\lefthand\ 你可以在我的网站和一份法语文档中找到一些示例：
+\href{http://altermundus.fr}{altermundus.fr}。
+
+\vfill
+如发现本文档中有拼写错误或任何其他意见，请发送至：\href{mailto:al.ma@mac.com}{\textcolor{blue}{Alain Matthes}}。
+
+本文件可根据 \LaTeX{} 项目公共许可证（LaTeX Project Public License）的条款重新分发和/或修改，可从 \href{http://www.ctan.org/}{CTAN}\ 存档获取。
+
+\clearpage
+\listofoverviews
+
+\clearpage
+\section*{属性总览}
+\begin{tabular}{ll}
+\textbf{类} & \textbf{属性} \\
+\hline
+point         & \hyperref[point:attributes]{见表}        \\
+line          & \hyperref[line:attributes]{见表}         \\
+triangle      & \hyperref[triangle:attributes]{见表}     \\
+circle        & \hyperref[circle:attributes]{见表}       \\
+occs          & \hyperref[occs:attributes]{见表}         \\
+conic         & \hyperref[conic:attributes]{见表}        \\
+quadrilateral & \hyperref[quadrilateral:attributes]{见表}\\
+square        & \hyperref[square:attributes]{见表}       \\
+rectangle     & \hyperref[rectangle:attributes]{见表}    \\
+parallelogram & \hyperref[parallelogram:attributes]{见表}\\
+regular       & \hyperref[regular:attributes]{见表}      \\
+vector        & \hyperref[vector:attributes]{见表}       \\
+matrix        & \hyperref[matrix:attributes]{见表}       \\
+angle         & \hyperref[angle:attributes]{见表}        \\
+list\_point   & \hyperref[list_point:attributes]{见表}   \\
+\end{tabular}
+\section*{方法总览}
+\begin{tabular}{ll}
+\textbf{类} & \textbf{方法} \\
+\hline
+point         & \hyperref[point:methods]{见表}         \\
+line          & \hyperref[line:methods part 1]{见表 1} \\
+line          & \hyperref[line:methods part 2]{见表 2} \\
+triangle      & \hyperref[triangle:methods]{见表}      \\
+circle        & \hyperref[circle:methods]{见表}        \\
+circle        & \hyperref[circle:methods 2]{见表 2}    \\
+occs          & \hyperref[occs:methods]{见表}          \\
+conic         & \hyperref[conic:methods]{见表}         \\
+path          & \hyperref[path:methods]{见表}          \\
+quadrilateral & \hyperref[quadrilateral:methods]{见表} \\
+square        & \hyperref[square:methods]{见表}        \\
+rectangle     & \hyperref[rectangle:methods]{见表}     \\
+parallelogram & \hyperref[parallelogram:methods]{见表} \\
+regular       & \hyperref[regular:methods]{见表}       \\
+vector        & \hyperref[vector:methods]{见表}        \\
+matrix        & \hyperref[matrix:methods]{见表}        \\
+angle         & \hyperref[angle:methods]{见表}         \\
+list\_point   & \hyperref[list_point:methods]{见表}    \\
+fct           & \hyperref[fct:methods]{见表}           \\
+pfct          & \hyperref[pfct:methods]{见表}          \\
+\end{tabular}
+\section*{元方法总览}
+\begin{tabular}{ll}
+\textbf{类} & \textbf{方法} \\
+\hline
+point  & \hyperref[point:methods]{见表}  \\
+occs   & \hyperref[occs:methods]{见表}   \\
+vector & \hyperref[vector:methods]{见表} \\
+matrix & \hyperref[matrix:methods]{见表} \\
+path   & \hyperref[path:methods]{见表}   \\
+\end{tabular}
+\clearpage
+\tableofcontents
+
+\clearpage
+\newpage
+
+\part{几何核心}
+
+\input{TKZdoc-elements-beginning.tex}
+\input{TKZdoc-elements-structure.tex}
+\input{TKZdoc-elements-why.tex}
+\input{TKZdoc-elements-presentation.tex}
+\input{TKZdoc-elements-convention.tex}
+\input{TKZdoc-elements-organization.tex}
+\input{TKZdoc-elements-coordinates.tex}
+\input{TKZdoc-elements-eps.tex}
+\input{TKZdoc-elements-foundations.tex}
+\input{TKZdoc-elements-classes.tex}
+\input{TKZdoc-elements-classes-point.tex}
+\input{TKZdoc-elements-classes-line.tex}
+\input{TKZdoc-elements-classes-circle.tex}
+\input{TKZdoc-elements-classes-triangle.tex}
+\input{TKZdoc-elements-classes-occs.tex}
+\input{TKZdoc-elements-classes-conic.tex}
+\input{TKZdoc-elements-classes-quadrilateral.tex}
+\input{TKZdoc-elements-classes-square.tex}
+\input{TKZdoc-elements-classes-rectangle.tex}
+\input{TKZdoc-elements-classes-parallelogram.tex}
+\input{TKZdoc-elements-classes-regular.tex}
+
+\part{代数与工具}
+
+\input{TKZdoc-elements-classes-vectors.tex}
+\input{TKZdoc-elements-classes-matrices.tex}
+ \input{TKZdoc-elements-classes-path.tex}
+\input{TKZdoc-elements-classes-list-point.tex}
+\input{TKZdoc-elements-classes-angle.tex}
+\input{TKZdoc-elements-intersection.tex}
+\input{TKZdoc-elements-constants.tex}
+\input{TKZdoc-elements-tkz.tex}
+\input{TKZdoc-elements-utils.tex}
+\input{TKZdoc-elements-maths.tex}
+
+\part{Lua 与集成}
+
+
+\input{TKZdoc-elements-lua.tex}
+\input{TKZdoc-elements-transfers.tex}
+\input{TKZdoc-elements-macros-transfert.tex}
+\input{TKZdoc-elements-classes-fct.tex}
+\input{TKZdoc-elements-classes-pfct.tex}
+\input{TKZdoc-elements-metapost.tex}
+
+
+\part{数学与计算基础}
+ \input{TKZdoc-elements-CMGE.tex}
+
+
+
+\clearpage\newpage
+\small\printindex
+
+\end{document}

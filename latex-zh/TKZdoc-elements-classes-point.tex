@@ -1,0 +1,1059 @@
+\newpage
+
+\section{point 类}
+在 tkz-elements 中，一个点在内部表示为一个复数（即它的附标）。这一选择使得平移、旋转、缩放等计算可以简洁地进行，同时在渲染时仍与 TikZ/tkz-euclide 兼容。
+
+
+变量 \tkzVar{point}{z} 保存一个用于存储点的表。它是 \textbf{必需的}，由本宏包自动初始化（例如 \tkzname{ z = \{\}}）。
+
+
+\vspace{1em}
+\tkzClass{point} 类构成整个框架的基础。它是一个混合类，既表示平面中的点，也表示复数。其基本原理如下：
+
+\begin{itemize}
+  \item 平面配备了一个正交基（OCCS，见 [\ref{sec:orthonormal_cartesian_coordinate_system}]），使我们可以通过横坐标和纵坐标确定一个点的位置。
+  \item 类似地，任何复数都可看作一个有序的实数对（其实部和虚部）。
+  \item 因此，平面可以等同于复平面，复数 $x + iy$ 由平面中坐标为 $(x, y)$ 的点来表示。
+\end{itemize}
+
+因此，像 $A$ 这样的点被存储为对象 \code{z.A}，其坐标及相关属性都封装在该对象内部。
+
+\vspace{1em}
+\code{point} 对象具有以下几个属性：
+\begin{mybox}{}
+\begin{itemize}
+  \item \code{re} --> 实部（横坐标），
+  \item \code{im} --> 虚部（纵坐标），
+  \item \code{type} --> 对象的类型（在此情形下始终为 \code{"point"}），
+  \item \code{arg} --> 复数的辐角（相对于 x 轴的角度），
+  \item \code{mod} --> 复数的模（到原点的距离）。
+\end{itemize}
+\end{mybox}
+
+
+
+\subsection{创建点}
+\label{sub:creating_a_point}
+
+通过在当前正交笛卡尔坐标系（OCCS）中给出坐标来创建点。推荐的形式为：
+
+\begin{mybox}
+  \code{z.A = point(x, y)}
+\end{mybox}
+
+其中 \code{x} 和 \code{y} 是实数，对应于该点的 $x$ 和 $y$ 坐标。
+
+\medskip
+
+在内部，这会创建一个复数 $x + i y$，并以键 \code{"A"} 存储在表 \tkzVar{point}{z} 中。表 \tkzVar{point}{z} 用于按标签引用所有点。
+
+\medskip
+
+另外，也可以使用更显式的语法：
+
+\begin{center}
+  \code{z.A = point:new(x, y)}
+\end{center}
+
+
+两种形式等价。简写构造函数自第 4 版起提供，为便于阅读和一致起见推荐使用。
+
+
+\def\size{42mm}
+\begin{tikzpicture}[remember picture]
+\node[ draw, fill=red!10] (tbl) {%
+ \centering
+\begin{minipage}{\size}
+
+   \hspace{\fill} \texttt{属性}\hspace{\fill}
+
+       \tikz\node[minimum width=\size,font=\small,
+    draw, fill=cyan!10,
+    rectangle split, rectangle split parts=6
+  ] {
+    \texttt{re (实部)}
+    \nodepart{two}\texttt{im (虚部)}
+    \nodepart{three}\texttt{type = 'point'}
+    \nodepart{four}\texttt{argument (弧度)}
+    \nodepart{five}\texttt{modulus (cm)}
+    \nodepart{six}\texttt{mtx (矩阵)}
+  };
+
+    \hspace{\fill}  \texttt{方法}\hspace{\fill}
+
+    \tikz\node[minimum width=\size,font=\small,
+    draw, fill=orange!20,sharp corners,
+    rectangle split, rectangle split parts=4
+  ] {
+   \texttt{homothety(coeff,obj)}
+    \nodepart{two}\texttt{rotation(angle, object)}
+    \nodepart{three}\texttt{symmetry (object)}
+    \nodepart{four}\texttt{\ldots}
+  };
+\end{minipage}};
+ \node[ draw, fill=red!10,,minimum height = 2em,
+  rounded corners,anchor=south] (tc) at (tbl.north){类 |Point|};
+\end{tikzpicture}
+\hspace{5cm}\begin{tikzpicture}[remember picture]
+   \node[ draw, fill=red!10] (tbl) {%
+ \centering
+\begin{minipage}{\size}
+   \hspace{\fill}    \texttt{属性}\hspace{\fill}
+
+        \tikz\node[minimum width=\size,font=\small,
+    draw, fill=cyan!10,
+    rectangle split, rectangle split parts=6
+  ] {
+    \texttt{re = 1}
+    \nodepart{two}\texttt{im = 2}
+    \nodepart{three}\texttt{type = 'point'}
+    \nodepart{four}\texttt{argument = atan(2)}
+     \nodepart{five}\texttt{modulus = $\sqrt{5}$}
+      \nodepart{six}\texttt{mtx = \{\{1\},\{2\}\}}
+  };
+
+    \hspace{\fill}  \texttt{方法}\hspace{\fill}
+
+        \tikz\node[minimum width=\size,font=\small,
+    draw, fill=orange!20,sharp corners,
+    rectangle split, rectangle split parts=4
+  ] {
+   \texttt{homothety(coeff,obj)}
+    \nodepart{two}\texttt{rotation(angle, object)}
+    \nodepart{three}\texttt{symmetry (object)}
+    \nodepart{four}\texttt{\ldots}
+  };
+\end{minipage}
+     };
+ \node[ draw, fill=red!10,remember picture,minimum height = 2em,
+  rounded corners,anchor=south] (to) at (tbl.north){对象 |z.A|};
+\end{tikzpicture}
+
+\begin{tikzpicture}[remember picture,overlay]
+\draw [thick,->](tc.east) -- (to.west);
+\end{tikzpicture}
+
+
+\subsection{点的属性}
+\label{sub:attributes_of_a_point}
+% 方法 \tkzMeth{point}{new}
+
+\begin{mybox}
+   创建 \\
+   |z.A = point(1, 2) |
+\end{mybox}
+ 点 $A$ 的坐标为 $x=1$、$y=2$。如果你采用 |z.A| 记法，则 $A$ 将作为 \TIKZ\ 或 \tkzNamePack{tkz-euclide} 中的节点被引用。
+
+这创建了一个坐标为 $1$、$2$ 且名为 $A$ 的固定点。记法 \tkzname{z.A} 表示坐标将存储在变量 \tkzVar{point}{z} 所对应的表中（呼应复数附标的记法），其中 $A$ 是点的名称，也是用于访问各值的键。
+
+\label{point:attributes}
+\bgroup
+  \small
+  \catcode`_=12
+  \captionof{table}{点的属性。}
+  \begin{tabular}{lll}
+  \toprule
+  \texttt{属性}      & \textbf{说明}&   \texttt{示例 / 参考} \\
+  \midrule
+  \tkzAttr{point}{type}     &  对象类型名，始终为 \texttt{"point"}   & \\
+  \tkzAttr{point}{re}       &  实部（即 $x$ 坐标）      & [\ref{ssub:methods}] \\
+  \tkzAttr{point}{im}       &  虚部（即 $y$ 坐标）    & [\ref{ssub:methods}]  \\
+  \tkzAttr{point}{argument} &   附标的辐角（弧度角） & $\approx$ \code{0.785398...} \quad  [\ref{ssub:example_point_attributes}] \\
+  \tkzAttr{point}{modulus}  & 附标的模（到原点的距离）  &  $\sqrt{5} \approx$ \code{2.2360...} \quad [\ref{ssub:example_point_attributes}] \\
+  \tkzAttr{point}{mtx}  & 以列向量形式表示的矩阵   & \code{z.A.mtx = \{\{1\},\{2\}\}} \quad  [\ref{ssub:example_point_attributes}] \\
+  \bottomrule
+  \end{tabular}
+\egroup
+
+
+\subsubsection{示例：点的属性}
+\label{ssub:example_point_attributes}
+
+\directlua{
+init_elements()
+   z.M = point(1, 2)}
+\hspace*{\fill}
+
+\begin{verbatim}
+\directlua{
+   init_elements()
+   z.M = point(1, 2)}
+\end{verbatim}
+\pgfkeys{/pgf/number format/.cd,std,precision=2}
+\let\pmpn\pgfmathprintnumber
+\DeleteShortVerb{\|}
+
+\begin{verbatim}
+\begin{tikzpicture}[scale = 1]
+\pgfkeys{/pgf/number format/.cd,std,precision=2}
+\let\pmpn\pgfmathprintnumber
+\tkzDefPoints{2/4/M,2/0/A,0/0/O,0/4/B}
+\tkzLabelPoints(O)
+\tkzMarkAngle[fill=gray!30,size=1](A,O,M)
+\tkzLabelAngle[pos=1,right](A,O,M){%
+   $\theta \approx \pmpn{\tkzUseLua{z.M.argument}}$ rad}
+\tkzDrawSegments(O,M)
+\tkzLabelSegment[above,sloped](O,M){%
+    $|z_M| =\sqrt{5}\approx \pmpn{%
+   \tkzUseLua{z.M.modulus}}$ cm}
+\tkzLabelPoint[right](M){$M: z_M = 1 + 2i$}
+\tkzDrawPoints(M,A,O,B)
+\tkzPointShowCoord(M)
+\tkzLabelPoint[below,teal](A){$\tkzUseLua{z.M.re}$}
+\tkzLabelPoint[left,teal](B){$\tkzUseLua{z.M.im}$}
+\tkzDrawSegments[->,add = 0 and 0.25](O,B O,A)
+\end{tikzpicture}
+\end{verbatim}
+
+
+\begin{center}
+   \begin{tikzpicture}
+   \pgfkeys{/pgf/number format/.cd,std,precision=2}
+   \let\pmpn\pgfmathprintnumber
+   \tkzDefPoints{2/4/M,2/0/A,0/0/O,0/4/B}
+   \tkzLabelPoints(O)
+   \tkzMarkAngle[fill=gray!30,size=1](A,O,M)
+   \tkzLabelAngle[pos=1,right](A,O,M){%
+   $\theta \approx \pmpn{\tkzUseLua{z.M.argument}}$ rad}
+   \tkzDrawSegments(O,M)
+   \tkzLabelSegment[above,sloped](O,M){%
+   $|z_M| =\sqrt{5}\approx \pmpn{\tkzUseLua{z.M.modulus}}$ cm}
+   \tkzLabelPoint[right](M){$M: z_M = 1 + 2i$}
+   \tkzDrawPoints(M,A,O,B)
+   \tkzPointShowCoord(M)
+   \tkzLabelPoint[below,teal](A){$\tkzUseLua{z.M.re}$}
+   \tkzLabelPoint[left,teal](B){$\tkzUseLua{z.M.im}$}
+   \tkzDrawSegments[->,add = 0 and 0.25](O,B O,A)
+   \begin{scope}[every annotation/.style={fill=lightgray!15,anchor = east}]
+   \node [annotation,font =\small,text width=6cm] at (current bounding box.west) {
+\texttt{z.M} 的属性
+   \begin{mybox}{}
+     \begin{itemize}
+     \item \texttt{z.M.re} = 1
+     \item \texttt{z.M.im} = 2
+     \item \texttt{z.M.type} = point
+     \item \texttt{z.M.argument} = $\theta \approx \pmpn{\tkzUseLua{z.M.argument}}$ rad
+     \item \texttt{z.M.modulus} = $|z_M| =\sqrt{5}\approx \pmpn{\tkzUseLua{z.M.modulus}}$ cm
+     \item \texttt{z.M.mtx} =  \tkzUseLua{z.M.mtx:print()}
+     \end{itemize}
+   \end{mybox}
+      };
+   \end{scope}
+   \end{tikzpicture}
+\end{center}
+
+ \MakeShortVerb{\|}
+
+
+\subsubsection{属性 \tkzAttr{point}{mtx}}
+\label{ssub:attribute_iattr_point_mtx}
+
+该属性使点能够与矩阵结合使用。
+
+\vspace{1em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+  \directlua{
+  z.A = point(2, -1)
+  z.A.mtx:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\begin{center}
+  \directlua{
+  z.A = point(2, -1)
+  z.A.mtx:print()}
+\end{center}
+\end{minipage}
+
+\subsubsection{复平面（Argand 图）}
+\label{ssub:argand_diagram}
+\normalsize
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  z.A = point(2, 3)
+  z.O = point(0, 0)
+  z.I = point(1, 0)}
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzInit[xmin=-4,ymin=-4,xmax=4,ymax=4]
+   \tkzDrawCircle[dashed,red](O,A)
+   \tkzPointShowCoord(A)
+   \tkzDrawPoint(A)
+   \tkzLabelPoint[above right](A){\normalsize $a+ib$}
+   \tkzDrawX\tkzDrawY
+   \tkzDrawSegment(O,A)
+   \tkzLabelSegment[above,anchor=south,sloped](O,A){ OA = modulus of $z_A$}
+  \tkzLabelAngle[anchor=west,pos=.5](I,O,A){$\theta$ = argument of $z_A$}
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+
+\begin{minipage}{\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(2, 3)
+ z.O = point(0, 0)
+ z.I = point(1, 0)}
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzInit[xmin=-4,ymin=-4,xmax=4,ymax=4]
+  \tkzDrawCircle[dashed,red](O,A)
+  \tkzPointShowCoord(A)
+  \tkzDrawPoint(A)
+  \tkzLabelPoint[above right](A){\normalsize $a+ib$}
+  \tkzDrawX\tkzDrawY
+  \tkzDrawSegment(O,A)
+  \tkzLabelSegment[above,anchor=south,sloped](O,A){ OA = $z_A$ 的模}
+  \tkzLabelAngle[anchor=west,pos=.5](I,O,A){$\theta$ = $z_A$ 的辐角}
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\newpage
+\subsection{point 类的方法}
+
+下表所列的方法都是标准方法，在本文档末尾的各示例中被广泛使用。这些方法每一个都返回一个 \tkzNameObj{point} 对象。
+
+\medskip
+
+关于使用复数和运算符重载的更高级运算，请参见第~\ref{sub:complex_numbers} 节，其中描述了可用的元方法。
+
+
+\vspace{1em}
+
+\bgroup
+\catcode`_=12
+\small
+\captionof{table}{\code{class} point 的函数与方法。}\label{point:methods}
+\begin{tabular}{lll}
+\toprule
+
+\texttt{方法} & \texttt{参考} \\
+\midrule
+\texttt{构造函数} &\\
+\midrule
+\tkzMeth{point}{new(r,r)} &[\ref{ssub:method_point_new}; \ref{ssub:method_normalize}]\\
+\tkzMeth{point}{polar(d,an)} &[\ref{ssub:method_point_polar}] \\
+\tkzMeth{point}{polar\_deg(d,an)} &[\ref{ssub:method_point_polar_deg}]   \\
+\midrule
+\texttt{返回实数的方法} & \\
+\midrule
+\tkzMeth{point}{get()}     &[\ref{ssub:method_point_get}] \\
+\midrule
+\texttt{返回点的方法} & \\
+\midrule
+\tkzMeth{point}{north(r)} & [\ref{ssub:methods}]   \\
+\tkzMeth{point}{south(r)} &  \\
+\tkzMeth{point}{east(r)}  &  \\
+\tkzMeth{point}{west(r)}  &  \\
+\tkzMeth{point}{normalize()}         & [\ref{ssub:method_normalize}] \\
+\tkzMeth{point}{normalize\_from(pt)} & [\ref{ssub:method_normalize}] \\
+\tkzMeth{point}{orthogonal(d)}       & [\ref{ssub:orthogonal_method}]\\
+\tkzMeth{point}{at()}                &  [\ref{ssub:_point_at_method}] \\
+\tkzMeth{point}{shift\_orthogonal\_to(pt, d)}& [\ref{shift_orthogonal}] \\
+\tkzMeth{point}{shift\_collinear\_to(pt, d)} & [\ref{shift_collinear}] \\
+\midrule
+\texttt{返回圆的方法} & \\
+\midrule
+\tkzMeth{point}{PPP(a,b)} &[\ref{ssub:point_PPP}]\\
+\midrule
+\texttt{返回对象的方法} & \\
+\midrule
+\tkzMeth{point}{symmetry(obj)} & [\ref{ssub:object_symmetry}] \\
+\tkzMeth{point}{rotation(an, obj)}  &  [\ref{ssub:object_rotation}] \\
+\tkzMeth{point}{homothety(r,obj)}    & [\ref{ssub:method_point_homothety_k_obj}]   \\
+\midrule
+
+\texttt{实用工具} &\\
+\midrule
+\tkzMeth{point}{identity(pt)} & [\ref{ssub:identity}]\\
+\tkzMeth{point}{print()} & [\ref{ssub:print}]\\
+\bottomrule %
+\end{tabular}
+\egroup
+
+
+\subsubsection{方法 \tkzMeth{point}{new(r, r)}}
+\label{ssub:method_point_new}
+
+该方法使用笛卡尔坐标在平面中创建一个点。\textbf{简写构造函数} \tkzMeth{point}{(r, r)} 自第 4 版起提供，为便于阅读和一致起见推荐使用。
+
+\medskip
+
+它接受两个实数作为参数：第一个表示 \emph{横坐标}（实部），第二个表示 \emph{纵坐标}（虚部）。在内部，该点被视为一个复数，并存储在全局表 \tkzname{z} 中。
+
+\medskip
+
+所得对象的类型为 \tkzNameObj{point}，可用于进一步的几何构造，或用 \tkzNamePack{tkz-euclide} 显示。
+
+\medskip
+
+\smallbf{注意：} 默认单位为厘米，与 \tkzNamePack{tkz-euclide} 的约定一致。所有坐标均在正交笛卡尔坐标系中解释。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex = 7cm]
+\directlua{
+  init_elements()
+  z.A  = point(0, 0)
+  z.B  = point(2, 1)}
+\begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzDrawPoints(A,B)
+  \tkzLabelPoints(A,B)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{get()}}
+\label{ssub:method_point_get}
+
+\code{get} 方法用于取回一个点的笛卡尔坐标。
+
+\medskip
+
+设 $I$ 为两条直线的交点。你可以用两种等价方式获取它的坐标：
+\begin{itemize}
+  \item 直接使用该点的属性：
+    \begin{center}
+    \code{x = z.I.re} \quad 与 \quad \code{y = z.I.im}
+    \end{center}
+  \item 或使用 \code{get()} 方法：
+    \begin{center}
+    \code{x, y = z.I:get()}
+    \end{center}
+\end{itemize}
+
+
+该方法提升了代码的可读性，也便于把坐标传给那些期望数值参数的函数。
+
+\vspace{1em}
+
+\begin{minipage}{.5\textwidth-1cm}
+\directlua{
+ init_elements()
+ z.A, z.B = point(0, 0), point(5, -1)
+ z.C, z.D = point(1, -4), point(4, 2)
+ L.AB = line(z.A, z.B)
+ L.CD = line(z.C, z.D)
+ z.I = intersection(L.AB, L.CD)
+ x, y = z.I:get()
+ tex.print("$x_I = $"..x)
+ tex.print('\\\\')
+ tex.print("$y_I = $"..y)}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\begin{tkzexample}[code only]
+\directlua{
+ init_elements()
+ z.A, z.B = point(0, 0), point(5, -1)
+ z.C, z.D = point(1, -4), point(4, 2)
+ L.AB = line(z.A, z.B)
+ L.CD = line(z.C, z.D)
+ z.I = intersection(L.AB, L.CD)
+ x, y = z.I:get()
+ tex.print("$x_I = $"..x)
+ tex.print('\\\\')
+ tex.print("$y_I = $"..y)}
+\end{tkzexample}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{point}{polar(r, an)}}
+\label{ssub:method_point_polar}
+
+该方法使用极坐标在平面中创建一个点。
+
+\medskip
+
+它接受两个参数：
+\begin{itemize}
+  \item \code{r} —> 模（到原点的距离），
+  \item \code{an} —> 辐角（弧度角）。
+\end{itemize}
+
+
+在内部，该点表示为复数：\code{r * exp(i * an)}。该方法特别适用于在圆上构造点，或用角度和距离定义点。
+
+\medskip
+
+\textbf{注意：} 默认单位为厘米，与 \tkzNamePack{tkz-euclide} 的约定一致。所有坐标均在正交笛卡尔坐标系中解释。
+
+\vspace{1em}
+
+\begin{mybox}
+\begin{verbatim}
+  z.B = polar(2, math.pi / 4)
+  or
+  z.B = point:polar(2, math.pi / 4)
+\end{verbatim}
+\end{mybox}
+
+\begin{tkzexample}[latex = 7cm]
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = point(3, 0)
+ z.F = polar(3, math.pi / 3)}
+\begin{center}
+\begin{tikzpicture}[scale=.75]
+   \tkzGetNodes
+   \tkzDrawCircle(O,A)
+   \tkzDrawSegments[new](O,A)
+   \tkzDrawSegments[purple](O,F)
+   \tkzDrawPoints(A,O,F)
+   \tkzLabelPoints[below right=6pt](A,O)
+   \tkzLabelPoints[above](F)
+\end{tikzpicture}
+\end{center}
+
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{polar\_deg(d,an)}}
+\label{ssub:method_point_polar_deg}
+
+与上一个相同，只是角度以度数给出。
+
+\begin{tkzexample}[latex=7cm]
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = polar_deg(3, 60)
+ z.C = polar_deg(3, 0)}
+\begin{center}
+  \begin{tikzpicture}[gridded]
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C)
+  \tkzDrawPoints(A,B,C)
+  \tkzLabelPoints(A,C)
+  \tkzLabelPoints[above](B)
+  \end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{north(d)}}
+\label{ssub:example_method_point_north_d}
+
+该方法创建一个新点，它位于过给定点、竖直向上（朝向北方）的直线上，与给定点相距一段竖直距离。
+
+\medskip
+
+当你想在某个参考点上方偏移特定距离处构造一个点时——例如放置一个标签，或构造一个已知高度的几何构型——它特别有用。
+
+\medskip
+
+可选参数 \code{d} 表示竖直距离。若省略，则使用默认值 $1$。
+
+\vspace{1em}
+
+
+\begin{tkzexample}[latex = 7cm]
+\directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = z.O:east()
+ z.Ap= z.O:east(1):north(1)
+ z.B = z.O:north()
+ z.C = z.O:west()
+ z.D = z.O:south()}
+\begin{center}
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzDrawPolygon(A,B,C,D)
+   \tkzDrawPoints(A,B,C,D,O,A')
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{normalize()}}
+\label{ssub:method_normalize}
+
+该方法返回一个新点，它位于从原点到当前点的线段上，与原点相距 $1$。它通常用于提取一个向量的方向，并将其长度归一化为 1。
+
+\medskip
+
+你也可以用该方法，沿给定方向构造一个与另一点相距固定距离的点。例如：
+
+\begin{center}
+\code{z.U = (z.C - z.B):normalize() + z.B}
+\end{center}
+
+
+这里，向量 $\overrightarrow{BU}$ 的长度为 $1$，且 $U$ 位于线段 $[BC]$ 上、从 $B$ 指向 $C$ 的方向。
+
+\medskip
+
+有两种等价方式可以得到相同结果：
+
+\begin{mybox}
+\begin{verbatim}
+  z.U = z.C:normalize_from(z.B)
+  z.U = L.BC:normalize()
+\end{verbatim}
+\end{mybox}
+
+
+第二种方式需要事先创建直线对象 \code{L.BC}。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex=8cm]
+\directlua{
+  init_elements()
+  z.A  = point(0, 0)
+  z.B  = point(4, 3)
+  z.C  = point(1, 5)
+  L.AB = line(z.A, z.B)
+  L.BC = line(z.B, z.C)
+  z.N = z.B:normalize()
+  z.U = z.C:normalize_from(z.B)}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawLines(A,B  B,C)
+  \tkzDrawPoints(A,B,C,U,N)
+  \tkzLabelPoints(A,B,C,U,N)
+  \tkzDrawSegment(B,C)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{orthogonal(d)}}
+\label{ssub:orthogonal_method}
+
+设 $O$ 为平面原点，$A$ 为异于 $O$ 的一点。该方法构造一个新点 $B$，使得向量 $\overrightarrow{OB}$ 与 $\overrightarrow{OA}$ 正交：
+
+\[
+\overrightarrow{OB} \perp \overrightarrow{OA}
+\]
+
+\medskip
+\DeleteShortVerb{\|}
+默认地，选取点 $B$ 使 $|OB| = |OA|$。若给出可选参数 \code{d}，则构造点 $B$ 使 $|OB| = d$。
+\MakeShortVerb{\|}
+
+\medskip
+
+该方法有助于构造垂直向量，或在与给定方向正交的圆上生成点。
+
+\vspace{1em}
+
+
+\begin{tkzexample}[latex=7cm]
+\directlua{
+  init_elements()
+  z.A = point(3, 1)
+  z.B = z.A:orthogonal(1)
+  z.O = point(0, 0)
+  z.C = z.A:orthogonal()}
+\begin{center}
+  \begin{tikzpicture}[gridded]
+    \tkzGetNodes
+    \tkzDrawSegments(O,A O,C)
+    \tkzDrawPoints(O,A,B,C)
+    \tkzLabelPoints[below right](O,A,B,C)
+  \end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{at(pt)}}
+\label{ssub:_point_at_method}
+
+该方法是对 \code{orthogonal} 方法的补充。它不是构造使 $\overrightarrow{OB} \perp \overrightarrow{OA}$（以 $O$ 为原点）的点 $B$，而是构造一个满足下式的点 $B$：
+
+\[
+\overrightarrow{AB} \perp \overrightarrow{OA}
+\]
+
+
+在此情形下，参考方向仍为 $\overrightarrow{OA}$，但正交向量是从点 $A$ 出发构造的，而非从原点出发。结果得到点 $B$，它位于过 $A$ 且与直线 $(OA)$ 正交的直线上。
+
+\medskip
+
+当处理局部正交方向时，该方法很有用，例如在三角形中作高，或定义锚定于给定点的垂直向量。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex=7cm]
+ \directlua{
+ init_elements()
+ z.O = point(0, 0)
+ z.A = point(3, 2)
+ z.B = z.A:orthogonal(1)
+ z.C = z.A + z.B
+ z.D =(z.C - z.A):orthogonal(2):at(z.C)}
+ \begin{center}
+   \begin{tikzpicture}[gridded]
+   \tkzGetNodes
+   \tkzLabelPoints[below right](O,A,C)
+   \tkzLabelPoints[above](B,D)
+   \tkzDrawSegments(O,A A,B A,C C,D O,B)
+   \tkzDrawPoints(O,A,B,C,D)
+   \end{tikzpicture}
+ \end{center}
+\end{tkzexample}
+
+%====================================================================
+\subsubsection{方法 \tkzMeth{point}{PPP(a,b)}}
+\label{ssub:point_PPP}
+%====================================================================
+该方法在文档 \tkzname{Geometry Euclidean} [\href{https://altermundus.fr}{AlterMundus}] 中介绍。
+
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(4, 0)
+  z.C = point(3, 4)
+  PA.center, PA.through, _ = z.A:PPP(z.B, z.C)
+  tkz.nodes_from_paths(PA.center, PA.through)
+}
+
+\begin{center}
+  \begin{tikzpicture}
+    \tkzGetNodes
+    \tkzDrawPolygon(A,B,C)
+    \tkzDrawCircles(w1,t1)
+    \tkzDrawPoints(A,B,C)
+  \end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+
+\subsubsection{方法 \tkzMeth{point}{shift\_orthogonal\_to(pt, dist)}}
+\label{shift_orthogonal}
+
+\medskip
+\texttt{语法： } \verb|z.P = z.A:shift_orthogonal_to(z.B, 2)|
+
+\medskip
+\texttt{返回值}
+该方法返回将当前点 A 沿与直线 (AB) 正交的方向平移一个有向距离 dist 后得到的点。
+正距离对应于将向量 $\overrightarrow{AB}$ 绕点 A 旋转 $+90^\circ$，
+负距离对应于旋转 $-90^\circ$。
+
+\begin{verbatim}
+z.Q = z.B:shift_orthogonal_to(z.A, 2)
+\end{verbatim}
+正距离对应于将向量 $\overrightarrow{BA}$ 绕点 B 旋转 $+90^\circ$。
+
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+z.A = point(3, 2)
+z.a = point(3, 3)
+z.B = point(7, 3)
+z.b = point(7, 4)
+C.A = circle(z.A, z.a)
+C.B = circle(z.B, z.b)
+z.TA = z.A:shift_orthogonal_to(z.B, C.A.radius)
+z.TB = z.B:shift_orthogonal_to(z.A, -C.A.radius)
+}
+\begin{tikzpicture}[gridded]
+\tkzGetNodes
+\tkzDrawCircles(A,a B,b)
+\tkzDrawLines(A,B TA,TB)
+\tkzDrawPoints(A,B,TA,TB)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{shift\_collinear\_to(pt, dist)}}
+\label{shift_collinear}
+该方法返回将当前点 A 沿与直线 (AB) 相同的方向平移一个有向距离 dist 后得到的点。
+
+\medskip
+\texttt{语法： } \verb|z.P = z.A:shift_collinear_to(z.B, 2)|
+
+
+
+\subsubsection{方法 \tkzMeth{point}{rotation(an, obj)}}
+\label{ssub:object_rotation}
+
+与后面几个方法一样，绕一点的旋转可应用于一个点、一组点或一个对象。
+
+该方法绕当前点（作为旋转中心）旋转一个或多个点或一个对象。
+
+
+\medskip
+\texttt{用途：}
+
+该方法将一个几何对象绕指定点旋转给定角度。
+
+在本例中，三角形绕作为旋转中心的点 $O$ 旋转角度 $\pi/3$。
+
+
+\medskip
+\texttt{语法： } \verb|new_obj = z.I:rotation(an, obj)|
+
+
+\medskip
+\texttt{返回：}
+\begin{itemize}
+\item 结果是一个点（或一组点），由每个给定点绕中心旋转指定角度得到。
+\item 该方法返回一个同类型的新对象，并作相应旋转。
+\end{itemize}
+
+
+\medskip
+\texttt{对一个点或一组点的用法示例}
+
+在下面的示例中，一组点绕给定中心旋转。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex=7cm]
+\directlua{
+ init_elements()
+ z.a = point(0, -1)
+ z.b = point(4, 0)
+ z.o = point(6, -2)
+ z.ap,
+ z.bp = z.o:rotation(math.pi / 2, z.a, z.b)}
+\begin{center}
+\begin{tikzpicture}[scale = .5]
+ \tkzGetNodes
+ \tkzDrawLines(o,a o,a' o,b o,b')
+ \tkzDrawPoints(a,a',b,b',o)
+ \tkzLabelPoints(b,b',o)
+ \tkzLabelPoints[below left](a,a')
+ \tkzDrawArc(o,a)(a')
+ \tkzDrawArc(o,b)(b')
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\medskip
+\texttt{对一个对象的用法示例}
+
+\vspace{1em}
+\begin{tkzexample}[latex=7cm]
+\directlua{
+ init_elements()
+ z.O  = point(-1, -1)
+ z.A  = point(2, 0)
+ z.B  = point(5, 0)
+ L.AB  = line(z.A, z.B)
+ T.ABC = L.AB:equilateral()
+ S.fig = L.AB:square()
+ _,_,z.E,z.F = S.fig:get()
+ S.new = z.O:rotation(math.pi / 3, S.fig)
+ _,_,z.Ep,z.Fp = S.new:get()
+ z.C = T.ABC.pc
+ T.ApBpCp = z.O:rotation(math.pi / 3, T.ABC)
+ z.Ap,z.Bp,
+ z.Cp = T.ApBpCp:get()}
+\begin{center}
+\begin{tikzpicture}[scale = .6]
+ \tkzGetNodes
+ \tkzDrawPolygons(A,B,C A',B',C' A,B,E,F)
+ \tkzDrawPolygons(A',B',E',F')
+ \tkzDrawPoints(A,B,C,A',B',C',O)
+ \tkzLabelPoints(A,B,C,A',B',C',O)
+ \begin{scope}
+  \tkzDrawArc[delta=0,->,dashed,red](O,A)(A')
+  \tkzDrawSegments[dashed,red](O,A O,A')
+ \end{scope}
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+
+
+
+\subsubsection{方法 \tkzMeth{point}{symmetry(obj)}}
+\label{ssub:object_symmetry}
+
+\medskip
+\texttt{描述：}
+该方法关于给定点对一个几何对象作中心对称（点反射）。
+
+\medskip
+\texttt{参数}
+
+参数 \code{obj} 可以是点、直线、三角形、圆或任何其他受支持的几何对象。该对象的每个元素都关于中心点作反射，从而产生一个同类型的新对象。
+
+\medskip
+\texttt{用法示例}
+
+下面的示例展示如何以一个参考点为中心，对一个对象（例如三角形）施加中心对称。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex=7cm]
+\directlua{
+  init_elements()
+  z.a = point(0, -1)
+  z.b = point(2, 0)
+  L.ab = line(z.a, z.b)
+  C.ab = circle(z.a, z.b)
+  z.o = point(1, 1)
+  z.ap, z.bp = z.o:symmetry(C.ab):get()}
+\begin{center}
+  \begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawCircles(a,b a',b')
+  \tkzDrawLines(a,a' b,b')
+  \tkzDrawLines[red](a,b a',b')
+  \tkzDrawPoints(a,a',b,b',o)
+  \tkzLabelPoints(a,a',b,b',o)
+  \end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{point}{homothety(k, obj)}}
+\label{ssub:method_point_homothety_k_obj}
+
+\texttt{用途： } 该方法关于当前点（作为变换中心）对一个几何对象作位似（放大或缩小）。
+
+\medskip
+
+\texttt{参数： }
+\begin{itemize}
+  \item \code{k} — 位似比（一个实数），
+  \item \code{obj} — 待变换的对象，可以是：
+  \begin{enumerate}
+    \item 单个点，
+    \item 一组点，
+    \item 或一个几何对象（直线、三角形、圆等）。
+  \end{enumerate}
+\end{itemize}
+
+
+正的比 \code{k} 产生以该点为中心的缩放，而负的比还会使对象关于中心作反射。
+
+\vspace{1em}
+
+\begin{tkzexample}[latex=7cm]
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(1, 2)
+ z.E = point(-3, 2)
+ z.C, z.D = z.E:homothety(2, z.A, z.B)}
+\begin{center}
+\begin{tikzpicture}[scale = .5]
+  \tkzGetNodes
+  \tkzDrawPoints(A,B,C,E,D)
+  \tkzLabelPoints(A,B,C,E)
+  \tkzDrawCircles(A,B C,D)
+  \tkzDrawLines(E,C E,D)
+\end{tikzpicture}
+\end{center}
+\end{tkzexample}
+
+ 该方法将一个点的坐标转换为格式化字符串，可直接在正文中显示。
+
+\medskip
+
+小数位数由全局变量 \code{tkz\_dc} 控制，在 \code{init\_elements()} 函数中默认设为 $2$。你可以在调用 \code{print()} 之前赋予新值来覆盖它：
+
+\begin{verbatim}
+tkz_dc = 0
+\end{verbatim}
+
+\medskip
+
+当在数学表达式中显示坐标、和、积或中间结果时，这特别有用。
+
+\medskip
+\texttt{用法示例：}
+
+\begin{verbatim}
+\directlua{
+  init_elements()
+  z.A = point(1, 2)
+  z.B = point(1, -1)
+  z.a = z.A + z.B
+  z.m = z.A * z.B
+  tkz_dc = 0}
+  点 $A$ 和 $B$ 对应的复数分别为
+   \tkzUseLua{z.A:print()} 与 \tkzUseLua{z.B:print()}，
+  它们的和为 \tkzUseLua{z.a:print()}，
+  它们的乘积为 \tkzUseLua{z.m:print()}。
+\end{verbatim}
+
+\directlua{
+init_elements()
+z.A = point(1, 2)
+z.B = point(1, -1)
+z.a = z.A + z.B
+z.m = z.A * z.B
+tkz_dc = 0
+}
+
+点 $A$ 和 $B$ 的各自附标为
+   \tkzUseLua{z.A:print()} 和 \tkzUseLua{z.B:print()}，
+ 它们的和为 \tkzUseLua{z.a:print()}，
+ 积为 \tkzUseLua{z.m:print()}。
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%  实用工具 %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsubsection{\tkzMeth{point}{identity}(pt)}
+  \label{ssub:identity}
+
+  \medskip
+  \texttt{语法： } \verb|z.A:identity(z.B)|
+
+  \medskip
+  \texttt{用途： }判断两个点在 \tkzVar{tkz}{tkz.epsilon} 所定义的数值精度内是否相同。
+
+  \medskip
+  \texttt{参数： } 要与 \textbf{self} 比较的点。\\
+
+  \medskip
+  \texttt{返回值： } 若两个点在数值上相同则为 True，否则为 false。\\
+
+
+  \begin{tkzexample}[latex=.5\textwidth]
+  \directlua{
+   z.A = point(0, 0)
+   z.B = point(0.0000000001, 0)
+   tex.print(tostring(z.A:identity(z.B)))
+   tex.print('\\\\')
+   tex.print(tkz.epsilon)}
+   %% true if tkz.epsilon > 1e-10
+  \end{tkzexample}
+
+  \medskip
+  \texttt{说明： }
+
+  该方法通过计算两个点之间的欧氏距离并检查其是否小于全局容差 \textbf{tkz.epsilon} 来比较它们。
+  在浮点计算中检验点是否相等时它很有用。
+
+
+
+  \subsubsection{\tkzMeth{point}{print}()}
+  \label{ssub:print}
+
+  \texttt{用法：}
+  \begin{verbatim}
+  z.A:print()
+  \end{verbatim}
+
+  \medskip
+
+  该方法以适合 \LaTeX{} 的格式打印该点的坐标。
+
+  它在内部使用 \texttt{tostring(self)} 将该点转换为字符串，并通过 \texttt{tex.print} 将结果发送到 \TeX{} 输出。因此输出可直接用于文档。
+
+  \medskip
+
+  \texttt{返回：} 无。
+
+  \medskip
+
+  \texttt{示例：}
+  \begin{verbatim}
+  \directlua{
+    z.A = point(1, 2)
+  }
+  Coordinates of A: \tkzUseLua{z.A:print()}
+  \end{verbatim}
+
+  \medskip
+
+  \texttt{说明：}
+
+  输出的格式取决于 \texttt{point} 类的 \texttt{\_\_tostring} 方法。通常它会产生形如 \texttt{(x,y)} 的坐标，可直接用于 TikZ 路径。
+\endinput

@@ -1,0 +1,342 @@
+%--------------------------------------------------------------------
+\newpage
+\section{数据传递}
+\label{sec:transfers}
+
+\tkzNamePack{tkz-elements} 宏包严格地把\emph{数学计算}与\emph{图形渲染}分离开来。所有几何对象都在 Lua 内部创建和操作，而绘图则由 \tkzNamePack{TikZ} 或 \tkzNamePack{tkz-euclide} 完成。
+
+所谓\emph{传递}（transfer），就是把数据从 Lua 计算层显式地传送到 \TeX\ 渲染层的操作。
+
+\medskip
+从概念上讲，其架构可概括为：
+
+\begin{center}
+计算（Lua）$\longrightarrow$ 传递 $\longrightarrow$ 渲染（TikZ/\TeX）
+\end{center}
+
+在被显式传递之前，对象对 \TeX\ 是不可见的。这种设计保证了数值稳健性，并在计算与呈现之间保持清晰的分离。
+
+%--------------------------------------------------------------------
+\subsection{概念概览}
+
+\tkzNamePack{tkz-elements} 提供三种传递机制：
+
+\begin{enumerate}
+\item 通过 \TeX\ 输入流的即时传递；
+\item 通过专用宏的基于对象的传递；
+\item 通过外部数据文件的基于文件的传递。
+\end{enumerate}
+
+每种机制适用于不同的场合，取决于所传递数据的规模和性质。
+
+\subsection{通过 \texttt{tostring} 进行对象序列化}
+\label{subsec:transfers_tostring}
+
+宏 \tkzNameMacro{tkzUseLua} 是从 Lua 到 \TeX\ 的基本桥梁。它对一个 Lua 表达式求值，并把结果打印到 \TeX\ 输入流中。在内部，它使用 Lua 的 \texttt{tostring()} 机制：
+
+\begin{verbatim}
+\def\tkzUseLua#1{\directlua{tex.sprint(#1)}}
+\end{verbatim}
+
+因此，任何 \tkzNamePack{tkz-elements} 对象都可以定义一个 Lua \texttt{\_\_tostring} 元方法来控制它在 \TeX\ 中的文本表示。这一点尤其用于复数（\tkzClass{point}）。
+
+\medskip
+\texttt{点的示例：}
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(1, -2)
+}
+\tkzUseLua{tostring(z.A)}
+\end{tkzexample}
+
+于是，与点 $A$ 关联的\emph{复数附标}就通过 Lua 的 \texttt{\_\_tostring} 元方法（经由 \texttt{tostring}）打印出来。
+
+\medskip
+\texttt{矩阵的示例： }
+
+宏 \tkzNameMacro{tkzUseLua} 把一个 Lua 表达式的\emph{值}作为文本打印出来（内部经由 \texttt{tostring(<expr>)}）。%
+\footnote{因此，对象可以通过定义一个 Lua \texttt{\_\_tostring} 元方法来自定义它在行文中的表示。}
+
+
+\medskip
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  local a, b, c, d = 1, 2, 3, 4
+  M.new = matrix({ { a, b }, { c, d } })}
+  \tkzUseLua{M.new:print()}
+\end{tkzexample}
+
+\texttt{其他情况}
+要传递 \code{nil}、\code{true} 和 \code{false}，必须使用 \code{tostring}；不过，数字或字符串可以直接传递。
+
+\begin{verbatim}
+  \tkzUseLua{tostring(nil)}
+  \tkzUseLua{tostring(true)}
+  \tkzUseLua{"TANGENT"}
+  \tkzUseLua{math.pi}
+\end{verbatim}
+%--------------------------------------------------------------------
+\subsection{即时传递}
+\label{subsec:transfer_immediate}
+
+当 Lua 使用 \texttt{tex.print} 直接把数据打印到 \TeX\ 输入流时，就发生即时传递。
+
+\subsubsection*{数值示例}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  z.A = point(3,4)
+  tex.print(point.abs(z.A))
+}
+\end{tkzexample}
+
+计算所得的值被直接插入文档。
+
+\subsubsection*{布尔示例}
+
+\begin{tkzexample}[latex=.5\textwidth]
+
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(3, 0)
+  z.C = point(0, 2)
+  T.ABC = triangle(z.A, z.B, z.C)
+  tex.print(tostring(T.ABC:check_equilateral()))
+}
+\end{tkzexample}
+
+这一机制让 Lua 计算能够通过条件语句影响 \TeX\ 的逻辑。
+
+\medskip
+\texttt{注意： } 可以自行决定何时进行传递。为此专门创建了一个宏，但你也可以自建：它叫做 \tkzcname{tkzUseLua}。其定义如下：
+
+\begin{mybox}
+  \begin{verbatim}
+  \def\tkzUseLua#1{\directlua{tex.print(#1)}}
+\end{verbatim}
+\end{mybox}
+
+该宏把一个 Lua 变量或表达式的值直接打印到 TeX 流中。
+
+\medskip
+\texttt{示例。}
+
+下面的 Lua 代码计算两条直线是否相交：
+
+\directlua{
+ z.a = point(4, 2)
+ z.b = point(1, 1)
+ z.c = point(2, 2)
+ z.d = point(5, 1)
+ L.ab = line(z.a, z.b)
+ L.cd = line(z.c, z.d)
+ det = (z.b - z.a) ^ (z.d - z.c)
+ if det == 0 then bool = true
+   else bool = false
+ end
+ x = intersection (L.ab, L.cd)}
+
+两条直线的交点位于附标为：\tkzUseLua{x} 的点处。
+
+\vspace{1em}
+\begin{minipage}{0.5\textwidth}
+\begin{verbatim}
+\directlua{
+  z.a = point(4, 2)
+  z.b = point(1, 1)
+  z.c = point(2, 2)
+  z.d = point(5, 1)
+  L.ab = line(z.a, z.b)
+  L.cd = line(z.c, z.d)
+  det = (z.b - z.a) ^ (z.d - z.c)
+  if det == 0 then bool = true
+    else bool = false
+  end
+  x = intersection (L.ab, L.cd)}
+
+两条直线的交点位于附标为：
+\tkzUseLua{tostring(x)} 的点处。
+
+
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzInit[xmin =0,ymin=0,xmax=5,ymax=3]
+  \tkzGrid\tkzAxeX\tkzAxeY
+  \tkzDrawPoints(a,...,d)
+  \ifthenelse{\equal{\tkzUseLua{bool}}{%
+  true}}{\tkzDrawSegments[red](a,b c,d)}{%
+  \tkzDrawSegments[blue](a,b c,d)}
+  \tkzLabelPoints(a,...,d)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\begin{center}
+\begin{tikzpicture}
+  \tkzGetNodes
+  \tkzInit[xmin =0,ymin=0,xmax=5,ymax=3]
+  \tkzGrid\tkzAxeX\tkzAxeY
+  \tkzDrawPoints(a,...,d)
+  \ifthenelse{\equal{\tkzUseLua{bool}}{true}}{
+  \tkzDrawSegments[red](a,b c,d)}{%
+  \tkzDrawSegments[blue](a,b c,d)}
+  \tkzLabelPoints(a,...,d)
+\end{tikzpicture}
+\end{center}
+  \end{minipage}
+
+%----------------------------------------------
+% ---> 在此处插入额外的自定义示例
+%----------------------------------------------
+
+%--------------------------------------------------------------------
+\subsection{基于对象的传递}
+\label{subsec:transfer_objects}
+
+存放在 Lua 表中的几何对象，必须先转换成与 TikZ 兼容的结构，才能绘制。
+
+\subsubsection{传递点}
+\label{transferring_points}
+
+点在内部以复数附标的形式存放。宏 \tkzNameMacro{tkzGetNodes} 把它们转换成 TikZ 坐标。
+
+\begin{tkzexample}[latex=7cm]
+  \directlua{
+     init_elements()
+     z.o   = point(0, 0)
+     z.a_1 = point(2, 1)
+     z.a_2 = point(1, 2)
+     z.ap  = z.a_1 + z.a_2
+     z.app = z.a_1 - z.a_2
+  }
+
+  \begin{center}
+    \begin{tikzpicture}[ scale = 1.5]
+       \tkzGetNodes
+       \tkzDrawSegments(o,a_1 o,a_2 o,a' o,a'')
+       \tkzDrawSegments[red](a_1,a' a_2,a')
+       \tkzDrawSegments[blue](a_1,a'' a_2,a'')
+       \tkzDrawPoints(a_1,a_2,a',o,a'')
+       \tkzLabelPoints(o,a_1,a_2,a',a'')
+    \end{tikzpicture}
+  \end{center}
+\end{tkzexample}
+
+\subsubsection{传递路径与曲线}
+
+
+\begin{tkzexample}[latex=.4\textwidth]
+\directlua{
+ init_elements()
+ PF.ex = pfct("(cos(t))^3", "(sin(t))^3")
+ PA.curve = PF.ex:path(0, 2*math.pi, 100)
+ }
+
+\begin{center}
+ \begin{tikzpicture}[scale=2]
+  \tkzDrawCoordinates[smooth,red,fill=orange](PA.curve)
+\end{tikzpicture}
+ \end{center}
+\end{tkzexample}
+
+该 Lua 对象被序列化为一个由 TikZ 解释的坐标列表。
+
+%----------------------------------------------
+% ---> 在此处插入高级 fct / pfct 示例
+%----------------------------------------------
+
+%--------------------------------------------------------------------
+\subsubsection{基于文件的传递}
+
+
+对于大型数据集或高分辨率曲线，生成一个外部文件可能更为合适。
+
+这一次，传递将借助一个外部文件来完成。下面这个示例基于上一个示例，但改用一张表。
+
+\texttt{生成数据文件： } 文件 \texttt{tmp.table} 由函数 $f$ 创建。
+
+文件 \texttt{tmp.table} 现在包含数值数据。
+ \texttt{使用生成的文件： } 这里使用 \tkzNamePack{TikZ} 绘制曲线。
+
+
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+ \directlua{
+  init_elements()
+   z.a = point(1, 0)
+   z.b = point(3, 2)
+   z.c = point(0, 2)
+   A,B,C = tkz.parabola (z.a, z.b, z.c)
+
+ function f(t0, t1, n)
+  local out=assert(io.open("tmp.table","w"))
+  local y
+  for t = t0,t1,(t1-t0)/n  do
+   y = A*t^2+B*t +C
+   out:write(utils.checknumber(t), " ",
+             utils.checknumber(y), " i\string\n")
+  end
+  out:close()
+ end}
+
+\begin{tikzpicture}
+   \tkzGetNodes
+   \tkzInit[xmin=-1,xmax=5,ymin=0,ymax=5]
+   \tkzDrawX\tkzDrawY
+   \tkzDrawPoints[red,size=2](a,b,c)
+   \directlua{f(-1,3,100)}%
+   \draw[domain=-1:3] plot[smooth]
+        file {tmp.table};
+\end{tikzpicture}
+ \end{tkzexample}
+
+
+
+
+基于文件的传递提供了可扩展性，并能与 \texttt{pgfplots} 等外部绘图工具互通。
+
+%----------------------------------------------
+% ---> 在此处插入高分辨率示例
+%----------------------------------------------
+
+%--------------------------------------------------------------------
+\subsection{\TeX--Lua 的动态交互}
+\label{subsec:dynamic_transfer}
+
+传递是双向的。
+\TeX\ 可以把参数传给 Lua 进行计算。
+
+\medskip
+\begin{verbatim}
+\newcommand{\ComputeSquare}[1]{%
+  \directlua{tex.print(#1 * #1)}%
+}
+\end{verbatim}
+
+\medskip
+用法：
+\newcommand{\ComputeSquare}[1]{%
+  \directlua{tex.print(#1 * #1)}%
+}
+\begin{verbatim}
+5 的平方是 \ComputeSquare{5}。
+\end{verbatim}
+
+\medskip
+5 的平方是 \ComputeSquare{5}。
+
+\medskip
+
+这种交互实现了动态的参数化几何，文档输入可直接控制 Lua 计算。
+
+%----------------------------------------------
+% ---> 在此处插入动态几何示例
+%----------------------------------------------
+
+\medskip
+因此，\tkzNamePack{tkz-elements} 中的传递可以是即时的、基于对象的或基于文件的，取决于数据的规模和结构。这种分层架构保证了计算与图形表示之间的清晰分离。

@@ -1,0 +1,224 @@
+\newpage
+\section{\tkzClass{parallelogram} 类}
+变量 \tkzVar{parallelogram}{P} 持有一个表，用于存放平行四边形。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐使用 \code{P}。如果你使用自定义变量（例如 parall），则必须手动初始化它。如果使用了 \code{P}，\code{init\_elements()} 函数会重新初始化该表。
+
+
+\subsection{创建平行四边形}
+\label{sub:creating_a_parallelogram}
+
+\tkzClass{parallelogram} 类根据它的四个顶点创建一个平行四边形。要由三个点计算第四个顶点，使用 \tkzFct{parallelogram}{parallelogram.fourth(za, zb, zc)}。
+
+\medskip
+所得对象存放在 \tkzVar{parallelogram}{P} 中。你可以自由使用别的名字，但为一致起见推荐使用 \tkzVar{parallelogram}{P}。
+
+\begin{mybox}
+\begin{verbatim}
+P.ABCD = parallelogram:new(z.A, z.B, z.C, z.D)
+\end{verbatim}
+\end{mybox}
+
+\textbf{简写形式。}
+
+你也可以使用简写形式：
+
+\begin{mybox}
+\begin{verbatim}
+P.ABCD = parallelogram(z.A, z.B, z.C, z.D)
+\end{verbatim}
+\end{mybox}
+
+\subsection{平行四边形的属性}
+
+各点按正向（逆时针）给出。有一个检验会检查两条对角线是否具有相同的中点；否则会引发错误。
+
+\begin{mybox}
+创建 | P.new = parallelogram(z.A,z.B,z.C,z.D)|
+\end{mybox}
+
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{平行四边形的属性。}\label{parallelogram:attributes}
+  \begin{tabular}{lll}
+  \toprule
+  \textbf{属性}         & \textbf{用法}  &  \\
+  \midrule
+  \tkzAttr{parallelogram}{pa}   & |z.A = P.new.pa|     &  \\
+  \tkzAttr{parallelogram}{pb}   & |z.B = P.new.pb|     &  \\
+  \tkzAttr{parallelogram}{pc}   & |z.C = P.new.pc|     &  \\
+  \tkzAttr{parallelogram}{pd}   & |z.D = P.new.pd|     &  \\
+  \tkzAttr{parallelogram}{type} & |P.new.type= 'parallelogram'|&  \\
+  \tkzAttr{parallelogram}{center}    & |z.I = P.new.center|  & 对角线交点 \\
+  \tkzAttr{parallelogram}{ab}   & |P.new.ab|    &  过两个顶点的直线 \\
+  \tkzAttr{parallelogram}{ac}   & |P.new.ac|           &  同上。 \\
+  \tkzAttr{parallelogram}{da}   & |P.new.da|           &  同上。 \\
+  \tkzAttr{parallelogram}{bc}   & |P.new.bc|           &  同上。 \\
+  \tkzAttr{parallelogram}{bd}   & |P.new.bd|           &  同上。 \\
+  \tkzAttr{parallelogram}{cd}   & |P.new.cd|           &  同上。 \\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+
+
+\subsubsection{示例：属性}
+\label{ssub:example_attributes}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 1)
+ z.C = point(7, 5)
+ z.D = point(3, 4)
+ P.new = parallelogram(z.A, z.B, z.C, z.D)
+ z.B = P.new.pb
+ z.C = P.new.pc
+ z.D = P.new.pd
+ z.I = P.new.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 1)
+ z.C = point(7, 5)
+ z.D = point(3, 4)
+ P.new = parallelogram(z.A, z.B, z.C, z.D)
+ z.B = P.new.pb
+ z.C = P.new.pc
+ z.D = P.new.pd
+ z.I = P.new.center}
+
+\begin{center}
+  \begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C,D)
+  \tkzDrawPoints(A,B,C,D)
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C,D)
+  \tkzDrawPoints[red](I)
+  \end{tikzpicture}
+\end{center}
+\end{minipage}
+
+\newpage
+\subsection{平行四边形的函数}
+
+\begin{center}
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{平行四边形的函数。}\label{parallelogram:methods}
+  \begin{tabular}{ll}
+  \toprule
+  \textbf{函数} & \texttt{参考}    \\
+  \midrule
+  \tkzMeth{parallelogram}{new (za, zb, zc, zd)} & \ref{ssub:example_attributes}\\
+  \tkzFct{parallelogram}{parallelogram.fourth (za,zb,zc)} & \ref{ssub:parallelogram_with_fourth_method} \\
+  \tkzMeth{parallelogram}{get(<i>)} & [\ref{ssub:method_parallelogram_get}]\\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+\end{center}
+
+\subsubsection{方法 \tkzMeth{parallelogram}{get(<i>)}}
+\label{ssub:method_parallelogram_get}
+
+该方法返回定义平行四边形对象的各个点。
+
+\begin{itemize}
+  \item \code{P.ABCD:get()} 按顺序返回四个顶点：\code{pa}、\code{pb}、\code{pc}、\code{pd}；
+  \item \code{P.ABCD:get(i)}（\code{i} 取 1 到 4）只返回第 \code{i} 个顶点；例如 \code{P.ABCD:get(2)} 等价于 \code{P.ABCD.pb}。
+\end{itemize}
+
+\begin{tkzexample}[code only]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(2, 0)
+  z.C = point(3, 2)
+  P.ABCD = parallelogram.fourth(z.A, z.B, z.C)
+  z.E, z.F, z.G, z.H = P.ABCD:get()
+  z.K = P.ABCD:get(3)
+}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{parallelogram}{new(pt,pt,pt,pt)}}
+\label{ssub:function_parallelogram_new}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+ z.A = point(0, 0)
+ z.B = point(4, 1)
+ z.C = point(7, 5)
+ z.D = point(3, 4)
+ P.ABCD = parallelogram(z.A, z.B, z.C, z.D)
+ z.B = P.ABCD.pb
+ z.C = P.ABCD.pc
+ z.D = P.ABCD.pd
+ z.I = P.ABCD.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{parallelogram}{fourth(pt,pt,pt)}}
+\label{ssub:parallelogram_with_fourth_method}
+用平行四边形补全一个三角形（见下一个示例）
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.B = point(3, 1)
+z.C = point(4, 3)
+P.four= parallelogram.fourth(z.A, z.B, z.C)
+z.D = P.four.pd
+z.I = P.four.center}
+\begin{tikzpicture}[ scale = .75]
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(3, 1)
+ z.C = point(4, 3)
+ P.four= parallelogram.fourth(z.A, z.B, z.C)
+ z.D = P.four.pd
+ z.I = P.four.center}
+\begin{center}
+  \begin{tikzpicture}[scale = .75]
+  \tkzGetNodes
+  \tkzDrawPolygon(A,B,C,D)
+  \tkzDrawPoints(A,B,C,D)
+  \tkzLabelPoints(A,B)
+  \tkzLabelPoints[above](C,D)
+  \tkzDrawPoints[red](I)
+  \end{tikzpicture}
+\end{center}
+\end{minipage}
+\endinput

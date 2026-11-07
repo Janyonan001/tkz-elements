@@ -1,0 +1,378 @@
+\newpage
+\section{\tkzClass{rectangle} 类}
+
+变量 \code{R} 持有一个表，用于存放矩形。它是可选的，你可以自由选择变量名。不过，为清晰和一致起见，推荐使用 \code{R}。如果你使用自定义变量（例如 rectangles），则必须手动初始化它。如果使用了 \code{R}，\code{init\_elements()} 函数会重新初始化该表。
+
+
+\subsection{矩形的属性}
+\label{sub:rectangle_attributes}
+
+
+各点按正向（逆时针）给出。不做检验：四个点必须构成一个矩形。
+
+\begin{mybox}
+创建 | R.ABCD = rectangle:new(z.A, z.B, z.C, z.D)|
+\end{mybox}
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{rectangle 的属性。}\label{rectangle:attributes}
+  \begin{tabular}{lll}
+  \toprule
+  \textbf{属性}       & \textbf{用法} & \\
+  \midrule
+  \tkzAttr{rectangle}{pa}     & |z.A = R.ABCD.pa| & \\
+  \tkzAttr{rectangle}{pb}     & |z.B = R.ABCD.pb| & \\
+  \tkzAttr{rectangle}{pc}     & |z.C = R.ABCD.pc| & \\
+  \tkzAttr{rectangle}{pd}     & |z.D = R.ABCD.pd| & \\
+  \tkzAttr{rectangle}{type}   &  |R.ABCD.type= 'rectangle'|  &\\
+  \tkzAttr{rectangle}{center} & |z.I = R.ABCD.center| & 矩形的中心\\
+  \tkzAttr{rectangle}{length} &  |R.ABCD.length| & 长 \\
+  \tkzAttr{rectangle}{width}  &  |R.ABCD.width| & 宽 \\
+  \tkzAttr{rectangle}{diagonal}  &  |R.ABCD.diagonal| & 对角线长度\\
+  \tkzAttr{rectangle}{ab}     &  |R.ABCD.ab|   &  过两个顶点的直线   \\
+  \tkzAttr{rectangle}{ac}     &  |R.ABCD.ac|   &  同上。 \\
+  \tkzAttr{rectangle}{da}     &  |R.ABCD.da|   &  同上。 \\
+  \tkzAttr{rectangle}{bc}     &  |R.ABCD.bc|   &  同上。 \\
+  \tkzAttr{rectangle}{bd}     &  |R.ABCD.bd|   &  同上。 \\
+  \tkzAttr{rectangle}{cd}     &  |R.ABCD.cd|   &  同上。 \\
+  \bottomrule
+  \end{tabular}
+  \egroup
+
+
+
+\subsubsection{示例}
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.C = point(4, 4)
+ z.D = point(0, 4)
+ R.new = rectangle(z.A, z.B, z.C, z.D)
+ z.I = R.new.center}
+
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\hspace{\fill}\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.C = point(4, 4)
+ z.D = point(0, 4)
+ R.new = rectangle(z.A, z.B, z.C, z.D)
+ z.I = R.new.center}
+
+\begin{tikzpicture}[scale =1.5]
+ \tkzGetNodes
+ \tkzDrawPolygon(A,B,C,D)
+ \tkzDrawSegment[dashed](A,C)
+ \tkzDrawPoints(A,B,C,D)
+ \tkzLabelPoints(A,B)
+ \tkzLabelPoints[above](C,D)
+ \tkzDrawPoints[red](I)
+ \tkzLabelPoint[right = 10pt](I){$I$\\ |R.new.center|}
+ \tkzLabelSegment[sloped,above](C,D){|R.new.length| =
+    \pmpn{\tkzUseLua{R.new.length}}}
+ \tkzLabelSegment[sloped,above](A,C){|R.new.diagonal| =
+   \pmpn{\tkzUseLua{R.new.diagonal}}}
+   % \tkzUseLua{R.new.length} and \tkzUseLua{R.new.diagonal} to get the values.
+\end{tikzpicture}
+\end{minipage}
+\newpage
+
+\subsection{矩形的方法}
+
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{矩形的方法。}\label{rectangle:methods}
+  \begin{tabular}{lll}
+  \textbf{方法} & \texttt{参考}  &  \\
+  \toprule
+  \tkzMeth{rectangle}{new(za ,zb, zc, zd)} &[\ref{meth_rectangle_new}]\\
+  \tkzMeth{rectangle}{angle (zi, za, angle)} & [\ref{ssub:angle_method}]\\
+  \tkzMeth{rectangle}{gold (za, zb)} & [\ref{ssub:gold_method}]\\
+  \tkzMeth{rectangle}{diagonal (za, zc)} &[\ref{ssub:diagonal_method}]\\
+  \tkzMeth{rectangle}{side (za, zb, d)} & [\ref{ssub:side_method}]\\
+  \tkzMeth{rectangle}{get\_lengths ()} & [\ref{ssub:function_rectangle_get__lengths}]\\
+  \tkzMeth{rectangle}{get(<i>)} & [\ref{ssub:method_rectangle_get}]\\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+
+
+\subsubsection{方法 \tkzMeth{rectangle}{get(<i>)}}
+\label{ssub:method_rectangle_get}
+
+该方法返回定义矩形对象的各个点。
+
+\begin{itemize}
+  \item \code{R.ABCD:get()} 按顺序返回四个顶点：\code{pa}、\code{pb}、\code{pc}、\code{pd}；
+  \item \code{R.ABCD:get(i)}（\code{i} 取 1 到 4）只返回第 \code{i} 个顶点；例如 \code{R.ABCD:get(2)} 等价于 \code{R.ABCD.pb}。
+\end{itemize}
+
+\begin{tkzexample}[code only]
+\directlua{
+  init_elements()
+  z.A = point(0, 0)
+  z.B = point(2, 0)
+  R.ABCD = rectangle:side(z.A, z.B, 1)
+  z.E, z.F, z.G, z.H = R.ABCD:get()
+  z.K = R.ABCD:get(3)
+}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{rectangle}{new(pt,pt,pt,pt)}}
+\label{meth_rectangle_new}
+该函数用四个点创建一个矩形。不做检验，验证由用户自行负责。
+
+\begin{tkzexample}[latex=.5\textwidth]
+  \directlua{
+  z.A = point(0, 0)
+  z.B = point(4, 0)
+  z.C = point(4, 3)
+  z.D = point(-2, -3)
+  L.AB = line(z.A,z.B)
+  L.CD = line(z.C,z.D)
+  z.I = intersection(L.AB, L.CD)
+  C.I = circle(through(z.I, 3.5))
+  z.G,z.E = intersection(L.AB, C.I)
+  z.F,z.H = intersection(L.CD, C.I)
+  R.I = rectangle(z.E, z.F, z.G, z.H)
+  z.X = R.I.ab:projection(z.I)}
+  \begin{tikzpicture}
+  \tkzGetNodes
+  \tkzDrawPolygon(E,F,G,H)
+  \tkzDrawPoints(A,B,C,D,I,E,F,G,H,X)
+  \tkzLabelPoints(A,B,C,D,I,E,F,G,H,X)
+  \tkzDrawPoints(I)
+  \end{tikzpicture}
+\end{tkzexample}
+
+\subsubsection{方法 \tkzMeth{rectangle}{angle(pt,pt,an)}}
+\label{ssub:angle_method}
+
+|R.ang = rectangle:angle(z.I,z.A)|；|z.A| 为顶点；ang 为两个顶点之间的角
+
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.I = point(4, 3)
+ P.ABCD = rectangle:angle(z.I, z.A,
+          math.pi / 6)
+ z.B = P.ABCD.pb
+ z.C = P.ABCD.pc
+ z.D = P.ABCD.pd}
+\begin{tikzpicture}[scale   = .5]
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C)
+\tkzLabelPoints(A,B,C,D)
+\tkzDrawPoints[new](I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 0)
+ z.I = point(4, 3)
+ P.ABCD = rectangle:angle(z.I, z.A, math.pi / 6)
+ z.B = P.ABCD.pb
+ z.C = P.ABCD.pc
+ z.D = P.ABCD.pd}
+\begin{tikzpicture}[scale  = .5]
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[new](I)
+\tkzLabelSegment[sloped,above](A,B){%
+    |rectangle: angle (z.C,z.A,math.pi/6)|}
+\end{tikzpicture}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{rectangle}{side(pt,pt,d)}}
+\label{ssub:side_method}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 3)
+ R.side = rectangle:side(z.A, z.B, 3)
+ z.C = R.side.pc
+ z.D = R.side.pd
+ z.I = R.side.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ z.A = point(0, 0)
+ z.B = point(4, 3)
+ R.side = rectangle:side(z.A, z.B, 3)
+ z.C = R.side.pc
+ z.D = R.side.pd
+ z.I = R.side.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\tkzLabelSegment[sloped,above](A,B){%
+   |rectangle:side(z.A,z.B,3)|}
+\end{tikzpicture}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{rectangle}{diagonal(pt,pt)}}
+\label{ssub:diagonal_method}
+矩形的边平行于坐标轴：仅凭一条对角线并不能确定一个矩形。
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+init_elements()
+z.A = point(0, 0)
+z.C = point(4, 3)
+R.diag = rectangle:diagonal(z.A, z.C)
+z.B = R.diag.pb
+z.D = R.diag.pd
+z.I = R.diag.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\tkzLabelSegment[sloped,above](A,B){%
+    |rectangle:diagonal(z.A,z.C)|}
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ z.A = point(0, 0)
+ z.C = point(4, 3)
+ R.diag = rectangle:diagonal(z.A, z.C)
+ z.B = R.diag.pb
+ z.D = R.diag.pd
+ z.I = R.diag.center}
+
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[red](I)
+\tkzLabelSegment[sloped,above](A,B){%
+   |rectangle:diagonal(z.A, z.C)|}
+\end{tikzpicture}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{rectangle}{gold(pt,pt)}}
+\label{ssub:gold_method}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ z.X = point(0, 0)
+ z.Y = point(4, 2)
+ R.gold = rectangle:gold(z.X, z.Y)
+ z.Z = R.gold.pc
+ z.W = R.gold.pd
+ z.I = R.gold.center}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(X,Y,Z,W)
+\tkzDrawPoints(X,Y,Z,W)
+\tkzLabelPoints(X,Y)
+\tkzLabelPoints[above](Z,W)
+\tkzDrawPoints[red](I)
+\tkzLabelSegment[sloped,above](X,Y){%
+|rectangle:gold(z.X,z.Y)|}
+\end{tikzpicture}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+init_elements()
+z.X = point(0, 0)
+z.Y = point(4, 2)
+R.gold = rectangle:gold(z.X, z.Y)
+z.Z = R.gold.pc
+z.W = R.gold.pd
+z.I = R.gold.center}
+
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(X,Y,Z,W)
+\tkzDrawPoints(X,Y,Z,W)
+\tkzLabelPoints(X,Y)
+\tkzLabelPoints[above](Z,W)
+\tkzDrawPoints[red](I)
+\tkzLabelSegment[sloped,above](X,Y){%
+  |rectangle:gold(z.X,z.Y)|}
+\end{tikzpicture}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{rectangle}{get\_lengths}()}
+\label{ssub:function_rectangle_get__lengths}
+
+\begin{tkzexample}[latex=.45\textwidth]
+\directlua{
+ init_elements()
+ z.I = point(2, 1)
+ z.A = point(0, 0)
+ R.ABCD = rectangle:angle(z.I, z.A, math.pi / 3)
+ z.B = R.ABCD.pb
+ z.C = R.ABCD.pc
+ z.D = R.ABCD.pd
+ tkzx,tkzy = R.ABCD:get_lengths()}
+\begin{tikzpicture}
+\tkzGetNodes
+\tkzDrawPolygon(A,B,C,D)
+\tkzDrawCircle(I,A)
+\tkzDrawPoints(A,B,C,D)
+\tkzLabelPoints(A,B)
+\tkzLabelPoints[above](C,D)
+\tkzDrawPoints[](I)
+\tkzLabelSegment(A,B){%
+    $\pmpn{\tkzUseLua{tkzx}}$}
+\tkzLabelSegment[right](B,C){%
+    $\pmpn{\tkzUseLua{tkzy}}$}
+\end{tikzpicture}
+\end{tkzexample}
+\endinput

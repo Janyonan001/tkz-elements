@@ -1,0 +1,115 @@
+\section{工作组织}
+\label{sec:work_organization}
+
+
+下面给出使用 \tkzNamePack{tkz-euclide} 与 \tkzEngine{Lua\LATEX} 时的一种示例组织方式。
+
+\begin{itemize}
+  \item \texttt{编译方式：} 添加如下一行：
+  \begin{verbatim}
+  % !TEX TS-program = lualatex
+  \end{verbatim}
+  以确保文档使用 \tkzEngine{Lua\LATEX} 编译。
+
+  \item \texttt{文档类：} 如果目的只是绘制一幅图形，推荐使用 \texttt{standalone} 文档类，因为它可避免不必要的开销。
+
+  \item \texttt{宏包加载：} 你可以用两种方式加载 \tkzNamePack{tkz-euclide}：
+  \begin{itemize}
+    \item \tkzcname{usepackage\{tkz-euclide\} } 让你获得整个宏包的完整功能。
+    \item 推荐的做法是使用 \tkzPopt{tkz-euclide}{mini} 选项，它只加载绘图所需的模块。如果你愿意，仍然可以直接用 \TIKZ{} 绘图。
+  \end{itemize}
+
+  \item \texttt{条件判断：} 当你需要在文档中求值布尔条件时，\tkzNamePack{ifthen} 宏包很有用。
+
+  \item \texttt{Lua 代码组织：} 虽然你可以直接用 \verb|\directlua| 嵌入 Lua 代码，但把代码外置有如下几个好处：
+  \begin{itemize}
+    \item 在支持 \tkzname{Lua} 和 \LATEX{} 的编辑器中，可以获得更好的语法高亮与代码展示效果。
+    \item 注释更简单：\tkzname{Lua} 使用 \verb|--|，而 \LATEX{} 使用 \verb|%|。把 Lua 放在单独的文件里可避免混淆。
+    \item 可复用：外部代码文件可在多个文档或图形之间复用。
+  \end{itemize}
+\end{itemize}
+
+为简单起见，本文档在大多数情况下使用内嵌的 Lua 代码。不过在某些示例中，会使用外部文件来向你展示具体做法。
+
+
+\vspace{12pt}
+\begin{mybox}{}
+\begin{minipage}{.50\textwidth}
+\begin{verbatim}
+% !TEX TS-program = lualatex
+% Created by Alain Matthes on 2024-01-09.
+\documentclass[margin = 12pt]{standalone}
+\usepackage[mini]{tkz-euclide}
+\usepackage{tkz-elements,ifthen}
+
+\begin{document}
+\directlua{
+ init_elements() % Clear tables
+ dofile ("lua/sangaku.lua")
+ % Load the lua code
+}
+\begin{tikzpicture}[ scale = .75]
+ \tkzGetNodes
+ \tkzDrawCircle(I,F)
+ \tkzFillPolygon[purple](A,C,D)
+ \tkzFillPolygon[blue!50!black](A,B,C)
+ \tkzFillCircle[orange](I,F)
+\end{tikzpicture}
+\end{document}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.40\textwidth}
+\directlua{
+ init_elements()
+ dofile ("lua/sangaku.lua")
+}
+\begin{center}
+\begin{tikzpicture}[ scale = .75]
+  \tkzGetNodes
+  \tkzDrawCircle(I,F)
+  \tkzFillPolygon[purple](A,C,D)
+  \tkzFillPolygon[blue!50!black](A,B,C)
+  \tkzFillCircle[orange](I,F)
+\end{tikzpicture}
+\end{center}
+\end{minipage}
+\end{mybox}
+
+\vspace{12pt}
+下面是 \tkzname{Lua} 部分的代码：文件 |sangaku.lua|
+
+\vspace{1em}
+\begin{minipage}{.5\textwidth}
+\begin{mybox}
+\begin{verbatim}
+ z.A = point(0, 0)
+ z.B = point(8, 0)
+ L.AB = line(z.A, z.B)
+ S.AB = L.AB:square()
+ _, _, z.C, z.D = S.AB:get()
+ z.F = S.AB.ac:projection(z.B)
+ L.BF = line(z.B, z.F)
+ T.ABC = triangle(z.A, z.B, z.C)
+ L.bi = T.ABC:bisector(2)
+ z.c = L.bi.pb
+ L.Cc = line(z.C, z.c)
+ z.I = intersection(L.Cc, L.BF)
+\end{verbatim}
+\end{mybox}
+\end{minipage}
+
+
+\subsection{缩放策略的更新}
+
+在以前的版本中，建议在代码的 Lua 部分进行缩放。不过，这一指导原则现在已经改变。
+
+由于所有几何计算都在 \tkzname{Lua} 中完成，在 \TIKZ{} 中进行缩放已不再有任何问题。相反，在 \tkzname{Lua} 中进行缩放却带来了若干麻烦——尤其是最近实现的与圆锥曲线相关的函数，它们涉及大量使用实数的距离计算。
+
+这些问题促使我们重新审视了若干函数，并在此过程中发现并修复了一些与 Lua 端缩放相关的 bug。
+
+\medskip
+
+\textbf{\textcolor{red}{新的建议：}} 从现在起，缩放应只在 \TIKZ{} 部分进行。\tkzname{Lua} 代码应在一个未经缩放、一致的坐标系中运行，以确保所有几何计算的可靠性。
+
+本文档后续只在 \tkzEnv{tikz}{tikzpicture} 环境中使用缩放。
+\endinput

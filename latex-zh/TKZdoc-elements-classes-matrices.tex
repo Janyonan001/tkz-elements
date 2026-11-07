@@ -1,0 +1,1430 @@
+\newpage\section{\tkzClass{matrix} 类}
+
+变量 \tkzVar{matrix}{M} 保存一个用于存储矩阵的表。它是可选的，你可以自由选择变量名。不过，为清晰与一致起见，推荐使用 \code{M}。如果你使用自定义变量（例如 Matrices），则必须手动初始化它。\\
+若使用 \code{init\_elements()} 函数，它会重新初始化 \code{M} 表。
+
+\vspace{1em}
+
+\code{matrix} 类目前是实验性的，其属性名与方法名尚未最终确定，说明该类仍在演进中。它已与其他类（例如 \code{point} 类）建立了某些联系。此外还加入了一个新属性 \code{mtx}，把一个列矩阵与点关联起来，其中的元素对应于该点在原基下的坐标。类似地，\code{vector} 类也加入了一个属性，其中 \code{mtx} 表示由构成该向量的两个附标组成的列矩阵。
+
+创建这个 \code{matrix} 类是为了避免依赖外部库，并已适配平面变换。它允许你使用复数。
+
+\lefthand\ 要显示矩阵，需要加载 \tkzNamePack{amsmath} 宏包。
+
+{\color{red}\lefthand\ } 虽然有些方法适用于任意大小的矩阵，但大多数方法仅适用于 2 阶和 3 阶方阵。
+
+
+\subsection{矩阵的创建}
+\label{sub:matrix_creation}
+
+创建矩阵有多种方式。下面我们逐一查看不同情形。
+
+第一种是使用数组的数组，即一个表，其中每个元素又是另一个表。例如，可用下面的代码创建一个 N 行 M 列的零矩阵：
+
+
+\begin{itemize}
+
+\item  第一种方法见 [\ref{ssub:method_new}]。这个函数最重要，因为它负责创建对象。其他函数创建特定对象时总是使用这个函数。
+
+\tkzClass{matrix} 类表示由四个值定义的 $2\times2$ 矩阵。
+
+\begin{mybox}
+\begin{verbatim}
+M = matrix:new(1, 0, 0, 1) -- identity matrix
+\end{verbatim}
+\end{mybox}
+
+\texttt{简写形式：}
+
+还有一种更简洁的形式：
+
+\begin{mybox}
+\begin{verbatim}
+M = matrix(1, 0, 0, 1)
+\end{verbatim}
+\end{mybox}
+
+
+\begin{mybox}
+   | M.new = matrix({ { a, b }, { c, d } }) | \\
+   其中 a、b、c、d 为实数或复数。
+\end{mybox}
+
+\begin{minipage}{.3\textwidth}
+\directlua{
+  init_elements()
+  local a, b, c, d = 1, 2, 3, 4
+  M.new = matrix({ { a, b }, { c, d } })
+  tex.print('M = ') M.new:print()}
+\end{minipage}
+\begin{minipage}{.6\textwidth}
+\begin{tkzexample}[code only]
+\directlua{
+  init_elements()
+  local a, b, c, d = 1, 2, 3, 4
+  M.new = matrix({ { a, b }, { c, d } })
+  tex.print('M = ') M.new:print()}
+\end{tkzexample}
+\end{minipage}
+
+
+\item 使用函数 \code{create}，可得到一个系数全为零、行列数可自选的矩阵。[\ref{ssub:function_matrix_create_n_m}]
+
+  \begin{mybox}
+  |M.cr = matrix.create(4,5)|
+  \end{mybox}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  M.cr = matrix.create(4, 5)
+  tex.print('M = ') M.cr:print()}
+\end{tkzexample}
+
+
+\item  大小为 {$\displaystyle n$} 的单位矩阵是一个 {$\displaystyle n\times n$} 方阵，主对角线上为 1、其余位置为 0。见 [\ref{ssub:method_identity}]
+
+\begin{mybox}
+|M.I = matrix.identity(3)|
+\end{mybox}
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  M.I = matrix.identity(3)
+  tex.print('$I_3 = $') M.I:print()}
+\end{tkzexample}
+
+
+\item  也可以用下面的方式得到方阵：[\ref{ssub:method_square}]
+  \begin{mybox}
+  |M.sq = matrix.square (2,a,b,c,d)|
+  \end{mybox}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+   local a, b, c, d = 1, 2, 3, 4
+  M.sq = matrix.square(2, a, b, c, d)
+  tex.print('M = ') M.sq:print()}
+\end{tkzexample}
+
+
+\item  列向量的情形：[\ref{ssub:method_vector}]
+
+  \begin{mybox}
+  | M.V = matrix.vector(1, 2, 3)|
+  也可以用 |M.V = matrix.column(1, 2, 3)|
+  \end{mybox}
+
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  M.V = matrix.vector(1, 2, 3)
+  tex.print('V = ') M.V:print()}
+\end{tkzexample}
+
+
+\item  行向量的情形：[\ref{ssub:function_row_vector}]
+
+\begin{mybox}
+  | M.V = matrix.row_vector(1, 2, 3)|
+\end{mybox}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  M.V = matrix.row_vector(1, 2, 3)
+  tex.print('V = ') M.V:print()}
+\end{tkzexample}
+
+
+\item  与点关联的矩阵
+
+  |M.p = matrix({ { p.re }, { p.im } })|
+
+\item  与向量关联的矩阵
+
+ 它是一个列矩阵，由定义该向量的两个点的附标组成。
+
+| local M.v = matrix{ { za }, { zb } }|
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+z.A = point(1, 2)
+z.B = point(3, 4)
+V.u = vector(z.A, z.B)
+V.u.mtx:print()}
+\end{tkzexample}
+
+
+
+\item  齐次变换矩阵 [\ref{ssub:method_htm}]
+
+ 目的是生成一个带齐次坐标的矩阵，能够通过旋转、平移和缩放来变换坐标系。为此需要同时指定旋转角、新原点的坐标以及缩放因子。
+
+\begin{tkzexample}[latex=.35\textwidth]
+\directlua{
+  init_elements()
+  M.h = matrix.htm(math.pi / 3, 1, 2, 2, 1)
+  tex.print('H = ') M.h:print()}
+\end{tkzexample}
+
+\end{itemize}
+
+\subsection{方法 \tkzMeth{matrix}{print()}}
+\label{sub:display_a_matrix_method_print}
+
+
+这个方法（见 \ref{ssub:method_print}）用于查看结果，下面说明如何使用它。它可用于实矩阵或复矩阵、方阵或非方阵。有几个选项可用于格式化结果。要使用 “print” 方法需要加载 \tkzNamePack{amsmath} 宏包。若没有该宏包，可以用 |print_array (M)| 不加格式地显示矩阵内容。
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  init_elements()
+  M.new = matrix { { 1, -1}, { 2, 0 } }
+  M.new:print()}
+\end{tkzexample}
+
+\subsection{矩阵的属性}
+\label{sub:attibutes_of_a_matrix}
+
+\begin{center}
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{矩阵的属性。}\label{matrix:attributes}
+  \begin{tabular}{ll}
+  \toprule
+  \textbf{属性}     & \texttt{参考} \\
+  \midrule
+  \tkzAttr{matrix}{set}     & [\ref{sub:attribute_set}]\\
+  \tkzAttr{matrix}{rows}    & [\ref{ssub:attributes_matrix_rows_and_cols}] \\
+  \tkzAttr{matrix}{cols}    & [\ref{ssub:attributes_matrix_rows_and_cols}] \\
+  \tkzAttr{matrix}{type}    &   \\
+  \tkzAttr{matrix}{det}     & [\ref{ssub:attributes_matrix_det}]\\
+  \bottomrule %
+  \end{tabular}
+  \egroup
+\end{center}
+
+
+
+\subsubsection{属性 \tkzAttr{matrix}{type}}
+\label{ssub:attribute_iattr_matrix_type}
+\begin{mybox}
+  |M.new = matrix{ { 1, 1}, { 0, 2} } |
+  |A = { { 1, 1 }, { 0, 2 } } |
+\end{mybox}
+
+\code{M} 是一个矩阵（因而也是一个表），而 A 是一个表。因此 \code{M.type} 给出 \code{'matrix'}，而 \code{A.type = nil}。\code{type(A) 或 type(M) = table}。
+
+\subsubsection{属性 \tkzAttr{matrix}{set}}
+\label{sub:attribute_set}
+像 |{{1,2},{2,-1}}| 这样的简单数组通常被视为 \code{matrix}。在 \tkzNamePack{tkz-elements} 中，我们把由
+|matrix({ { 1, 1 }, { 0, 2 } })|
+定义的 |M.new| 视为矩阵，而把 |M.new.set| 视为数组（|M.new.set = { { 1, 1 }, {0, 2 } }|）。
+
+你可以访问矩阵的某个特定元素，例如：|M.new.set[2][1]| 给出 \tkzUseLua{M.new.set[2][2]}。
+
+|\tkzUseLua{M.new.set[2][1]}| 是显示 $2$ 的表达式。
+
+\subsubsection{属性 \tkzAttr{matrix}{rows} 与 \tkzAttr{matrix}{cols}}
+\label{ssub:attributes_matrix_rows_and_cols}
+
+行数用 |M.n.rows| 访问，列数用 |M.n.cols| 访问，示例如下：
+
+\vspace{.5em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.n = matrix({ { 1, 2, 3 }, { 4, 5, 6 } })
+ M.n:print()
+ tex.print("Rows:  "..M.n.rows)
+ tex.print("Cols:  "..M.n.cols)}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ M.n = matrix({ { 1, 2, 3 }, { 4, 5, 6 } })
+ M.n:print()
+ tex.print("Rows:  "..M.n.rows)
+ tex.print("Cols:  "..M.n.cols)}
+\end{minipage}
+
+\subsubsection{属性 \tkzAttr{matrix}{det} }
+\label{ssub:attributes_matrix_det}
+若矩阵是方阵，则给出其行列式；否则为 \code{nil}。矩阵的系数可以是复数。
+
+\vspace{.5em}
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.s = matrix.square(3, 1, 1, 0, 2, -1, -2, 1, -1, 2)
+  M.s:print()
+  tex.print ('\\\\')
+  tex.print ("Its determinant is:  " .. M.s.det)
+  }
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+ init_elements()
+ M.s = matrix.square(3, 1, 1, 0, 2, -1, -2, 1, -1, 2)
+ M.s:print()
+ tex.print('\\\\')
+ tex.print("Its determinant is:  "..M.s.det)
+ tex.print('\\\\')
+ local a = point(1, -2)
+ local b = point(0, 1)
+ local c = point(1, 1)
+ local d = point(1, -1)
+  M.A = matrix({ { a, b }, {c, d } })
+ tex.print ("Its determinant is:  "..tostring(M.A.det))}
+\end{minipage}
+
+\subsection{矩阵的元方法}
+
+矩阵必须满足一定条件才能进行某些运算。
+
+\begin{center}
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{矩阵的元方法。}\label{matrix:metamethods}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{元方法} & \textbf{参考} \\
+    \midrule
+    \tkzMeta{matrix}{add(M1,M2)} & 见 [\ref{ssub:addition_of_matrices}] \\
+    \tkzMeta{matrix}{sub(M1,M2)} & 见 [\ref{ssub:addition_of_matrices}]  \\
+    \tkzMeta{matrix}{unm(M}      & |- M|  \\
+    \tkzMeta{matrix}{mul(M1,M2)} & [\ref{ssub:multiplication_of_matrices}]   \\
+    \tkzMeta{matrix}{pow(M,n)}   & [\ref{ssub:multiplication_of_matrices}]  \\
+    \tkzMeta{matrix}{tostring(M,n)} & 显示矩阵   \\
+    \tkzMeta{matrix}{eq(M1,M2)}     &  真或假  \\
+  \bottomrule
+  \end{tabular}
+  \egroup
+\end{center}
+
+
+
+\subsubsection{矩阵的加法与减法}
+\label{ssub:addition_of_matrices}
+为简化输入，我用了几个函数来简化显示。
+
+\vspace{.5em}
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.A = matrix({ { 1, 2 }, { 2 , -1 } })
+  M.B = matrix({ { -1, 0}, { 1, 3 } })
+  S = M.A + M.B
+  D = M.A - M.B
+  dsp(M.A,'A')
+  nl() nl()
+  dsp(M.B,'B')
+  nl() nl()
+  dsp(M.S,'S') sym(" = ")
+  dsp(M.A) sym(' + ') dsp(M.B)
+  nl() nl()
+  dsp(M.D,'D') sym(" = ")
+  dsp(M.A) sym(' - ') dsp(M.B)
+}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+ init_elements()
+
+ local function dsp (M,name)
+  if name then
+     tex.print(name..' = ')print_matrix(M)
+  else
+     print_matrix(M)
+  end
+ end
+
+ local  function sym(s)
+   tex.print(' '..s..' ')
+ end
+
+ local function nl()
+   tex.print('\\\\')
+ end
+
+  M.A = matrix({ { 1, 2 }, { 2 , -1 } })
+  M.B = matrix({ { -1, 0}, { 1, 3 } })
+  M.S = M.A + M.B
+  M.D = M.A - M.B
+  dsp(M.A,'A')
+  nl() nl()
+  dsp(M.B,'B')
+  nl() nl()
+  dsp(M.S,'S') sym(" = ") dsp(M.A) sym(' + ') dsp(M.B)
+  nl() nl()
+  dsp(M.D,'D') sym(" = ") dsp(M.A) sym(' - ') dsp(M.B)}
+\end{minipage}
+
+\subsubsection{矩阵的乘法与乘方}
+\label{ssub:multiplication_of_matrices}
+为简化输入，我用了几个函数。它们的定义可在本文档的源码部分找到。n 为大于或小于 0 的整数，或 |'T'|。
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.A = matrix({ { 1, 2 }, { 2 ,-1 } })
+  M.B = matrix({ { -1, 0 }, { 1, 3 } })
+  M.P = M.A * M.B
+  M.I = M.A ^ -1
+  M.C = M.A ^ 3
+  M.K = 2 * M.A}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+
+ local function dsp (M,name)
+ if name then
+   tex.print(name..' = ')print_matrix(M)
+  else print_matrix(M) end
+  end
+
+ local  function sym (s)
+    tex.print(' '..s..' ')
+  end
+
+ local function  nl  ()
+    tex.print('\\\\')
+ end
+
+  M.A = matrix({ { 1, 2 }, { 2 ,-1 } })
+  M.B = matrix({ { -1, 0 }, { 1, 3 } })
+  M.P = M.A * M.B
+  M.I = M.A ^ -1
+  M.C = M.A ^ 3
+  M.K = 2 * M.A
+  dsp(M.P,'P') sym(" = ") dsp(M.A) sym(' * ') dsp(M.B)
+  nl() nl()
+  dsp(M.A ^ -1,'$A^{-1}$')
+  nl() nl()
+  dsp(M.K,'K')}
+\end{minipage}
+
+
+\subsubsection{元方法 \code{eq}}
+\label{ssub:metamthod_eq}
+
+检测两个矩阵是否相等。结果为 \textbf{true} 或 \textbf{false}。
+
+\subsection{matrix 类的方法}
+
+\begin{center}
+  \bgroup
+  \catcode`_=12
+  \small
+  \captionof{table}{matrix 的函数与方法。}\label{matrix:methods}
+  \begin{tabular}{lll}
+  \toprule
+  \textbf{函数} & \texttt{参考}   & \\
+  \midrule
+  \tkzFct{matrix}{new(...)}
+    & 见 [\ref{ssub:method_new}; \ref{sub:matrix_creation}] & \\
+  \tkzFct{matrix}{matrix.square()}
+    & [\ref{ssub:method_square}] & \\
+  \tkzFct{matrix}{matrix.vector()}
+    & [\ref{ssub:method_vector}] & \\
+  \tkzFct{matrix}{matrix.row\_vector()}
+    & [\ref{ssub:function_row_vector}] & \\
+  \tkzFct{matrix}{matrix.create()}
+    &  & \\
+  \tkzFct{matrix}{matrix.identity()}
+    & [\ref{ssub:method_identity}] & \\
+  \tkzFct{matrix}{matrix.htm()}
+    & [\ref{ssub:method_htm}] & \\
+  \tkzFct{matrix}{get\_htm\_point(V)}
+    & [\ref{ssub:method_get_htm_point}] & \\
+  \midrule
+  \textbf{方法} & \texttt{参考}   & \\
+  \midrule
+  \tkzMeth{matrix}{print(s,n)}
+    &  & \\
+  \tkzMeth{matrix}{htm\_apply(...)}
+    & [\ref{ssub:method_code_htm__apply}] & \\
+  \tkzMeth{matrix}{get()}
+    & [\ref{ssub:get_an_element_of_a_matrix}] & \\
+  \tkzMeth{matrix}{inverse()}
+    & [\ref{ssub:inverse_matrix}] & \\
+  \tkzMeth{matrix}{adjugate()}
+    & [\ref{ssub:method_adjugate}] & \\
+  \tkzMeth{matrix}{transpose()}
+    & [\ref{ssub:transpose_matrix}] & \\
+  \tkzMeth{matrix}{is\_diagonal()}
+    & [\ref{ssub:method_is_diagonal}] & \\
+  \tkzMeth{matrix}{is\_orthogonal()}
+    & [\ref{ssub:method_is_orthogonal}] & \\
+  \tkzMeth{matrix}{homogenization()}
+    & [\ref{ssub:method_homogenization}] & \\
+  \tkzMeth{matrix}{gauss\_jordan()}
+    & [\ref{ssub:method_matrix_gauss_jordan}] & \\
+  \tkzMeth{matrix}{rank()}
+    & [\ref{ssub:method_matrix_rank}] & \\
+  \tkzMeth{matrix}{augment\_right(B)}
+    & [\ref{ssub:matrix-augmentation-submatrix}] & \\
+  \tkzMeth{matrix}{submatrix(r1,r2,c1,c2)}
+    & [\ref{ssub:matrix-augmentation-submatrix}] & \\
+  \bottomrule
+  \end{tabular}
+  \egroup
+\end{center}
+
+
+
+
+\subsubsection{方法 \tkzMeth{matrix}{print}}
+\label{ssub:method_print}
+
+加载 \tkzNamePack{amsmath} 宏包后即可使用这个方法。默认选择 \tkzEnv{latex}{bmatrix} 环境，但也可以从 \tkzEnv{latex}{matrix}、\tkzEnv{latex}{pmatrix}、\tkzEnv{latex}{Bmatrix}、“vmatrix”、“Vmatrix” 中选择。另一个选项用于设置小数点后的位数。全局变量 “tkz\_dc” 用于设置小数位数。示例如下：
+
+\vspace{.5em}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.n = matrix({ { math.sqrt(2), math.sqrt(3) }, { math.sqrt(4), math.sqrt(5) } })
+  M.n:print('pmatrix')}
+\end{verbatim}
+
+\directlua{
+  init_elements()
+  M.n = matrix({ { math.sqrt(2), math.sqrt(3) }, { math.sqrt(4), math.sqrt(5) } })
+  tkz_dc = 3
+  M.n:print('pmatrix')
+}
+
+
+\vspace{.5em}
+你也可以用 |print_array (M)| 函数把矩阵显示为简单数组。见下例。
+
+对于方阵，可以传入一个值列表，其第一个元素是矩阵的阶数。
+
+\vspace{.5em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+init_elements()
+ M.s = matrix.square(2, 1, 0, 0, 2)
+ M.s:print()}
+  \end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+  init_elements()
+  M.s = matrix.square(2,1,0,0,2)
+  M.s:print()}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{matrix}{new}}
+\label{ssub:method_new}
+
+这是创建矩阵的主要方法。下面是一个系数为复数的 2×3 矩阵示例：
+
+\vspace{.5em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ a = point(1, 0)
+ b = point(1, 1)
+ c = point(-1, 1)
+ d = point(0, 1)
+ e = point(1, -1)
+ f = point(0, -1)
+ M.n = matrix({ { a, b, c }, { d, e, f } })
+ M.n:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ a = point(1, 0)
+ b = point(1, 1)
+ c = point(-1, 1)
+ d = point(0, 1)
+ e = point(1, -1)
+ f = point(0, -1)
+ M.n = matrix({ { a, b, c }, { d, e, f } })
+ M.n:print()}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.vector}}
+\label{ssub:method_vector}
+
+列矩阵这一特殊情形（常用于表示向量）可如下处理：
+
+\vspace{.5em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.v = matrix.vector(1, 2, 3)
+ M.v:print()}
+  \end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ M.v = matrix.vector(1, 2, 3)
+ M.v:print()}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.row\_vector}}
+\label{ssub:function_row_vector}
+
+\begin{mybox}
+\code{ M.rv = matrix.row\_vector (1, 2, 3)}
+
+m.rv = \directlua{matrix.row_vector (1, 2, 3):print()}
+\end{mybox}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.create(n,m)}}
+\label{ssub:function_matrix_create_n_m}
+
+\begin{mybox}
+\code{ M.c = matrix.create (2, 3)}
+
+M.c = \directlua{matrix.create (2, 3):print()}
+\end{mybox}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.square}(liste)}
+\label{ssub:method_square}
+
+我们在介绍矩阵时已经见过这个方法。需要先给出矩阵的阶数，然后逐行给出系数。
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.s = matrix.square(2, 2, 3, -5, 4)
+ M.s:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ M.s = matrix.square(2, 2, 3, -5, 4)
+ M.s:print()}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.identity}}
+\label{ssub:method_identity}
+
+创建 3 阶单位矩阵
+
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.Id_3 = matrix.identity(3)
+  M.Id_3:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+  init_elements()
+  M.Id_3 = matrix.identity(3)
+  M.Id_3:print()}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{is\_orthogonal}}
+\label{ssub:method_is_orthogonal}
+
+若 $A^TA = I$（在容差 \code{tkz.epsilon} 范围内），该方法返回 \code{true}，否则返回 \code{false}。
+
+\begin{verbatim}
+\directlua{
+ init_elements()
+ local cos = math.cos
+ local sin = math.sin
+ local pi = math.pi
+ M.A = matrix({ { cos(pi / 6), -sin(pi / 6) }, { sin(pi / 6), cos(pi / 6) } })
+ M.A:print()
+ bool = M.A:is_orthogonal()
+ tex.print("\\\\")
+ if bool then
+ 	tex.print("The matrix is orthogonal")
+ else
+ 	tex.print("The matrix is not orthogonal")
+ end
+ tex.print("\\\\")
+ tex.print("Test: $M.A^T = M.A^{-1} ?$")
+ M.A:transpose():print()
+ tex.print("=")
+ M.A:inverse():print()}
+\end{verbatim}
+
+\directlua{
+ init_elements()
+ local cos = math.cos
+ local sin = math.sin
+ local pi = math.pi
+ M.A = matrix({{cos(pi / 6), -sin(pi / 6)}, {sin(pi / 6), cos(pi / 6)}})
+ M.A:print()
+ bool = M.A:is_orthogonal()
+ tex.print("\\\\")
+ if bool then
+ 	tex.print("The matrix is orthogonal")
+ else
+ 	tex.print("The matrix is not orthogonal")
+ end
+ tex.print("\\\\")
+ tex.print("Test: $M.A^T = M.A^{-1} ?$")
+ M.A:transpose():print()
+ tex.print("=")
+ M.A:inverse():print()}
+
+\subsubsection{方法 \tkzMeth{matrix}{is\_diagonal}}
+\label{ssub:method_is_diagonal}
+
+若矩阵是对角矩阵，该方法返回 \code{true}，否则返回 \code{false}。非对角元与 \code{tkz.epsilon} 比较。
+
+\subsubsection{函数 \tkzFct{matrix}{print\_array}}
+\label{ssub:display_a_table_or_array_function_code_print_array}
+
+我们需要显示结果，下面看看不同的显示方式，并区分数组与矩阵。
+
+下面 $A$ 是一个数组。它可以显示为简单数组，也可以显示为矩阵，但不能使用属性，也不能用 |A:print()|，因为 $A$ 不是 \code{matrix} 类的对象。若想把数组像矩阵一样显示，可以用函数 |print_matrix|（见下例）。
+
+\vspace{.5em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ A = { { 1, 2 }, { 1, -1 } }
+ tex.print("A = ")
+ print_array(A)
+ tex.print(" or ")
+ print_matrix(A)
+ M.A = matrix({ { 1, 1 }, { 0, 2 } })
+ tex.print("\\\\")
+ tex.print("M = ")
+ M.A:print()}
+\end{verbatim}
+\end{minipage}
+ \begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ A = { { 1, 2 }, { 1, -1 } }
+ tex.print("A = ")
+ print_array(A)
+ tex.print(" or ")
+ print_matrix(A)
+ M.A = matrix({ { 1, 1 }, { 0, 2 } })
+ tex.print("\\\\")
+ tex.print("M = ")
+ M.A:print()}
+ \end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{get}}
+\label{ssub:get_an_element_of_a_matrix}
+获取矩阵的一个元素。
+
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.n = matrix{ { 1, 2 }, { 2, -1 } }
+  S = M.n:get(1, 1) + M.n:get(2, 2)
+  tex.print(S)}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+  init_elements()
+  M.n = matrix{ { 1, 2 }, { 2, -1 } }
+  S = M.n:get(1, 1) + M.n:get(2, 2)
+  tex.print(S)}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{inverse}}
+\label{ssub:inverse_matrix}
+
+若矩阵不可逆，则报错。
+
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 1, 2 }, { 2, -1 } })
+ tex.print("Inverse of $A = $")
+ M.B = M.A:inverse()
+ M.B:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 1, 2 }, { 2, -1 } })
+ tex.print("Inverse of $A = $")
+ M.B = M.A:inverse()
+ M.B:print()}
+\end{minipage}
+
+\subsubsection{用乘方语法求逆矩阵}
+\label{ssub:inverse_matrix_with_power_syntax}
+
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.n = matrix({ { 1, 0, 1 }, { 1, 2, 1 }, { 0, -1, 2 } })
+  tex.print("$M = $")  print_matrix (M.n)
+  tex.print('\\\\')
+  tex.print("Inverse of $M = M^{-1}$")
+  tex.print('\\\\','=') print_matrix(M.n ^ -1)}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+  init_elements()
+  M.n = matrix({ { 1, 0, 1 }, { 1, 2, 1 }, { 0, -1, 2 } })
+  tex.print("$M = $")  print_matrix (M.n)
+  tex.print('\\\\')
+  tex.print("$M = M^{-1} = $")
+  print_matrix(M.n ^ -1)}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{transpose}}
+\label{ssub:transpose_matrix}
+
+转置矩阵可用 |A: transpose ()| 或 |A^{'T'}| 访问。
+
+\vspace{.5em}
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 1, 2 }, { 2, -1 } })
+ M.AT = M.A:transpose()
+ tex.print("$A^{'T'} = $")
+ M.AT:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 1, 2 }, { 2, -1 } })
+ M.AT = M.A:transpose()
+ tex.print("$A^{'T'} = $")
+ M.AT:print()}
+\end{minipage}
+
+\vspace{.5em}
+注：|(A ^'T')^'T' = A|
+
+\subsubsection{方法 \tkzMeth{matrix}{adjugate}}
+\label{ssub:method_adjugate}
+
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  M.N =  matrix({ {1, 0, 3}, {2, 1, 0},
+                  {-1, 2, 0} })
+  tex.print('N = ') print_matrix(M.N)
+  tex.print('\\\\')
+  M.N.a = M.N:adjugate()
+  M.N.i = M.N * M.N.a
+  tex.print('adj(M) = ') M.N.a:print()
+  tex.print('\\\\')
+  tex.print('N $\\times$ adj(N) = ')
+  print_matrix(M.N.i)
+  tex.print('\\\\')
+  tex.print('det(N) = ')
+  tex.print(M.N.det)}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\directlua{
+  init_elements()
+  M.N =  matrix({ {1, 0, 3}, {2, 1, 0}, {-1, 2, 0} })
+  tex.print('N = ') print_matrix(M.N)
+  tex.print('\\\\')
+  M.N.a = M.N:adjugate()
+  M.N.i = M.N * M.N.a
+  tex.print('adj(M) = ') M.N.a:print()
+  tex.print('\\\\')
+  tex.print('N $\\times$ adj(N) = ') print_matrix(M.N.i)
+  tex.print('\\\\')
+  tex.print('det(N) = ') tex.print(M.N.det)}
+\end{minipage}
+\newpage
+
+
+\subsubsection{方法 \tkzMeth{matrix}{diagonalize}}
+\label{ssub:diagonalization}
+
+这个方法仅适用于 2 阶矩阵。它返回两个矩阵 $D$ 和 $P$，使得 $A = PDP^{-1}$：特征值在 $D$ 的对角线上，特征向量是 $P$ 的列。复特征值以复数形式给出。具有二重特征值且尚未对角化的矩阵会报错。
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 5, -3 }, { 6, -4 } })
+ tex.print("A = ")
+ M.A:print()
+ M.D, M.P = M.A:diagonalize()
+ tex.print("D = ")
+ M.D:print()
+ tex.print("P = ")
+ M.P:print()
+ M.R = M.P ^ -1 * M.A * M.P
+ tex.print("\\\\")
+ tex.print("Test: $D = P^{-1}AP = $ ")
+ M.R:print()
+ tex.print("\\\\")
+ tex.print("Verification: $P^{-1}P = $ ")
+ M.T = M.P ^ -1 * M.P
+ M.T:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ M.A = matrix({ { 5, -3 }, { 6, -4 } })
+ tex.print("A = ")
+ M.A:print()
+ M.D, M.P = M.A:diagonalize()
+ tex.print("D = ")
+ M.D:print()
+ tex.print("P = ")
+ M.P:print()
+ M.R = M.P ^ -1 * M.A * M.P
+ tex.print("\\\\")
+ tex.print("Test: $D = P^{-1}AP = $ ")
+ M.R:print()
+ tex.print("\\\\")
+ tex.print("Verification: $P^{-1}P = $ ")
+ M.T = M.P ^ -1 * M.P
+ M.T:print()}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{homogenization}}
+\label{ssub:method_homogenization}
+
+\code{homogenization} 的目标是能够使用齐次变换矩阵。
+
+取一个点 $A$，使 |z.A = point(2,-1)|。为应用 \code{htm} 矩阵，我们需要对这个点做一些处理。第一步是确定与该点关联的向量（矩阵）。这很直接，因为 point 有一个叫 \code{mtx} 的属性给出这个向量：
+
+\begin{mybox}
+z.A = point(2,0)\\
+M.V = z.A.mtx:homogenization()
+\end{mybox}
+得到：
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ pi = math.pi
+ M.h = matrix.htm(pi / 4, 3, 1)
+ z.A = point(2, 0)
+ M.V = z.A.mtx:homogenization()
+ z.A.mtx:print()
+ tex.print("then after homogenization: ")
+ M.V:print()}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ pi = math.pi
+ M.h = matrix.htm(pi / 4, 3, 1)
+ z.A = point(2, 0)
+ M.V = z.A.mtx:homogenization()
+ z.A.mtx:print()
+ tex.print("then after homogenization: ")
+ M.V:print()}
+\end{minipage}
+
+\subsubsection{函数 \tkzFct{matrix}{matrix.htm}}
+\label{ssub:method_htm}
+齐次变换矩阵。
+
+这个变换有几种使用方式。首先需要创建一个能把旋转与平移关联起来的矩阵。
+
+主要方法是创建矩阵：
+
+\begin{mybox}
+  pi  = math.pi\\
+  M.h   = matrix.htm(pi / 4, 3, 1)
+\end{mybox}
+
+这样创建一个 3×3 矩阵，结合了 $\pi/4$ 的旋转与 $\overrightarrow{t}=(3,1)$ 的平移。
+
+完整形式为 \code{matrix.htm(phi, tx, ty, sx, sy)}：先按 (\code{sx}, \code{sy}) 缩放，再旋转角度 \code{phi}，再平移向量 (\code{tx}, \code{ty})。缩放因子默认为 1。
+
+\directlua{
+  init_elements()
+  pi = math.pi
+  M.h = matrix.htm(pi / 4, 3, 1)
+  M.h:print()
+}
+
+
+现在可以应用矩阵 M。设 $A$ 为此处定义的点：\ref{ssub:method_homogenization}。通过齐次化得到列矩阵 $V$。
+
+
+\begin{mybox}
+M.W = M.A * M.V
+\end{mybox}
+
+\directlua{
+  init_elements()
+  pi  = math.pi
+  M.h = matrix.htm(pi / 4 , 3 , 1)
+  M.h:print()
+  z.A = point(2,0)
+  M.V = z.A.mtx:homogenization()
+  M.V:print() tex.print('=')
+  M.W = M.h * M.V
+  M.W:print()
+}
+
+剩下的就是提取新点的坐标。
+
+\subsubsection{函数 \tkzFct{matrix}{get\_htm\_point}}
+\label{ssub:method_get_htm_point}
+
+上一节我们得到了矩阵 $W$。现在需要得到它所定义的点。
+
+函数 \code{get\_htm\_point} 从应用 \code{htm} 矩阵后得到的向量中提取一个点。
+
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+  init_elements()
+  pi  = math.pi
+  M.h   = matrix.htm(pi / 4 , 3 , 1)
+  z.A = point(2,0)
+  M.V = z.A.mtx:homogenization()
+  M.W = M.h * M.V
+  M.W:print()
+  z.P = get_htm_point(M.W)
+  tex.print("The affix of $P$ is: ")
+  tex.print(tkz.display(z.P))}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+  init_elements()
+  pi  = math.pi
+  M.h   = matrix.htm(pi / 4 , 3 , 1)
+  z.A = point(2,0)
+  M.V = z.A.mtx:homogenization()
+  M.W = M.h * M.V
+  M.W:print()
+  z.P = get_htm_point(M.W)
+  tex.print("The affix of $P$ is: ")
+  tex.print(tkz.display(z.P))}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{htm\_apply}}
+\label{ssub:method_code_htm__apply}
+上面的操作可以简化为直接在点 $A$ 上使用 \code{htm\_apply} 方法。
+
+\begin{mybox}
+|z.Ap = M: htm_apply (z.A)|\\
+% 显示 (z.Ap)
+\end{mybox}
+
+方法 \code{htm\_apply} 可变换一个点、一组点或一个对象。
+每个参数可以是点或对象（直线、圆、三角形、正方形、矩形、四边形、平行四边形、椭圆）。若矩阵定义的是相似变换，对象保持其类；否则圆或椭圆变为椭圆，正方形或矩形变为平行四边形。矩阵必须是 3×3 矩阵，最后一行为 (0, 0, 1)。
+
+\directlua{
+ init_elements()
+ pi = math.pi
+ M.h = matrix.htm(pi / 4, 3, 1)
+ z.O = point(0, 0)
+ z.I = point(1, 0)
+ z.J = point(0, 1)
+ z.A = point(2, 0)
+ z.B = point(1, 2)
+ L.AB = line(z.A, z.B)
+ z.Op, z.Ip, z.Jp = M.h:htm_apply(z.O, z.I, z.J)
+ L.ApBp = M.h:htm_apply(L.AB)
+ z.Ap = L.ApBp.pa
+ z.Bp = L.ApBp.pb
+ z.K = point(2, 2)
+ T.IJK = triangle(z.I, z.J, z.K)
+ Tp = M.h:htm_apply(T.IJK)
+ z.Kp = Tp.pc}
+
+\begin{minipage}{.6\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ pi = math.pi
+ M.h = matrix.htm(pi / 4, 3, 1)
+ z.O = point(0, 0)
+ z.I = point(1, 0)
+ z.J = point(0, 1)
+ z.A = point(2, 0)
+ z.B = point(1, 2)
+ L.AB = line(z.A, z.B)
+ z.Op, z.Ip, z.Jp = M.h:htm_apply(z.O, z.I, z.J)
+ L.ApBp = M.h:htm_apply(L.AB)
+ z.Ap = L.ApBp.pa
+ z.Bp = L.ApBp.pb
+ z.K = point(2, 2)
+ T.IJK = triangle(z.I, z.J, z.K)
+ Tp = M.h:htm_apply(T.IJK)
+ z.Kp = Tp.pc}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\begin{tikzpicture}[gridded]
+   \tkzGetNodes
+   \tkzDrawPoints(O,O',A,B,A',B',K,K')
+   \tkzLabelPoints(O,O',A,B,A',B',I,J,I',J',K,K')
+   \tkzDrawSegments[->](O,I O,J O',I' O',J')
+   \tkzDrawLines (A,B A',B')
+   \tkzDrawPolygons[red](I,J,K I',J',K')
+\end{tikzpicture}
+\end{minipage}
+
+\vspace{.5 em}
+
+新的笛卡尔坐标系：
+
+\vspace{.5 em}
+\begin{minipage}{.5\textwidth}
+\begin{verbatim}
+\directlua{
+ init_elements()
+ pi = math.pi
+ tp = tex.print
+ nl = "\\\\"
+ a = point(1, 0)
+ b = point(0, 1)
+ M.R = matrix.htm(pi / 5, 2, 1)
+ M.R:print()
+ tp(nl)
+ M.v = matrix.vector(1, 2)
+ M.v:print()
+ M.v.h = M.v:homogenization()
+ M.v.h:print()
+ tp(nl)
+ M.V = M.R * M.v.h
+ M.V:print()
+ z.N = get_htm_point(M.V)
+tex.print(tkz.display(z.N))}
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.5\textwidth}
+\directlua{
+ init_elements()
+ pi = math.pi
+ tp = tex.print
+ nl = "\\\\"
+ a = point(1, 0)
+ b = point(0, 1)
+ M.R = matrix.htm(pi / 5, 2, 1)
+ M.R:print()
+ tp(nl)
+ M.v = matrix.vector(1, 2)
+ M.v:print()
+ M.v.h = M.v:homogenization()
+ M.v.h:print()
+ tp(nl)
+ M.V = M.R * M.v.h
+ M.V:print()
+ z.N = get_htm_point(M.V)
+ tex.print(tkz.display(z.N))}
+\end{minipage}
+
+\subsubsection{方法 \tkzMeth{matrix}{gauss\_jordan()}}
+\label{ssub:method_matrix_gauss_jordan}
+
+
+这个方法对矩阵应用高斯–约当消元算法，返回其行最简形（RREF）。
+
+\medskip
+高斯–约当算法通过一系列初等行变换把矩阵化为等价矩阵：
+\begin{itemize}
+\item 交换两行；
+\item 用非零数乘某一行；
+\item 把某一行的倍数加到另一行。
+\end{itemize}
+所得矩阵满足以下性质：
+\begin{itemize}
+\item 每个非零行的首个非零元都等于 $1$；
+\item 每个首 $1$ 是其所在列唯一的非零元；
+\item 所有零行（如果有）都在矩阵底部。
+\end{itemize}
+
+\medskip
+\texttt{返回值：}
+
+该方法返回一个新的矩阵对象，对应原矩阵的行最简形。
+原矩阵不被修改。
+
+\medskip
+\texttt{数值说明：}
+
+由于计算使用浮点运算，内部使用数值容差来检测零主元。
+非常小的值（通常低于某个固定阈值）被视为零。
+
+\medskip
+\texttt{典型用途：}
+
+\begin{itemize}
+\item 求解线性方程组；
+\item 计算矩阵的秩；
+\item 检测向量组的线性无关性；
+\item 计算方阵的逆（当逆存在时）。
+\end{itemize}
+
+\texttt{2×2 矩阵示例：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  M.A    = matrix({{2,1},{5,3}})
+  M.Ainv = M.A:augment_right(matrix.identity(2))
+              :gauss_jordan()
+              :submatrix(1, 2, 3, 4)
+
+  M.Ainv:print()
+}
+\end{tkzexample}
+
+\texttt{3×3 矩阵示例：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  % Matrix 3x3
+  M.A = matrix({
+    {2, 1, 1},
+    {1, 3, 2},
+    {1, 0, 0}
+  })
+
+  % Inverse via augmentation + Gauss–Jordan
+  M.Ainv = M.A
+            :augment_right(matrix.identity(3))
+            :gauss_jordan()
+            :submatrix(1, 3, 4, 6)
+
+  % Print the inverse
+  M.Ainv:print()
+}
+\end{tkzexample}
+
+
+
+
+\subsubsection{方法 \tkzMeth{matrix}{rank()}}
+\label{ssub:method_matrix_rank}
+
+这个方法返回矩阵的秩，即其行（等价地，列）所张成的向量空间的维数。
+
+\medskip
+秩通过高斯–约当消元过程计算：它等于矩阵行最简形中非零行的行数。
+
+\medskip
+\texttt{返回值：}
+该方法返回一个非负整数，等于矩阵的秩。
+
+\medskip
+\texttt{说明：}
+\begin{itemize}
+\item 秩始终小于或等于行数与列数的较小者。
+\item 若矩阵的秩等于这个较小者，则称矩阵满秩。
+\item 方阵可逆当且仅当其秩达到最大。
+\end{itemize}
+
+\medskip
+\texttt{数值稳定性：}
+与 \tkzMeth{matrix}{gauss\_jordan()} 一样，使用数值容差来判断某行是否应视为零行。
+
+\medskip
+\noindent
+\textbf{注。}
+方法 \tkzMeth{matrix}{rank()} 内部依赖高斯–约当消元，但直接、便捷地给出秩，而不暴露中间的行最简形矩阵。
+
+\texttt{示例 1：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  M.A = matrix({
+    {2, 1, 1},
+    {1, 3, 2},
+    {1, 0, 0}
+  })
+
+  tex.print("rank(A) = ", M.A:rank())
+}
+\end{tkzexample}
+
+\texttt{示例 2：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+\directlua{
+  M.B = matrix({
+    {1, 2, 3},
+    {2, 4, 6},
+    {1, 1, 1}
+  })
+
+  tex.print("rank(B) = ", M.B:rank())
+}
+\end{tkzexample}
+
+\texttt{示例 3：}
+
+\begin{tkzexample}[latex=.5\textwidth]
+
+\directlua{
+  M.C = matrix({
+    {1, 2, 3},
+    {2, 4, 6},
+    {1, 1, 1}
+  })
+
+  M.R = M.C:gauss_jordan()
+
+  tex.print("rank(C) = ", M.C:rank())
+}
+
+\end{tkzexample}
+
+
+\subsubsection{增广矩阵与子矩阵}
+\label{ssub:matrix-augmentation-submatrix}
+
+方阵求逆与线性方程组求解都基于同一个基本思想：
+先处理一个\emph{增广矩阵}，再在高斯–约当消元后提取其中的一块。
+
+\medskip
+
+\paragraph{增广矩阵。}
+设 $A$ 是 $m\times n$ 矩阵，$B$ 是 $m\times p$ 矩阵。
+增广矩阵 $[A \mid B]$ 通过把 $B$ 的各列接在 $A$ 的右侧得到：
+
+\[
+[A \mid B] =
+\begin{pmatrix}
+A_{11} & \cdots & A_{1n} & B_{11} & \cdots & B_{1p} \\
+\vdots &        & \vdots & \vdots &        & \vdots \\
+A_{m1} & \cdots & A_{mn} & B_{m1} & \cdots & B_{mp}
+\end{pmatrix}.
+\]
+
+在 \texttt{matrix} 类中，这个操作由方法 \texttt{augment\_right} 完成。
+
+\medskip
+
+\paragraph{示例（矩阵求逆）。}
+设
+\[
+A =
+\begin{pmatrix}
+2 & 1\\
+5 & 3
+\end{pmatrix}.
+\]
+增广矩阵 $[A \mid I]$ 为
+
+\[
+\begin{pmatrix}
+2 & 1 & 1 & 0\\
+5 & 3 & 0 & 1
+\end{pmatrix}.
+\]
+
+应用高斯–约当算法得到
+
+\[
+\begin{pmatrix}
+1 & 0 & 3 & -1\\
+0 & 1 & -5 & 2
+\end{pmatrix}
+=
+[I \mid A^{-1}],
+\]
+由此可直接读出逆矩阵。
+
+\medskip
+
+\paragraph{子矩阵提取。}
+方法 \texttt{submatrix(r1, r2, c1, c2)} 从矩阵中提取一个矩形块，由以下范围界定：
+
+\begin{itemize}
+  \item 行从 \texttt{r1} 到 \texttt{r2}，
+  \item 列从 \texttt{c1} 到 \texttt{c2}。
+\end{itemize}
+
+所有下标从~$1$ 开始。
+
+\medskip
+
+\paragraph{\texttt{submatrix(1,2,3,4)} 的含义。}
+在上例中，消元后的增广矩阵有：
+\begin{itemize}
+  \item $2$ 行，
+  \item $4$ 列。
+\end{itemize}
+
+逆矩阵占据：
+\begin{itemize}
+  \item 第 $1$ 到 $2$ 行，
+  \item 第 $3$ 到 $4$ 列。
+\end{itemize}
+
+因此提取
+\[
+\texttt{submatrix(1,2,3,4)}
+\]
+恰好返回块
+\[
+A^{-1} =
+\begin{pmatrix}
+3 & -1\\
+-5 & 2
+\end{pmatrix}.
+\]
+
+\medskip
+
+\paragraph{一般规则。}
+对于 $n$ 阶方阵，逆矩阵通过
+\[
+[A \mid I_n]
+\;\xrightarrow{\text{Gauss--Jordan}}\;
+[I_n \mid A^{-1}],
+\]
+得到，并用
+\[
+\texttt{submatrix(1, n, n+1, 2n)}.
+\]
+提取。
+
+\medskip
+
+\paragraph{小结。}
+\begin{itemize}
+  \item \texttt{augment\_right} 构造增广矩阵，
+  \item \texttt{gauss\_jordan} 执行行消元，
+  \item \texttt{submatrix} 提取所需的结果块。
+\end{itemize}
+
+\endinput

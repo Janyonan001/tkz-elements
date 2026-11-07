@@ -1,0 +1,49 @@
+\babel@toc {english}{}\relax 
+\babel@toc {english}{}\relax 
+\contentsline {part}{\numberline {I}几何核心}{19}{part.1}%
+\addvspace {\baselineskip }
+\contentsline {section}{\numberline {1}快速入门}{20}{section.1}%
+\contentsline {section}{\numberline {2}结构}{22}{section.2}%
+\contentsline {section}{\numberline {3}为什么需要 tkz-elements？}{23}{section.3}%
+\contentsline {section}{\numberline {4}简介}{27}{section.4}%
+\contentsline {section}{\numberline {5}书写约定、最佳实践与常见错误}{32}{section.5}%
+\contentsline {section}{\numberline {6}工作组织}{36}{section.6}%
+\contentsline {section}{\numberline {7}坐标}{38}{section.7}%
+\contentsline {section}{\numberline {8}数值容差}{39}{section.8}%
+\contentsline {section}{\numberline {9}几何关系 API}{39}{section.9}%
+\contentsline {section}{\numberline {10}类与对象}{42}{section.10}%
+\contentsline {section}{\numberline {11}point 类}{44}{section.11}%
+\contentsline {section}{\numberline {12}line 类}{56}{section.12}%
+\contentsline {section}{\numberline {13}circle 类}{87}{section.13}%
+\contentsline {section}{\numberline {14}\textbf {\texttt {triangle}}\index {Classes@类!triangle@\texttt {triangle}} 类}{127}{section.14}%
+\contentsline {section}{\numberline {15}\textbf {\texttt {occs}}\index {Classes@类!occs@\texttt {occs}} 类}{208}{section.15}%
+\contentsline {section}{\numberline {16}\textbf {\texttt {conic}}\index {Classes@类!conic@\texttt {conic}} 类}{214}{section.16}%
+\contentsline {section}{\numberline {17}\textbf {\texttt {quadrilateral}}\index {Classes@类!quadrilateral@\texttt {quadrilateral}} 类}{248}{section.17}%
+\contentsline {section}{\numberline {18}\textbf {\texttt {square}}\index {Classes@类!square@\texttt {square}} 类}{253}{section.18}%
+\contentsline {section}{\numberline {19}\textbf {\texttt {rectangle}}\index {Classes@类!rectangle@\texttt {rectangle}} 类}{257}{section.19}%
+\contentsline {section}{\numberline {20}\textbf {\texttt {parallelogram}}\index {Classes@类!parallelogram@\texttt {parallelogram}} 类}{261}{section.20}%
+\contentsline {section}{\numberline {21}\textbf {\texttt {regular polygon}}\index {Classes@类!regular polygon@\texttt {regular polygon}} 类}{265}{section.21}%
+\contentsline {part}{\numberline {II}代数与工具}{268}{part.2}%
+\addvspace {\baselineskip }
+\contentsline {section}{\numberline {22}vector 类}{269}{section.22}%
+\contentsline {section}{\numberline {23}\textbf {\texttt {matrix}}\index {Classes@类!matrix@\texttt {matrix}} 类}{278}{section.23}%
+\contentsline {section}{\numberline {24}\textbf {\texttt {path}}\index {Classes@类!path@\texttt {path}} 类}{292}{section.24}%
+\contentsline {section}{\numberline {25}\textbf {\texttt {list\_point}}\index {Classes@类!list\_point@\texttt {list\_point}} 类}{301}{section.25}%
+\contentsline {section}{\numberline {26}angle 类}{305}{section.26}%
+\contentsline {section}{\numberline {27}交点}{308}{section.27}%
+\contentsline {section}{\numberline {28}全局变量与常量}{316}{section.28}%
+\contentsline {section}{\numberline {29}辅助函数}{317}{section.29}%
+\contentsline {section}{\numberline {30}utils 模块}{330}{section.30}%
+\contentsline {section}{\numberline {31}数学工具}{335}{section.31}%
+\contentsline {part}{\numberline {III}Lua 与集成}{337}{part.3}%
+\addvspace {\baselineskip }
+\contentsline {section}{\numberline {32}面向初学者的 LuaLaTeX：Lua 脚本入门}{338}{section.32}%
+\contentsline {section}{\numberline {33}数据传递}{349}{section.33}%
+\contentsline {section}{\numberline {34}T\kern -.1667em\lower .5ex\hbox {E}\kern -.125emX\spacefactor 1000 \ 接口宏（\texttt {tkz-elements.sty}）}{352}{section.34}%
+\contentsline {section}{\numberline {35}\textbf {\texttt {fct}}\index {Classes@类!fct@\texttt {fct}} 类}{361}{section.35}%
+\contentsline {section}{\numberline {36}\textbf {\texttt {pfct}}\index {Classes@类!pfct@\texttt {pfct}} 类}{368}{section.36}%
+\contentsline {section}{\numberline {37}Metapost}{371}{section.37}%
+\contentsline {part}{\numberline {IV}数学与计算基础}{372}{part.4}%
+\addvspace {\baselineskip }
+\contentsline {section}{\numberline {38}计算模型与几何引擎}{373}{section.38}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
